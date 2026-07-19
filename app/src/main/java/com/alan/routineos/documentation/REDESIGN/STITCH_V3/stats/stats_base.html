@@ -1,0 +1,287 @@
+<!DOCTYPE html><html lang="es" class="dark" style=""><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#1d1639",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#30353c",
+                        "surface-dim": "#0f141a",
+                        "on-tertiary": "#322b4f",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#bbcac0",
+                        "on-secondary": "#00315e",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-error": "#690005",
+                        "surface-bright": "#353a40",
+                        "outline-variant": "#3c4a42",
+                        "secondary-container": "#234a79",
+                        "on-tertiary-fixed-variant": "#494267",
+                        "surface-container-low": "#171c22",
+                        "on-primary": "#003825",
+                        "on-tertiary-container": "#4d466b",
+                        "on-secondary-fixed": "#001c3a",
+                        "tertiary-container": "#bfb5e2",
+                        "surface": "#0f141a",
+                        "primary-fixed-dim": "#45dfa3",
+                        "on-secondary-container": "#96baf0",
+                        "tertiary": "#dbd1ff",
+                        "on-background": "#dee3eb",
+                        "tertiary-fixed-dim": "#cac1ee",
+                        "tertiary-fixed": "#e6deff",
+                        "on-primary-container": "#00563a",
+                        "secondary": "#a5c8ff",
+                        "secondary-fixed-dim": "#a5c8ff",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#45dfa3",
+                        "inverse-primary": "#006c4a",
+                        "inverse-on-surface": "#2c3137",
+                        "on-surface": "#dee3eb",
+                        "on-primary-fixed": "#002114",
+                        "primary-container": "#34d399",
+                        "on-primary-fixed-variant": "#005137",
+                        "surface-container": "#1b2026",
+                        "outline": "#85948b",
+                        "surface-variant": "#30353c",
+                        "surface-container-high": "#252a31",
+                        "primary-fixed": "#68fcbe",
+                        "primary": "#5af0b3",
+                        "inverse-surface": "#dee3eb",
+                        "background": "#0f141a",
+                        "on-secondary-fixed-variant": "#204877",
+                        "surface-container-lowest": "#0a0f14"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "sm": "8px",
+                        "margin-desktop": "24px",
+                        "base": "4px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-base": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "body-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "data-lg": ["JetBrains Mono"]
+                    }
+                }
+            }
+        }
+    }catch(_e){}</script></head><body class="bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface w-full top-0 sticky border-b border-outline-variant dark:border-outline-variant z-40">
+<div class="flex justify-between items-center px-md h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Estadisticas</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="transition-colors duration-200 hover:bg-surface-variant/50 p-2 rounded-full">
+
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-md pt-6 pb-32">
+<!-- Period Selector -->
+<div class="flex justify-center mb-xl">
+<div class="bg-surface-container-high rounded-full p-1 flex items-center border border-outline-variant">
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Semana</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md bg-primary-container text-on-primary-container shadow-sm">Mes</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Año</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Left Column: Activity & Metrics -->
+<div class="lg:col-span-8 space-y-lg">
+<!-- Activity Section -->
+<section class="glass-card rounded-xl p-6">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-1">Actividad</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">18 de 28 días con actividad</p>
+</div>
+<div class="flex gap-1 items-center font-data-sm text-data-sm text-on-surface-variant">
+<span class="">Menos</span>
+<div class="w-3 h-3 bg-surface-container-highest rounded-sm"></div>
+<div class="w-3 h-3 bg-primary/20 rounded-sm"></div>
+<div class="w-3 h-3 bg-primary/50 rounded-sm"></div>
+<div class="w-3 h-3 bg-primary/80 rounded-sm"></div>
+<div class="w-3 h-3 bg-primary rounded-sm"></div>
+<span class="">Más</span>
+</div>
+</div>
+<div class="contribution-grid">
+<!-- Mocking 4 weeks of activity (28 cells) -->
+<!-- Row 1 -->
+<div class="contribution-cell bg-primary/40"></div>
+<div class="contribution-cell bg-primary/80"></div>
+<div class="contribution-cell bg-primary"></div>
+<div class="contribution-cell bg-surface-container-highest"></div>
+<div class="contribution-cell bg-primary/60"></div>
+<div class="contribution-cell bg-primary/20"></div>
+<div class="contribution-cell bg-primary/80"></div>
+<!-- Row 2 -->
+<div class="contribution-cell bg-primary"></div>
+<div class="contribution-cell bg-primary/40"></div>
+<div class="contribution-cell bg-surface-container-highest"></div>
+<div class="contribution-cell bg-surface-container-highest"></div>
+<div class="contribution-cell bg-primary/80"></div>
+<div class="contribution-cell bg-primary/60"></div>
+<div class="contribution-cell bg-primary"></div>
+<!-- Row 3 -->
+<div class="contribution-cell bg-primary/20"></div>
+<div class="contribution-cell bg-primary/40"></div>
+<div class="contribution-cell bg-primary/80"></div>
+<div class="contribution-cell bg-primary"></div>
+<div class="contribution-cell bg-surface-container-highest"></div>
+<div class="contribution-cell bg-surface-container-highest"></div>
+<div class="contribution-cell bg-primary/20"></div>
+<!-- Row 4 -->
+<div class="contribution-cell bg-primary/60"></div>
+<div class="contribution-cell bg-primary/80"></div>
+<div class="contribution-cell bg-primary"></div>
+<div class="contribution-cell bg-surface-container-highest"></div>
+<div class="contribution-cell bg-primary/40"></div>
+<div class="contribution-cell bg-surface-container-highest"></div>
+<div class="contribution-cell bg-primary/20"></div>
+</div>
+</section>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">DÍAS ACTIVOS</p>
+<p class="font-data-lg text-data-lg text-primary">18 días</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">CUMPLIMIENTO</p>
+<p class="font-data-lg text-data-lg text-primary">72%</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">RACHA</p>
+<p class="font-data-lg text-data-lg text-primary">5 días</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">CAMBIOS</p>
+<p class="font-data-lg text-data-lg text-primary">6 ajustes</p>
+</div>
+</div>
+<!-- Insights Section -->
+<section class="space-y-md">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant px-1">INSIGHTS</h3>
+<div class="space-y-sm">
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant hover:bg-surface-container transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary">school</span>
+<p class="font-body-base text-body-base">Completaste 4 de 5 días de Universidad</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant hover:bg-surface-container transition-colors cursor-default">
+<span class="material-symbols-outlined text-secondary">analytics</span>
+<p class="font-body-base text-body-base">El jueves fue tu día con más cambios</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Goals & Comparison -->
+<div class="lg:col-span-4 space-y-lg">
+<!-- Planned vs Realized -->
+<section class="glass-card rounded-xl p-6">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6">Planificado vs Realizado</h2>
+<div class="space-y-8">
+<!-- University Task -->
+<div>
+<div class="flex justify-between items-end mb-3">
+<span class="font-body-base font-semibold">Universidad</span>
+<span class="font-data-sm text-on-surface-variant">25h / 28h</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000 ease-out" style="width: 89%;"></div>
+</div>
+</div>
+<!-- Gym Task -->
+<div>
+<div class="flex justify-between items-end mb-3">
+<span class="font-body-base font-semibold">Gym</span>
+<span class="font-data-sm text-on-surface-variant">3 / 4 sesiones</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full transition-all duration-1000 ease-out" style="width: 75%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Cuerpo y Bienestar Entry -->
+<button class="w-full group bg-surface-container-high hover:bg-surface-container-highest rounded-xl p-6 border border-outline-variant transition-all flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+<div class="text-left">
+<h3 class="font-headline-md text-headline-md text-on-surface">Cuerpo y bienestar</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ver métricas de salud</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<!-- Decorative Glass Card (Asymmetric Layout element) -->
+<div class="relative overflow-hidden glass-card rounded-xl aspect-[4/3] flex flex-col justify-end p-6 border-outline-variant">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-on-surface-variant/30 text-6xl rotate-12">trending_up</span>
+</div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">RENDIMIENTO</p>
+<p class="font-body-sm text-body-sm">Tu consistencia en el bloque de mañana ha mejorado un <span class="text-primary font-bold">12%</span> respecto al mes pasado.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-outline-variant dark:border-outline-variant rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">today</span>
+<span class="font-label-md text-label-md">Today</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-label-md text-label-md">Planner</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-label-md text-label-md">System</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container/20 dark:bg-primary-container/20 text-primary dark:text-primary-fixed-dim rounded-xl px-3 py-1 transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-md text-label-md">Stats</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md">Account</span>
+</button>
+</nav>
+<script>
+        // Simple interaction for the period buttons
+        const buttons = document.querySelectorAll('.flex.justify-center.mb-xl button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => {
+                    b.classList.remove('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+                    b.classList.add('text-on-surface-variant');
+                });
+                btn.classList.remove('text-on-surface-variant');
+                btn.classList.add('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+            });
+        });
+    </script>
+</body></html>

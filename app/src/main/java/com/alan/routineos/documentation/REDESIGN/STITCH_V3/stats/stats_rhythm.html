@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "on-tertiary-fixed": "#1d1639",
+                            "error-container": "#93000a",
+                            "surface-container-highest": "#30353c",
+                            "surface-dim": "#0f141a",
+                            "on-tertiary": "#322b4f",
+                            "error": "#ffb4ab",
+                            "on-surface-variant": "#bbcac0",
+                            "on-secondary": "#00315e",
+                            "secondary-fixed": "#d4e3ff",
+                            "on-error": "#690005",
+                            "surface-bright": "#353a40",
+                            "outline-variant": "#3c4a42",
+                            "secondary-container": "#234a79",
+                            "on-tertiary-fixed-variant": "#494267",
+                            "surface-container-low": "#171c22",
+                            "on-primary": "#003825",
+                            "on-tertiary-container": "#4d466b",
+                            "on-secondary-fixed": "#001c3a",
+                            "tertiary-container": "#bfb5e2",
+                            "surface": "#0f141a",
+                            "primary-fixed-dim": "#45dfa3",
+                            "on-secondary-container": "#96baf0",
+                            "tertiary": "#dbd1ff",
+                            "on-background": "#dee3eb",
+                            "tertiary-fixed-dim": "#cac1ee",
+                            "tertiary-fixed": "#e6deff",
+                            "on-primary-container": "#00563a",
+                            "secondary": "#a5c8ff",
+                            "secondary-fixed-dim": "#a5c8ff",
+                            "on-error-container": "#ffdad6",
+                            "surface-tint": "#45dfa3",
+                            "inverse-primary": "#006c4a",
+                            "inverse-on-surface": "#2c3137",
+                            "on-surface": "#dee3eb",
+                            "on-primary-fixed": "#002114",
+                            "primary-container": "#34d399",
+                            "on-primary-fixed-variant": "#005137",
+                            "surface-container": "#1b2026",
+                            "outline": "#85948b",
+                            "surface-variant": "#30353c",
+                            "surface-container-high": "#252a31",
+                            "primary-fixed": "#68fcbe",
+                            "primary": "#5af0b3",
+                            "inverse-surface": "#dee3eb",
+                            "background": "#0f141a",
+                            "on-secondary-fixed-variant": "#204877",
+                            "surface-container-lowest": "#0a0f14"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                        "spacing": {
+                            "xl": "32px",
+                            "sm": "8px",
+                            "margin-desktop": "24px",
+                            "base": "4px",
+                            "lg": "24px",
+                            "xs": "4px",
+                            "md": "16px",
+                            "margin-mobile": "16px"
+                        },
+                        "fontFamily": {
+                            "display-lg": ["Inter"],
+                            "body-base": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "display-lg-mobile": ["Inter"],
+                            "data-sm": ["JetBrains Mono"],
+                            "body-sm": ["Inter"],
+                            "label-caps": ["Inter"],
+                            "data-lg": ["JetBrains Mono"]
+                        }
+                    }
+                }
+            }
+        } catch (_e) {}
+    </script>
+<style>
+        .custom-pattern {
+            background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+            background-size: 4px 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-base">
+<!-- TopAppBar -->
+<header class="bg-surface w-full top-0 sticky border-b border-outline-variant z-40">
+<div class="flex justify-between items-center px-md h-16 w-full max-w-screen-xl mx-auto">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Estadísticas</h1>
+<div class="flex items-center gap-2"></div>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-md pt-6 pb-32">
+<!-- Period Selector -->
+<div class="flex flex-col items-center mb-xl gap-4">
+<div class="bg-surface-container-high rounded-full p-1 flex items-center border border-outline-variant">
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md bg-primary-container text-on-primary-container shadow-sm">Semana</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Mes</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Año</button>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">chevron_left</span>
+<span class="font-data-lg text-data-lg">15–21 de julio</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">chevron_right</span>
+</div>
+</div>
+<!-- Summary Metrics -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-xl">
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">CUMPLIMIENTO</p>
+<p class="font-data-lg text-data-lg text-primary">76%</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">DÍAS ACTIVOS</p>
+<p class="font-data-lg text-data-lg text-primary">6 de 7</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">CAMBIOS</p>
+<p class="font-data-lg text-data-lg text-primary">4</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">PARCIALES</p>
+<p class="font-data-lg text-data-lg text-primary">3</p>
+</div>
+</div>
+<!-- Main Visualization: Ritmo Semanal -->
+<section class="bg-surface-container-low rounded-xl p-6 border border-outline-variant mb-lg">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-6">RITMO SEMANAL</h2>
+<div class="grid grid-cols-7 gap-2 h-64 items-end mb-4">
+<!-- Lun -->
+<div class="flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-xs">check</span></div>
+<div class="h-12 bg-primary/40 custom-pattern text-primary/60 rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-[10px]">contrast</span></div>
+<p class="text-center font-label-caps text-[10px] mt-2">LUN</p>
+</div>
+<!-- Mar -->
+<div class="flex flex-col gap-1 h-full">
+<div class="flex-1 border-2 border-dashed border-outline-variant rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-surface-variant/30 text-xs">close</span></div>
+<div class="h-16 bg-primary rounded-sm flex items-center justify-center relative"><span class="material-symbols-outlined text-on-primary text-xs">check</span><div class="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-3 bg-secondary rounded-full"></div></div>
+<p class="text-center font-label-caps text-[10px] mt-2">MAR</p>
+</div>
+<!-- Mié (Selected) -->
+<div class="flex flex-col gap-1 h-full bg-primary/10 rounded-lg p-1 outline outline-1 outline-primary">
+<div class="h-10 bg-primary/40 custom-pattern text-primary/60 rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-[10px]">contrast</span></div>
+<div class="h-6 border border-secondary bg-secondary/10 text-secondary rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-[10px]">add</span></div>
+<div class="flex-1 bg-primary rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-xs">check</span></div>
+<div class="h-14 border-2 border-dashed border-outline-variant rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-surface-variant/30 text-xs">close</span></div>
+<p class="text-center font-label-caps text-[10px] mt-2 text-primary font-bold">MIÉ</p>
+</div>
+<!-- Jue -->
+<div class="flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-xs">check</span></div>
+<div class="h-20 bg-primary rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-xs">check</span></div>
+<p class="text-center font-label-caps text-[10px] mt-2">JUE</p>
+</div>
+<!-- Vie -->
+<div class="flex flex-col gap-1 h-full">
+<div class="h-12 bg-primary/40 custom-pattern text-primary/60 rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-[10px]">contrast</span></div>
+<div class="flex-1 bg-primary rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-xs">check</span></div>
+<p class="text-center font-label-caps text-[10px] mt-2">VIE</p>
+</div>
+<!-- Sáb -->
+<div class="flex flex-col gap-1 h-full">
+<div class="flex-1 border-2 border-dashed border-outline-variant rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-surface-variant/30 text-xs">close</span></div>
+<p class="text-center font-label-caps text-[10px] mt-2">SÁB</p>
+</div>
+<!-- Dom -->
+<div class="flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary rounded-sm flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-xs">check</span></div>
+<p class="text-center font-label-caps text-[10px] mt-2">DOM</p>
+</div>
+</div>
+</section>
+<!-- Selected Day Detail -->
+<section class="bg-surface-container rounded-xl p-6 border border-outline-variant mb-lg">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Miércoles 17</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">4 rutinas planificadas, 1 espontánea</p>
+</div>
+<div class="bg-primary/20 text-primary px-3 py-1 rounded-full font-data-sm text-data-sm">68% completado</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">contrast</span>
+<span class="font-body-base">Universidad</span>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">PARCIAL</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-lg border border-secondary/30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">add</span>
+<span class="font-body-base">Reunión</span>
+</div>
+<span class="font-label-caps text-[10px] text-secondary">ESPONTÁNEA</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="font-body-base">Gym</span>
+</div>
+<span class="font-label-caps text-[10px] text-primary">COMPLETADO</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-lg opacity-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">cancel</span>
+<span class="font-body-base">Lectura</span>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">OMITIDO</span>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-lg">
+<!-- Planificado vs Realizado -->
+<section class="bg-surface-container rounded-xl p-6 border border-outline-variant">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-6">PLANIFICADO VS REALIZADO</h2>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-base font-semibold">Universidad</span>
+<span class="font-data-sm text-on-surface-variant">25h / 28h</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 89%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-base font-semibold">Gym</span>
+<span class="font-data-sm text-on-surface-variant">3 completas · 1 parcial</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="h-full bg-primary" style="width: 75%;"></div>
+<div class="h-full bg-primary/30 custom-pattern" style="width: 15%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Por sistema -->
+<section class="bg-surface-container rounded-xl p-6 border border-outline-variant">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-6">POR SISTEMA</h2>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-body-base">Universidad</span>
+</div>
+<span class="font-data-sm text-on-surface-variant">82% · 4 de 5 días</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="font-body-base">Gym</span>
+</div>
+<span class="font-data-sm text-on-surface-variant">75% · 3 completas, 1 parcial</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Insights Section -->
+<section class="space-y-md">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant px-1">INSIGHTS</h3>
+<div class="space-y-sm">
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+<span class="material-symbols-outlined text-primary">edit_calendar</span>
+<p class="font-body-base">El miércoles concentró la mayoría de tus cambios.</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+<span class="material-symbols-outlined text-secondary">fitness_center</span>
+<p class="font-body-base">Gym tuvo una sesión parcial esta semana.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 backdrop-blur-xl border-t border-outline-variant rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">today</span>
+<span class="font-label-md text-label-md">Today</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-label-md text-label-md">Planner</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-label-md text-label-md">System</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-xl px-3 py-1 transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-md text-label-md">Stats</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md">Account</span>
+</button>
+</nav>
+</body></html>

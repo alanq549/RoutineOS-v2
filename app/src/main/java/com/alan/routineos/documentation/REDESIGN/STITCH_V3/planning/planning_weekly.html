@@ -1,0 +1,330 @@
+<!DOCTYPE html><html class="dark" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        body {
+            background-color: #0A0D12;
+            color: #dee3eb;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        .glass-panel {
+            background: rgba(18, 22, 29, 0.55);
+            backdrop-filter: blur(16px);
+            border: 1px solid #232A34;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #232A34;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#1d1639",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#30353c",
+                        "surface-dim": "#0f141a",
+                        "on-tertiary": "#322b4f",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#bbcac0",
+                        "on-secondary": "#00315e",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-error": "#690005",
+                        "surface-bright": "#353a40",
+                        "outline-variant": "#3c4a42",
+                        "secondary-container": "#234a79",
+                        "on-tertiary-fixed-variant": "#494267",
+                        "surface-container-low": "#171c22",
+                        "on-primary": "#003825",
+                        "on-tertiary-container": "#4d466b",
+                        "on-secondary-fixed": "#001c3a",
+                        "tertiary-container": "#bfb5e2",
+                        "surface": "#0f141a",
+                        "primary-fixed-dim": "#45dfa3",
+                        "on-secondary-container": "#96baf0",
+                        "tertiary": "#dbd1ff",
+                        "on-background": "#dee3eb",
+                        "tertiary-fixed-dim": "#cac1ee",
+                        "tertiary-fixed": "#e6deff",
+                        "on-primary-container": "#00563a",
+                        "secondary": "#a5c8ff",
+                        "secondary-fixed-dim": "#a5c8ff",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#45dfa3",
+                        "inverse-primary": "#006c4a",
+                        "inverse-on-surface": "#2c3137",
+                        "on-surface": "#dee3eb",
+                        "on-primary-fixed": "#002114",
+                        "primary-container": "#34d399",
+                        "on-primary-fixed-variant": "#005137",
+                        "surface-container": "#1b2026",
+                        "outline": "#85948b",
+                        "surface-variant": "#30353c",
+                        "surface-container-high": "#252a31",
+                        "primary-fixed": "#68fcbe",
+                        "primary": "#5af0b3",
+                        "inverse-surface": "#dee3eb",
+                        "background": "#0f141a",
+                        "on-secondary-fixed-variant": "#204877",
+                        "surface-container-lowest": "#0a0f14"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "sm": "8px",
+                        "margin-desktop": "24px",
+                        "base": "4px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "margin-mobile": "16px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background selection:bg-primary-container/30">
+<!-- Top Navigation Anchor -->
+<header class="w-full top-0 sticky z-40 bg-surface border-b border-outline-variant transition-colors duration-200">
+<div class="flex justify-between items-center px-md h-16 w-full max-w-5xl mx-auto">
+<div class="flex items-center gap-3">
+<button class="p-2 hover:bg-surface-variant/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-on-surface">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Planificar</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-surface-variant/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-on-surface">search</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-5xl mx-auto px-md pt-6 pb-32">
+<!-- Segmented Control -->
+<div class="flex p-1 bg-surface-container-low rounded-xl mb-8 w-full max-w-sm mx-auto border border-outline-variant">
+<button class="flex-1 py-2 text-sm font-semibold rounded-lg bg-surface-container-highest text-primary shadow-sm">Planificador</button>
+<button class="flex-1 py-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface transition-colors">Rutinas</button>
+</div>
+<!-- Week Selector -->
+<div class="mb-10 overflow-x-auto no-scrollbar">
+<div class="flex justify-between min-w-[400px] gap-2">
+<!-- Selected Day: Monday 12 -->
+<div class="flex flex-col items-center gap-2 p-3 bg-primary-container rounded-xl min-w-[56px] transition-all transform hover:scale-105">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-primary-container">Lun</span>
+<span class="text-lg font-extrabold text-on-primary-container leading-none">12</span>
+
+</div>
+<!-- Other Days -->
+<div class="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-xl min-w-[56px] border border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Mar</span>
+<span class="text-lg font-semibold text-on-surface leading-none">13</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-xl min-w-[56px] border border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Mié</span>
+<span class="text-lg font-semibold text-on-surface leading-none">14</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-xl min-w-[56px] border border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Jue</span>
+<span class="text-lg font-semibold text-on-surface leading-none">15</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-xl min-w-[56px] border border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Vie</span>
+<span class="text-lg font-semibold text-on-surface leading-none">16</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-xl min-w-[56px] border border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-tertiary">Sáb</span>
+<span class="text-lg font-semibold text-on-surface leading-none">17</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-xl min-w-[56px] border border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-tertiary">Dom</span>
+<span class="text-lg font-semibold text-on-surface leading-none">18</span>
+</div>
+</div>
+</div>
+<!-- Routine Blocks -->
+<section class="space-y-6">
+<h2 class="font-label-caps text-on-surface-variant tracking-[0.2em] px-1">BLOQUES DE RUTINA</h2>
+<div class="grid grid-cols-1 gap-4">
+<!-- Block 1: Universidad (Flexible) -->
+<div class="glass-panel p-5 rounded-2xl flex gap-5 group transition-all hover:bg-surface-container-high/60">
+<div class="flex flex-col items-center pt-1 min-w-[80px]">
+<span class="font-data-sm text-primary">07:00</span>
+<div class="w-[1px] h-full bg-outline-variant my-2"></div>
+<span class="font-data-sm text-primary">14:00</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-bold bg-primary-container/20 text-primary-fixed px-2 py-0.5 rounded-full uppercase">Flexible</span>
+</div>
+<h3 class="text-lg font-bold text-on-surface mb-1">Universidad</h3>
+<p class="text-sm text-on-surface-variant font-body-sm">3 materias: Algoritmos II, Diseño de Sistemas, Probabilidad.</p>
+<div class="mt-4 flex gap-2">
+<span class="flex items-center gap-1 font-data-sm text-xs text-on-surface-variant bg-surface-container px-2 py-1 rounded-md border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]">school</span> Campus Central
+                            </span>
+</div>
+<div class="mt-3 flex items-center gap-2 text-error font-medium text-[10px] bg-error-container/10 p-2 rounded-lg border border-error/20"><span class="material-symbols-outlined text-sm">warning</span><span class="">Conflicto: Coincide con Cita médica (10:00 - 11:00)</span></div></div>
+<div class="flex items-start">
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Block 2: Gym (Flexible) -->
+<div class="glass-panel p-5 rounded-2xl flex gap-5 hover:bg-surface-container-high/60 transition-all">
+<div class="flex flex-col items-center pt-1 min-w-[80px]">
+<span class="font-data-sm text-primary">16:00</span>
+<div class="w-[1px] h-full bg-outline-variant my-2"></div>
+<span class="font-data-sm text-primary">18:00</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-bold bg-primary-container/20 text-primary-fixed px-2 py-0.5 rounded-full uppercase">Flexible</span>
+</div>
+<h3 class="text-lg font-bold text-on-surface mb-1">Gym</h3>
+<p class="text-sm text-on-surface-variant font-body-sm">Sesión de Push Day: Enfocado en hipertrofia y movilidad.</p>
+</div>
+<div class="flex items-start">
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Block 3: Dormir (Exacta) -->
+<div class="glass-panel p-5 rounded-2xl flex gap-5 border-l-4 border-l-tertiary hover:bg-surface-container-high/60 transition-all">
+<div class="flex flex-col items-center pt-1 min-w-[80px]">
+<span class="font-data-sm text-tertiary">22:30</span>
+<div class="w-[1px] h-6 bg-outline-variant my-2"></div>
+<span class="material-symbols-outlined text-tertiary">bedtime</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-bold bg-tertiary-container/20 text-tertiary px-2 py-0.5 rounded-full uppercase">Hora exacta</span>
+</div>
+<h3 class="text-lg font-bold text-on-surface mb-1">Dormir</h3>
+<p class="text-sm text-on-surface-variant font-body-sm">Rutina nocturna: Sin pantallas 30min antes, lectura ligera.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Contextual Samples: Exceptions & Conflicts -->
+<section class="mt-12 space-y-6">
+<h2 class="font-label-caps text-on-surface-variant tracking-[0.2em] px-1 uppercase">EXCEPCIONES</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Exception Case -->
+<div class="glass-panel p-4 rounded-xl border border-outline-variant relative overflow-hidden group border-l-tertiary">
+<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl">event_available</span>
+</div>
+<div class="flex items-center gap-2 mb-3">
+<span class="font-data-sm text-on-surface-variant">Mié 14 Oct</span>
+<span class="text-[9px] font-extrabold bg-secondary-container/40 text-secondary-fixed px-2 py-0.5 rounded-full border border-secondary/20">SOLO MIÉRCOLES</span>
+</div>
+<div class="space-y-1">
+<h4 class="font-bold text-on-surface">Universidad</h4>
+<p class="font-data-sm text-xs text-primary">07:00 - 12:00</p>
+</div>
+</div>
+<!-- Conflict Case -->
+
+</div>
+</section>
+<!-- Unscheduled Section -->
+<section class="mt-12 pb-24">
+<div class="flex items-center justify-between mb-4 px-1">
+<h2 class="font-label-caps text-on-surface-variant tracking-[0.2em]">SIN HORARIO</h2>
+<span class="font-data-sm text-[10px] text-on-surface-variant/60">PENDIENTES FLEXIBLES</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">rocket_launch</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">drag_handle</span>
+</div>
+<h4 class="mt-3 font-semibold text-on-surface">Proyecto personal</h4>
+<p class="text-[11px] text-on-surface-variant font-body-sm mt-1">Avance en arquitectura v2</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform">auto_stories</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">drag_handle</span>
+</div>
+<h4 class="mt-3 font-semibold text-on-surface">Lectura</h4>
+<p class="text-[11px] text-on-surface-variant font-body-sm mt-1">Capítulos 4 y 5</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 backdrop-blur-xl border-t border-outline-variant rounded-t-xl shadow-2xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform duration-150 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">today</span>
+<span class="font-label-md text-[10px] mt-1">Today</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary-fixed-dim rounded-xl px-4 py-1 transition-transform duration-150 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="font-label-md text-[10px] mt-1">Planner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform duration-150 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-label-md text-[10px] mt-1">System</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform duration-150 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-md text-[10px] mt-1">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform duration-150 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-[10px] mt-1">Account</span>
+</a>
+</nav>
+<!-- FAB -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40 border border-white/10">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'wght' 600;">add</span>
+</button>
+<script>
+        // Simple Micro-interaction for the segmented control
+        const segments = document.querySelectorAll('.segmented-btn');
+        segments.forEach(btn => {
+            btn.addEventListener('click', () => {
+                segments.forEach(b => {
+                    b.classList.remove('bg-surface-container-highest', 'text-primary', 'shadow-sm');
+                    b.classList.add('text-on-surface-variant');
+                });
+                btn.classList.add('bg-surface-container-highest', 'text-primary', 'shadow-sm');
+                btn.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+
+
+</body></html>

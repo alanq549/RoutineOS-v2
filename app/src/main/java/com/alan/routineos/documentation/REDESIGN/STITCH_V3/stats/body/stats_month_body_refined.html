@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "on-tertiary-fixed": "#1d1639",
+                            "error-container": "#93000a",
+                            "surface-container-highest": "#30353c",
+                            "surface-dim": "#0f141a",
+                            "on-tertiary": "#322b4f",
+                            "error": "#ffb4ab",
+                            "on-surface-variant": "#bbcac0",
+                            "on-secondary": "#00315e",
+                            "secondary-fixed": "#d4e3ff",
+                            "on-error": "#690005",
+                            "surface-bright": "#353a40",
+                            "outline-variant": "#3c4a42",
+                            "secondary-container": "#234a79",
+                            "on-tertiary-fixed-variant": "#494267",
+                            "surface-container-low": "#171c22",
+                            "on-primary": "#003825",
+                            "on-tertiary-container": "#4d466b",
+                            "on-secondary-fixed": "#001c3a",
+                            "tertiary-container": "#bfb5e2",
+                            "surface": "#0f141a",
+                            "primary-fixed-dim": "#45dfa3",
+                            "on-secondary-container": "#96baf0",
+                            "tertiary": "#dbd1ff",
+                            "on-background": "#dee3eb",
+                            "tertiary-fixed-dim": "#cac1ee",
+                            "tertiary-fixed": "#e6deff",
+                            "on-primary-container": "#00563a",
+                            "secondary": "#a5c8ff",
+                            "secondary-fixed-dim": "#a5c8ff",
+                            "on-error-container": "#ffdad6",
+                            "surface-tint": "#45dfa3",
+                            "inverse-primary": "#006c4a",
+                            "inverse-on-surface": "#2c3137",
+                            "on-surface": "#dee3eb",
+                            "on-primary-fixed": "#002114",
+                            "primary-container": "#34d399",
+                            "on-primary-fixed-variant": "#005137",
+                            "surface-container": "#1b2026",
+                            "outline": "#85948b",
+                            "surface-variant": "#30353c",
+                            "surface-container-high": "#252a31",
+                            "primary-fixed": "#68fcbe",
+                            "primary": "#5af0b3",
+                            "inverse-surface": "#dee3eb",
+                            "background": "#0f141a",
+                            "on-secondary-fixed-variant": "#204877",
+                            "surface-container-lowest": "#0a0f14"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                        "spacing": {
+                            "xl": "32px",
+                            "sm": "8px",
+                            "margin-desktop": "24px",
+                            "base": "4px",
+                            "lg": "24px",
+                            "xs": "4px",
+                            "md": "16px",
+                            "margin-mobile": "16px"
+                        },
+                        "fontFamily": {
+                            "display-lg": ["Inter"],
+                            "body-base": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "display-lg-mobile": ["Inter"],
+                            "data-sm": ["JetBrains Mono"],
+                            "body-sm": ["Inter"],
+                            "label-caps": ["Inter"],
+                            "data-lg": ["JetBrains Mono"]
+                        }
+                    }
+                }
+            }
+        } catch (_e) {}
+    </script>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface w-full top-0 sticky border-b border-outline-variant dark:border-outline-variant z-40">
+<div class="flex justify-between items-center px-md h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Estadísticas</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="transition-colors duration-200 hover:bg-surface-variant/50 p-2 rounded-full">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-md pt-6 pb-32">
+<!-- Period Selector -->
+<div class="flex justify-center mb-xl">
+<div class="bg-surface-container-high rounded-full p-1 flex items-center border border-outline-variant">
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Semana</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md bg-primary-container text-on-primary-container shadow-sm">Mes</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Año</button>
+</div>
+</div>
+<div class="flex items-center justify-center gap-4 mb-xl">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">chevron_left</button>
+<span class="font-headline-md text-on-surface">Julio de 2026</span>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">chevron_right</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Left Column: Activity & Metrics -->
+<div class="lg:col-span-8 space-y-lg">
+<!-- Activity Section (Concentric Rings) -->
+<section class="bg-surface-container/30 rounded-xl p-6 border border-outline-variant/50">
+<div class="flex flex-col items-center py-6">
+<div class="relative w-64 h-64 flex items-center justify-center">
+<!-- Concentric Rings (SVG) -->
+<svg class="absolute inset-0 w-full h-full -rotate-90" viewbox="0 0 100 100">
+<!-- Week 1 -->
+<circle class="text-surface-container-highest" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-width="2"></circle>
+<circle class="text-primary/40" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-dasharray="231 282" stroke-width="2"></circle>
+<!-- Week 2 -->
+<circle class="text-surface-container-highest" cx="50" cy="50" fill="none" r="38" stroke="currentColor" stroke-width="2"></circle>
+<circle class="text-primary/60" cx="50" cy="50" fill="none" r="38" stroke="currentColor" stroke-dasharray="176 238" stroke-width="2"></circle>
+<!-- Week 3 (Selected) -->
+<circle class="text-surface-container-highest" cx="50" cy="50" fill="none" r="31" stroke="currentColor" stroke-width="3"></circle>
+<circle class="text-primary" cx="50" cy="50" fill="none" r="31" stroke="currentColor" stroke-dasharray="132 194" stroke-width="3"></circle>
+<!-- Week 4 -->
+<circle class="text-surface-container-highest" cx="50" cy="50" fill="none" r="24" stroke="currentColor" stroke-width="2"></circle>
+<circle class="text-primary/80" cx="50" cy="50" fill="none" r="24" stroke="currentColor" stroke-dasharray="119 150" stroke-width="2"></circle>
+</svg>
+<!-- Center Text -->
+<div class="text-center z-10">
+<p class="text-6xl font-bold text-primary">76%</p>
+<p class="font-label-caps text-on-surface-variant">CUMPLIMIENTO</p>
+</div>
+</div>
+<div class="mt-6 text-center">
+<p class="font-body-base text-on-surface">23 de 31 días activos</p>
+<p class="font-label-md text-primary mt-2">Semana 3 (15–21 julio) seleccionada</p>
+</div>
+</div>
+</section>
+<!-- Metrics Grid (Details) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<!-- Weekly Summary -->
+<div class="bg-surface-container rounded-xl p-6 border border-outline-variant">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-on-surface text-lg">Semana 3</h3>
+<span class="text-error font-data-sm">−8% vs anterior</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="font-label-caps text-on-surface-variant text-[10px]">COMPLETADO</p>
+<p class="font-data-lg text-primary">68%</p>
+</div>
+<div>
+<p class="font-label-caps text-on-surface-variant text-[10px]">DÍAS ACTIVOS</p>
+<p class="font-data-lg text-primary">6</p>
+</div>
+<div>
+<p class="font-label-caps text-on-surface-variant text-[10px]">CAMBIOS</p>
+<p class="font-data-lg text-primary">3</p>
+</div>
+<div>
+<p class="font-label-caps text-on-surface-variant text-[10px]">PARCIALES</p>
+<p class="font-data-lg text-primary">2</p>
+</div>
+</div>
+</div>
+<!-- Cycle Navigation -->
+<div class="space-y-2">
+<div class="flex justify-between items-center p-3 rounded-lg bg-surface-container-low border border-outline-variant/30">
+<span class="font-body-base">Semana 1</span>
+<span class="font-data-sm text-on-surface-variant">82%</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg bg-surface-container-low border border-outline-variant/30">
+<span class="font-body-base">Semana 2</span>
+<span class="font-data-sm text-on-surface-variant">74%</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg bg-primary/10 border border-primary/30">
+<span class="font-body-base text-primary font-bold">Semana 3</span>
+<span class="font-data-sm text-primary">68%</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg bg-surface-container-low border border-outline-variant/30">
+<span class="font-body-base">Semana 4</span>
+<span class="font-data-sm text-on-surface-variant">79%</span>
+</div>
+</div>
+</div>
+<!-- Body Load Section (Improved) -->
+<section class="bg-surface-container rounded-xl p-6 border border-outline-variant">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-label-caps text-on-surface-variant tracking-wider">BODY LOAD</h3>
+<p class="font-label-md text-primary">Semana 3 (Acumulado)</p>
+</div>
+<div class="flex bg-surface-container-highest rounded-lg p-0.5 border border-outline-variant">
+<button class="px-4 py-1 rounded-md bg-surface-container text-xs font-medium text-primary">FRONT</button>
+<button class="px-4 py-1 rounded-md text-xs font-medium text-on-surface-variant">BACK</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+<!-- Anatomical Visualization -->
+<div class="relative aspect-square flex justify-center items-center bg-surface-container-low rounded-2xl border border-outline-variant/30 py-8 overflow-hidden">
+<div class="flex gap-4">
+<!-- Larger Silhouette Front -->
+<div class="relative group cursor-pointer transition-transform duration-300 hover:scale-105">
+<span class="material-symbols-outlined text-[140px] text-primary/30 leading-none" style="font-variation-settings: 'wght' 200;">accessibility_new</span>
+<!-- Hotspots Example -->
+<div class="absolute top-[18%] left-1/2 -translate-x-1/2 w-4 h-4 bg-primary/80 rounded-full blur-[2px] animate-pulse"></div>
+<div class="absolute top-[40%] left-[30%] w-3 h-3 bg-primary/60 rounded-full blur-[1px]"></div>
+<div class="absolute top-[40%] right-[30%] w-3 h-3 bg-primary/60 rounded-full blur-[1px]"></div>
+</div>
+</div>
+<!-- Subtle recovery indicator (minimized) -->
+<div class="absolute bottom-4 right-4 flex items-center gap-1.5 px-2 py-1 bg-error-container/20 border border-error/30 rounded-full">
+<span class="material-symbols-outlined text-[14px] text-error">warning</span>
+<span class="text-[10px] font-bold text-error uppercase tracking-tight">Recovery Needed</span>
+</div>
+</div>
+<!-- Metrics & Comparisons -->
+<div class="space-y-6">
+<div class="grid grid-cols-2 gap-x-6 gap-y-4">
+<div class="space-y-1">
+<div class="flex justify-between items-center">
+<p class="font-label-caps text-on-surface-variant text-[10px]">TREN SUPERIOR</p>
+<span class="font-data-sm text-primary">64%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full">
+<div class="h-full bg-primary rounded-full transition-all duration-500" style="width: 64%"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-center">
+<p class="font-label-caps text-on-surface-variant text-[10px]">TREN INFERIOR</p>
+<span class="font-data-sm text-secondary">36%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full">
+<div class="h-full bg-secondary rounded-full transition-all duration-500" style="width: 36%"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-center">
+<p class="font-label-caps text-on-surface-variant text-[10px]">CADENA ANTERIOR</p>
+<span class="font-data-sm text-primary">58%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full">
+<div class="h-full bg-primary rounded-full transition-all duration-500" style="width: 58%"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-center">
+<p class="font-label-caps text-on-surface-variant text-[10px]">CADENA POSTERIOR</p>
+<span class="font-data-sm text-primary-fixed-dim">42%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full">
+<div class="h-full bg-primary-fixed-dim rounded-full transition-all duration-500" style="width: 42%"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-outline-variant/30">
+<div>
+<p class="font-label-caps text-on-surface-variant text-[9px]">ZONA MÁS CARGADA</p>
+<p class="text-sm font-medium text-on-surface">Deltoides</p>
+</div>
+<div>
+<p class="font-label-caps text-on-surface-variant text-[9px]">ZONA DESCUIDADA</p>
+<p class="text-sm font-medium text-on-surface">Isquiotibiales</p>
+</div>
+<div>
+<p class="font-label-caps text-on-surface-variant text-[9px]">ZONAS ACTIVAS</p>
+<p class="text-sm font-medium text-on-surface">8 de 12</p>
+</div>
+<div>
+<p class="font-label-caps text-on-surface-variant text-[9px]">PLANIFICADO VS REAL</p>
+<p class="text-sm font-medium text-primary">92% Match</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Insights Section -->
+<div class="space-y-lg">
+<!-- Outcome Breakdown -->
+<section>
+<h3 class="font-label-caps text-on-surface-variant mb-4 px-1">RESULTADO DEL MES</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant">
+<p class="font-label-caps text-on-surface-variant text-xs">COMPLETADAS</p>
+<p class="font-data-lg text-primary">96</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant">
+<p class="font-label-caps text-on-surface-variant text-xs">PARCIALES</p>
+<p class="font-data-lg text-secondary">14</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant">
+<p class="font-label-caps text-on-surface-variant text-xs">OMITIDAS</p>
+<p class="font-data-lg text-on-surface-variant">11</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant">
+<p class="font-label-caps text-on-surface-variant text-xs">ESPONTÁNEAS</p>
+<p class="font-data-lg text-primary-fixed-dim">8</p>
+</div>
+</div>
+</section>
+<!-- Systems this Month -->
+<section>
+<h3 class="font-label-caps text-on-surface-variant mb-4 px-1">SISTEMAS ESTE MES</h3>
+<div class="space-y-2">
+<div class="flex justify-between items-center p-4 bg-surface-container-low rounded-xl border border-outline-variant hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">school</span>
+<span class="font-body-base">Universidad</span>
+</div>
+<span class="font-data-sm text-on-surface-variant">84% · 18 de 22 días</span>
+</div>
+<div class="flex justify-between items-center p-4 bg-surface-container-low rounded-xl border border-outline-variant hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">fitness_center</span>
+<span class="font-body-base">Gym</span>
+</div>
+<span class="font-data-sm text-on-surface-variant">78% · 11 sesiones</span>
+</div>
+<div class="flex justify-between items-center p-4 bg-surface-container-low rounded-xl border border-outline-variant hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-fixed-dim">terminal</span>
+<span class="font-body-base">Proyecto personal</span>
+</div>
+<span class="font-data-sm text-on-surface-variant">61% · 7 de 12 bloques</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Right Column: Goals & Comparison -->
+<div class="lg:col-span-4 space-y-lg">
+<!-- Planned vs Realized -->
+<section class="bg-surface-container rounded-xl p-6 border border-outline-variant">
+<h2 class="font-headline-md text-on-surface mb-6 text-lg">Tiempo Planificado vs Real</h2>
+<div class="space-y-6">
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-base">Planificado</span>
+<span class="font-data-sm text-on-surface-variant">126 h</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary/40 w-full rounded-full"></div>
+</div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-base">Real</span>
+<span class="font-data-sm text-primary">112 h 40 min</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[89%] rounded-full"></div>
+</div>
+<div class="pt-4 border-t border-outline-variant">
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-on-surface-variant">DIFERENCIA</span>
+<span class="font-data-lg text-error">−13 h 20 min</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Insights del Ciclo -->
+<section class="space-y-md">
+<h3 class="font-label-caps text-on-surface-variant px-1">INSIGHTS DEL CICLO</h3>
+<div class="space-y-sm">
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+<p class="font-body-base">La segunda semana tuvo la mayor constancia.</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+<p class="font-body-base">La mayoría de los cambios ocurrieron en Universidad.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (4-item structure) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-outline-variant dark:border-outline-variant rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all duration-150 group">
+<span class="material-symbols-outlined mb-1 group-active:scale-90">today</span>
+<span class="font-label-md text-label-md">Today</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all duration-150 group">
+<span class="material-symbols-outlined mb-1 group-active:scale-90">calendar_month</span>
+<span class="font-label-md text-label-md">Planning</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-xl px-4 py-1.5 transition-all duration-150 group">
+<span class="material-symbols-outlined mb-0.5 group-active:scale-90" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-md text-label-md">Stats</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all duration-150 group">
+<span class="material-symbols-outlined mb-1 group-active:scale-90">person</span>
+<span class="font-label-md text-label-md">Account</span>
+</button>
+</nav>
+<script>
+        // Period selection interaction
+        const periodButtons = document.querySelectorAll('.flex.justify-center.mb-xl button');
+        periodButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                periodButtons.forEach(b => {
+                    b.classList.remove('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+                    b.classList.add('text-on-surface-variant');
+                });
+                btn.classList.remove('text-on-surface-variant');
+                btn.classList.add('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+            });
+        });
+    </script>
+</body></html>

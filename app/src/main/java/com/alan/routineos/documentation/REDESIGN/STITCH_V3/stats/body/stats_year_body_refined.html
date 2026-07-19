@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "on-tertiary-fixed": "#1d1639",
+                            "error-container": "#93000a",
+                            "surface-container-highest": "#30353c",
+                            "surface-dim": "#0f141a",
+                            "on-tertiary": "#322b4f",
+                            "error": "#ffb4ab",
+                            "on-surface-variant": "#bbcac0",
+                            "on-secondary": "#00315e",
+                            "secondary-fixed": "#d4e3ff",
+                            "on-error": "#690005",
+                            "surface-bright": "#353a40",
+                            "outline-variant": "#3c4a42",
+                            "secondary-container": "#234a79",
+                            "on-tertiary-fixed-variant": "#494267",
+                            "surface-container-low": "#171c22",
+                            "on-primary": "#003825",
+                            "on-tertiary-container": "#4d466b",
+                            "on-secondary-fixed": "#001c3a",
+                            "tertiary-container": "#bfb5e2",
+                            "surface": "#0f141a",
+                            "primary-fixed-dim": "#45dfa3",
+                            "on-secondary-container": "#96baf0",
+                            "tertiary": "#dbd1ff",
+                            "on-background": "#dee3eb",
+                            "tertiary-fixed-dim": "#cac1ee",
+                            "tertiary-fixed": "#e6deff",
+                            "on-primary-container": "#00563a",
+                            "secondary": "#a5c8ff",
+                            "secondary-fixed-dim": "#a5c8ff",
+                            "on-error-container": "#ffdad6",
+                            "surface-tint": "#45dfa3",
+                            "inverse-primary": "#006c4a",
+                            "inverse-on-surface": "#2c3137",
+                            "on-surface": "#dee3eb",
+                            "on-primary-fixed": "#002114",
+                            "primary-container": "#34d399",
+                            "on-primary-fixed-variant": "#005137",
+                            "surface-container": "#1b2026",
+                            "outline": "#85948b",
+                            "surface-variant": "#30353c",
+                            "surface-container-high": "#252a31",
+                            "primary-fixed": "#68fcbe",
+                            "primary": "#5af0b3",
+                            "inverse-surface": "#dee3eb",
+                            "background": "#0f141a",
+                            "on-secondary-fixed-variant": "#204877",
+                            "surface-container-lowest": "#0a0f14"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                        "spacing": {
+                            "xl": "32px",
+                            "sm": "8px",
+                            "margin-desktop": "24px",
+                            "base": "4px",
+                            "lg": "24px",
+                            "xs": "4px",
+                            "md": "16px",
+                            "margin-mobile": "16px"
+                        },
+                        "fontFamily": {
+                            "display-lg": ["Inter"],
+                            "body-base": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "display-lg-mobile": ["Inter"],
+                            "data-sm": ["JetBrains Mono"],
+                            "body-sm": ["Inter"],
+                            "label-caps": ["Inter"],
+                            "data-lg": ["JetBrains Mono"]
+                        }
+                    }
+                }
+            }
+        } catch (_e) {}
+    </script>
+<style>
+        .month-ring {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
+        }
+        .month-ring svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface w-full top-0 sticky border-b border-outline-variant dark:border-outline-variant z-40">
+<div class="flex justify-between items-center px-md h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Estadísticas</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="transition-colors duration-200 hover:bg-surface-variant/50 p-2 rounded-full">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-md pt-6 pb-32">
+<!-- Period Selector -->
+<div class="flex justify-center mb-xl">
+<div class="bg-surface-container-high rounded-full p-1 flex items-center border border-outline-variant">
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Semana</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">Mes</button>
+<button class="px-6 py-1.5 rounded-full font-label-md text-label-md bg-primary-container text-on-primary-container shadow-sm">Año</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Left Column -->
+<div class="lg:col-span-8 space-y-lg">
+<!-- Monthly Cycle Rings Section -->
+<section class="bg-surface-container-low rounded-xl p-6 border border-outline-variant">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-1">Actividad 2026</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">214 de 365 días activos</p>
+</div>
+</div>
+<!-- 3x4 Grid of Monthly Rings -->
+<div class="grid grid-cols-3 md:grid-cols-4 gap-6 mt-4">
+<!-- Ring Component Helper (Repetitive for simplicity) -->
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="75, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px]">75%</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">ENE</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="60, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px]">60%</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">FEB</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="90, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px]">90%</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">MAR</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="45, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px]">45%</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">ABR</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="82, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px]">82%</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">MAY</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="95, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px]">95%</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">JUN</span>
+</div>
+<div class="flex flex-col items-center gap-2 scale-110">
+<div class="month-ring w-full max-w-[80px] ring-2 ring-primary ring-offset-4 ring-offset-surface-container-low rounded-full">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px] font-bold text-primary">100%</div>
+</div>
+<span class="font-label-caps text-[10px] text-primary font-bold">JUL</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px] text-on-surface-variant/40">—</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">AGO</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px] text-on-surface-variant/40">—</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">SEP</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px] text-on-surface-variant/40">—</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">OCT</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px] text-on-surface-variant/40">—</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">NOV</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="month-ring w-full max-w-[80px]">
+<svg viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-data-sm text-[10px] text-on-surface-variant/40">—</div>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">DIC</span>
+</div>
+</div>
+</section>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">DÍAS ACTIVOS</p>
+<p class="font-data-lg text-data-lg text-primary">18 días</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">CUMPLIMIENTO</p>
+<p class="font-data-lg text-data-lg text-primary">72%</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">RACHA</p>
+<p class="font-data-lg text-data-lg text-primary">5 días</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">CAMBIOS</p>
+<p class="font-data-lg text-data-lg text-primary">6 ajustes</p>
+</div>
+</div>
+<!-- Body Load Section (Integrated) -->
+<section class="space-y-md">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant px-1">BODY LOAD</h3>
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant">
+<div class="flex justify-between items-start mb-6">
+<div>
+<p class="font-label-caps text-label-caps text-primary mb-1">Carga Muscular / <span class="font-bold">Julio</span></p>
+<h4 class="font-headline-md text-headline-md">Resumen de Carga</h4>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="font-data-sm">+8% vs Jun</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<!-- Silhouette System -->
+<div class="flex flex-col items-center gap-4 bg-surface-container-lowest/50 rounded-xl p-6 border border-outline-variant/50">
+<div class="flex bg-surface-container-high rounded-lg p-1 w-full max-w-[200px]">
+<button class="flex-1 py-1.5 text-label-caps text-[10px] bg-primary text-on-primary rounded-md font-bold transition-all">FRENTE</button>
+<button class="flex-1 py-1.5 text-label-caps text-[10px] text-on-surface-variant hover:text-on-surface transition-all">ESPALDA</button>
+</div>
+<div class="relative w-full aspect-[4/5] flex items-center justify-center">
+<!-- Technical Silhouette Representation -->
+<div class="w-48 h-64 relative opacity-80">
+<span class="material-symbols-outlined text-[180px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-on-surface-variant/20">accessibility_new</span>
+<!-- Visual Overlays for Muscle Groups -->
+<div class="absolute top-[15%] left-1/2 -translate-x-1/2 w-20 h-24 bg-primary/30 blur-xl rounded-full"></div>
+<div class="absolute top-[40%] left-1/2 -translate-x-1/2 w-16 h-12 bg-secondary/20 blur-md rounded-full"></div>
+</div>
+<div class="absolute bottom-2 left-0 right-0 text-center">
+<span class="font-label-caps text-[9px] text-on-surface-variant uppercase tracking-widest">Análisis Muscular: Activo</span>
+</div>
+</div>
+</div>
+<!-- Refined Stats Grid -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-highest/20 p-4 rounded-xl border border-outline-variant/30 col-span-2">
+<p class="font-label-caps text-[10px] text-on-surface-variant">ZONA DOMINANTE</p>
+<div class="flex justify-between items-baseline mt-1">
+<p class="font-body-base font-bold">Espalda y Hombros</p>
+<span class="text-primary font-data-sm">84%</span>
+</div>
+</div>
+<div class="bg-surface-container-highest/20 p-3 rounded-xl border border-outline-variant/30">
+<p class="font-label-caps text-[10px] text-on-surface-variant">SOBRECARGA</p>
+<p class="font-data-lg text-error">2 <span class="text-[10px] font-normal">eventos</span></p>
+</div>
+<div class="bg-surface-container-highest/20 p-3 rounded-xl border border-outline-variant/30">
+<p class="font-label-caps text-[10px] text-on-surface-variant">MENOS ENTRENADO</p>
+<p class="font-body-sm font-semibold mt-1">Gemelos</p>
+</div>
+<div class="bg-surface-container-highest/20 p-3 rounded-xl border border-outline-variant/30">
+<p class="font-label-caps text-[10px] text-on-surface-variant">RECUPERACIÓN</p>
+<p class="font-data-lg text-primary">78%</p>
+</div>
+<div class="bg-surface-container-highest/20 p-3 rounded-xl border border-outline-variant/30">
+<p class="font-label-caps text-[10px] text-on-surface-variant">TREN INF/SUP</p>
+<p class="font-data-lg text-secondary">40/60</p>
+</div>
+<div class="bg-surface-container-highest/20 p-4 rounded-xl border border-outline-variant/30 col-span-2">
+<p class="font-label-caps text-[10px] text-on-surface-variant">BALANCE FRONT/BACK</p>
+<div class="flex items-center gap-2 mt-2">
+<div class="flex-1 h-1.5 bg-primary rounded-full" style="width: 55%;"></div>
+<div class="flex-1 h-1.5 bg-secondary rounded-full" style="width: 45%;"></div>
+</div>
+<div class="flex justify-between text-[10px] mt-1 text-on-surface-variant">
+<span>Frente 55%</span>
+<span>Atrás 45%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Goals & Comparison -->
+<div class="lg:col-span-4 space-y-lg">
+<!-- Planned vs Realized -->
+<section class="bg-surface-container-low rounded-xl p-6 border border-outline-variant">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6">Planificado vs Realizado</h2>
+<div class="space-y-8">
+<!-- University Task -->
+<div>
+<div class="flex justify-between items-end mb-3">
+<span class="font-body-base font-semibold">Universidad</span>
+<span class="font-data-sm text-on-surface-variant">25h / 28h</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000 ease-out" style="width: 89%;"></div>
+</div>
+</div>
+<!-- Gym Task -->
+<div>
+<div class="flex justify-between items-end mb-3">
+<span class="font-body-base font-semibold">Gym</span>
+<span class="font-data-sm text-on-surface-variant">3 / 4 sesiones</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full transition-all duration-1000 ease-out" style="width: 75%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Insights Section -->
+<section class="space-y-md">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant px-1">INSIGHTS</h3>
+<div class="space-y-sm">
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant hover:bg-surface-container transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary">school</span>
+<p class="font-body-base text-body-base">Completaste 4 de 5 días de Universidad</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant hover:bg-surface-container transition-colors cursor-default">
+<span class="material-symbols-outlined text-secondary">analytics</span>
+<p class="font-body-base text-body-base">El jueves fue tu día con más cambios</p>
+</div>
+</div>
+</section>
+<!-- Performance Card -->
+<div class="relative overflow-hidden bg-surface-container rounded-xl aspect-[4/3] flex flex-col justify-end p-6 border border-outline-variant">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-on-surface-variant/30 text-6xl rotate-12">trending_up</span>
+</div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">RENDIMIENTO</p>
+<p class="font-body-sm text-body-sm">Tu consistencia en el bloque de mañana ha mejorado un <span class="text-primary font-bold">12%</span> respecto al mes pasado.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 backdrop-blur-xl border-t border-outline-variant rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">today</span>
+<span class="font-label-md text-label-md">Today</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-label-md text-label-md">Planning</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-xl px-3 py-1 transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-md text-label-md">Stats</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90 duration-150">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md">Account</span>
+</button>
+</nav>
+<script>
+    // Simple interaction for the period buttons
+    const buttons = document.querySelectorAll('.flex.justify-center.mb-xl button');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => {
+                b.classList.remove('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+                b.classList.add('text-on-surface-variant');
+            });
+            btn.classList.remove('text-on-surface-variant');
+            btn.classList.add('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+        });
+    });
+</script>
+</body></html>

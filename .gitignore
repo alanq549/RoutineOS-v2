@@ -1,15 +1,79 @@
+# ----------------------------
+# Android / Gradle
+# ----------------------------
+
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.gradle/
+/build/
+/**/build/
 local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# APK / AAB
+*.apk
+*.ap_
+*.aab
+
+# Logs
+*.log
+
+# ----------------------------
+# Android Studio
+# ----------------------------
+
+.idea/caches/
+.idea/libraries/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/assetWizardSettings.xml
+.idea/navEditor.xml
+.idea/shelf/
+
+# Opcional (si no comparten configuración de Android Studio)
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+
+# Mantener el resto de .idea para compartir configuraciones del proyecto
+
+# ----------------------------
+# Kotlin
+# ----------------------------
+
+.kotlin/
+
+# ----------------------------
+# Sistema operativo
+# ----------------------------
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ----------------------------
+# Archivos temporales
+# ----------------------------
+
+*.tmp
+*.swp
+*~
+
+# ----------------------------
+# Reportes
+# ----------------------------
+
+/reports/
+
+# ----------------------------
+# Firebase (si algún día lo agregas)
+# ----------------------------
+
+google-services.json
+
+# ----------------------------
+# Crashlytics
+# ----------------------------
+
+crashlytics.properties
+fabric.properties
