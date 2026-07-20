@@ -7,8 +7,9 @@ Este documento define el ciclo de vida del desarrollo en RoutineOS v2, asegurand
 El flujo estándar sigue estos pasos obligatorios:
 
 1. **Definición en Roadmap**: Toda funcionalidad nace en el Roadmap de [04_PROJECT_STATUS.md](./04_PROJECT_STATUS.md).
-2. **Creación de Engineering Card (EC)**: Se crea un archivo en `EC/` usando la [TEMPLATE.md](./EC/TEMPLATE.md).
-3. **Implementación**: El desarrollo se realiza en una rama específica siguiendo la [02_BRANCH_STRATEGY.md](./02_BRANCH_STRATEGY.md).
+2. **Creación de Engineering Card (EC)**: Se crea un archivo en `EC/` usando la [TEMPLATE.md](./EC/TEMPLATE.md). El estado inicial es `DRAFT`.
+3. **Análisis y Preparación**: Se completa la EC hasta que pase a estado `READY`.
+4. **Implementación**: El desarrollo se realiza en una rama específica siguiendo la [02_BRANCH_STRATEGY.md](./02_BRANCH_STRATEGY.md). El estado es `IN_PROGRESS`.
 4. **Auditoría**: Una vez terminada la lógica, se realiza una auditoría técnica documentada en `AUDITS/` según [AUDITS/README.md](./AUDITS/README.md).
 5. **Aprobación y Merge**: Tras la auditoría exitosa, se procede al merge a la rama protegida correspondiente.
 
@@ -24,9 +25,9 @@ Las auditorías aseguran la calidad y el cumplimiento de las reglas de arquitect
 - Ver detalles en [AUDITS/README.md](./AUDITS/README.md).
 
 ## Flujo de Aprobación
-1. **Developer Self-Audit**: El autor verifica su trabajo contra la EC.
-2. **Technical Audit**: Revisión de arquitectura y consistencia.
-3. **Status Update**: Cambio de estado a `APPROVED` en el tablero de estado.
+1. **Developer Self-Audit**: El autor verifica su trabajo contra la EC (`IMPLEMENTED`).
+2. **Technical Audit**: Revisión de arquitectura y consistencia (`AUDIT_PENDING`).
+3. **Status Update**: Cambio de estado a `APPROVED` en el tablero de estado tras verificación exitosa.
 
 ## Continuidad Automática
 Para que un agente IA o un desarrollador pueda continuar el proyecto sin fricción:

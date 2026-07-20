@@ -1,33 +1,40 @@
 # 03_AGENT_RULES.md — RoutineOS v2
 
-## Reglas para Agentes IA
-Este documento define el protocolo operativo para cualquier agente que interactúe con el repositorio de RoutineOS v2.
+## Protocolo Operativo para Agentes IA
+Este documento establece el algoritmo de trabajo y las restricciones de seguridad para agentes IA que operan en RoutineOS v2.
 
-### Protocolo de Inicio
-Antes de realizar cualquier modificación, el agente DEBE:
-1. Leer [00_PROJECT_SCOPE.md](./00_PROJECT_SCOPE.md) para entender la constitución técnica.
-2. Leer [04_PROJECT_STATUS.md](./04_PROJECT_STATUS.md) para identificar la tarea actual.
-3. Localizar la Engineering Card (EC) correspondiente en la carpeta `EC/`.
+### Principios de Ingeniería
+El desarrollo debe seguir este flujo atómico para garantizar la trazabilidad:
+**One Engineering Card (EC) -> One Branch -> One Pull Request -> One Audit -> One Merge**
 
-### Priorización de Tareas
-1. Continuar con la primera EC que tenga estado `IN_PROGRESS`.
-2. Si no hay ninguna, tomar la primera EC en estado `READY` y cambiarla a `IN_PROGRESS`.
-3. Nunca trabajar en dos ECs simultáneamente a menos que sea una instrucción explícita del usuario.
+### Algoritmo de Trabajo (10 Pasos)
+Cada vez que un agente inicie una sesión de trabajo, DEBE ejecutar exactamente este orden:
 
-### Operaciones de Git
-- **Creación de Ramas**: Crear una rama siguiendo [02_BRANCH_STRATEGY.md](./02_BRANCH_STRATEGY.md) antes de iniciar cambios de código.
-- **Commits**: Realizar commits atómicos que correspondan a avances significativos de la EC.
-- **Merge**: No realizar merges a `main` o `develop` sin haber documentado la auditoría previa.
+1. **Constitución**: Leer [00_PROJECT_SCOPE.md](./00_PROJECT_SCOPE.md).
+2. **Contexto Largo Plazo**: Leer [05_ROADMAP.md](./05_ROADMAP.md).
+3. **Contexto Vivo**: Leer [07_CURRENT_CONTEXT.md](./07_CURRENT_CONTEXT.md).
+4. **Dashboard**: Leer [04_PROJECT_STATUS.md](./04_PROJECT_STATUS.md).
+5. **Selección de Tarea**: Seguir el Decision Tree de [06_AGENT_BOOTSTRAP.md](./06_AGENT_BOOTSTRAP.md).
+6. **Verificación de Dependencias**: Confirmar que todas las dependencias de la EC seleccionada estén en estado `MERGED` o `CLOSED`.
+7. **Entorno de Trabajo**: Verificar si se requiere una nueva rama según [02_BRANCH_STRATEGY.md](./02_BRANCH_STRATEGY.md).
+8. **Diseño e Implementación**: Seguir estrictamente el plan definido en la EC.
+9. **Actualización de Status**: Reflejar el avance en `07_CURRENT_CONTEXT.md` y `04_PROJECT_STATUS.md`.
+10. **Finalización**: Detenerse y esperar feedback humano tras alcanzar una Stop Condition.
 
-### Actualización de Estado
-El agente es responsable de mantener [04_PROJECT_STATUS.md](./04_PROJECT_STATUS.md) actualizado al:
-- Iniciar una tarea (`READY` -> `IN_PROGRESS`).
-- Terminar una implementación (`IN_PROGRESS` -> `IMPLEMENTED`).
-- Completar una auditoría (`IMPLEMENTED` -> `AUDIT_PENDING` -> `APPROVED`).
+---
 
-### Restricciones Críticas (Lo que NUNCA debe hacer)
-- **Modificar archivos no relacionados**: No tocar archivos fuera del scope de la EC actual.
-- **Ignorar el Design System**: No crear estilos ad-hoc; usar los componentes base.
-- **Omitir la Documentación**: No dar por cerrada una tarea si no hay registro de la implementación y auditoría.
-- **Romper el Build**: Siempre verificar que el proyecto compile tras cambios significativos.
-- **Ignorar la regla de 300 líneas**: Si un archivo supera las 300 líneas, el agente debe proponer un refactor.
+### Restricciones de Seguridad Críticas
+Un agente NUNCA debe realizar las siguientes acciones sin aprobación humana explícita:
+- **Merge**: No integrar ramas de trabajo.
+- **Push**: No subir cambios a repositorios remotos.
+- **Borrar Ramas**: No eliminar ninguna rama.
+- **Modificación de Alcance**: No alterar el objetivo de una EC aprobada.
+
+### Reglas de Calidad y Limpieza
+- **Nunca modificar archivos no relacionados**: El diff debe ser mínimo y centrado en la EC.
+- **Responsabilidad Única**: Un archivo = Una responsabilidad.
+- **Límites de Tamaño**:
+    - Funciones < 30 líneas.
+    - Archivos < 300 líneas.
+- **No romper compilación**: Verificar siempre el estado del build tras cambios significativos.
+- **No Deuda Técnica**: No usar "TODO" sin una EC asociada o comentarios temporales.

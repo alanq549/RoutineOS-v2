@@ -7,7 +7,7 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `chore/development-documentation` |
 | **Current Phase** | Fase 1: Infraestructura de Ingeniería |
-| **Current Goal** | Finalizar Framework de Ingeniería (Fase 3) |
+| **Current Goal** | Iniciar Fase 2: Core Architecture |
 | **Current EC** | [EC-001_DATA_FOUNDATION](./EC/EC-001_DATA_FOUNDATION.md) |
 | **Next EC** | EC-002_CORE_ARCHITECTURE |
 | **Blocked By** | Ninguna |
@@ -18,5 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- Se está cerrando la infraestructura documental antes de habilitar la EC-001 para implementación de código.
-- Todas las ECs actuales están en estado `DRAFT` o `IN_PROGRESS` (documentación).
+- Framework documental finalizado y verificado.
+- EC-000 cerrada como base arquitectónica.
+- Se habilita EC-001 para implementación de código (Room & Hilt).

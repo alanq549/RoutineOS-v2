@@ -5,41 +5,51 @@ RoutineOS v2 busca ser la plataforma de referencia para la gestión de rutinas c
 
 ---
 
-## Fases del Proyecto
+## Flujo de Dependencias de Fases
+El proyecto sigue una progresión lógica donde cada capa sostiene a la siguiente:
 
-### Fase 1: Infraestructura de Ingeniería (Actual)
-Establecimiento de las bases sobre las cuales se construirá todo el sistema.
-- **Objetivos**: Framework documental, base de datos local, inyección de dependencias, base del sistema de diseño.
-- **Dependencias**: Ninguna.
-
-### Fase 2: Core Architecture & Data Layer
-Implementación de los cimientos técnicos de la aplicación.
-- **Objetivos**: Configuración de Hilt, base de Room, repositorios base, entidades core (Routine, Task, Execution).
-- **Dependencias**: Fase 1.
-
-### Fase 3: Foundations del Design System
-Creación de la biblioteca de componentes UI reutilizables.
-- **Objetivos**: Tokens de color, tipografía, formas, componentes base (Botones, Cards, Inputs).
-- **Dependencias**: Fase 1.
-
-### Fase 4: Gestión de Rutinas (MVP)
-Funcionalidad principal para el usuario final.
-- **Objetivos**: Listado, creación, edición y visualización de rutinas.
-- **Dependencias**: Fase 2, Fase 3.
-
-### Fase 5: Ejecución y Tracking
-El motor de RoutineOS.
-- **Objetivos**: Sistema de temporizadores, estados de ejecución, persistencia de resultados de sesión.
-- **Dependencias**: Fase 4.
-
-### Fase 6: Análisis y Estadísticas
-Valor agregado basado en los datos locales.
-- **Objetivos**: Visualizaciones de progreso, insights de cumplimiento, exportación de datos.
-- **Dependencias**: Fase 5.
+**Foundation (Fase 1)**
+↓
+**Core & Data Layer (Fase 2)**
+↓
+**Design System Foundations (Fase 3)**
+↓
+**Routine Management (Fase 4)**
+↓
+**Execution & Tracking (Fase 5)**
+↓
+**Analytics & Insights (Fase 6)**
 
 ---
 
-## Notas de Implementación
-- Las fases pueden solaparse ligeramente en el tiempo (paralelismo), pero sus dependencias estructurales deben respetarse.
-- Cada fase se compone de múltiples Engineering Cards (ECs).
-- El progreso detallado de cada fase se consulta en [04_PROJECT_STATUS.md](./04_PROJECT_STATUS.md).
+## Fases del Proyecto
+
+### Fase 1: Infraestructura de Ingeniería
+Establecimiento de las bases sobre las cuales se construirá todo el sistema.
+- **Objetivos**: Framework documental, base de la arquitectura.
+- **Estado**: Activo.
+
+### Fase 2: Core Architecture & Data Layer
+Implementación de los cimientos técnicos de la aplicación.
+- **Objetivos**: Configuración de Hilt, Room, Repositorios base.
+- **Dependencia**: Fase 1 finalizada.
+
+### Fase 3: Foundations del Design System
+Creación de la biblioteca de componentes UI reutilizables.
+- **Objetivos**: Tokens de diseño, componentes atómicos.
+- **Dependencia**: Fase 1 finalizada.
+
+### Fase 4: Gestión de Rutinas (MVP)
+Funcionalidad principal para el usuario final.
+- **Objetivos**: CRUD de rutinas.
+- **Dependencia**: Fase 2 y Fase 3 finalizadas.
+
+### Fase 5: Ejecución y Tracking
+El motor de RoutineOS.
+- **Objetivos**: Temporizadores, ejecución de sesiones.
+- **Dependencia**: Fase 4 finalizada.
+
+### Fase 6: Análisis y Estadísticas
+Valor agregado basado en los datos locales.
+- **Objetivos**: Visualizaciones, insights.
+- **Dependencia**: Fase 5 finalizada.

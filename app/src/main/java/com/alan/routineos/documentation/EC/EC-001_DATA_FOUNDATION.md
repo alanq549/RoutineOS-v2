@@ -59,4 +59,4 @@ Un sistema de persistencia funcional donde se puedan guardar y recuperar rutinas
 (A completar tras la implementación).
 
 ## Estado
-**ESTADO ACTUAL:** DRAFT
+**ESTADO ACTUAL:** READY
