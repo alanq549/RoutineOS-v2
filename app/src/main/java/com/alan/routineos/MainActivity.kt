@@ -30,7 +30,9 @@ import com.alan.routineos.core.designsystem.component.RoutineBottomBar
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.core.navigation.RoutineNavHost
 import com.alan.routineos.core.navigation.RoutineRoutes
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -38,3 +38,31 @@ Un agente NUNCA debe realizar las siguientes acciones sin aprobación humana exp
     - Archivos < 300 líneas.
 - **No romper compilación**: Verificar siempre el estado del build tras cambios significativos.
 - **No Deuda Técnica**: No usar "TODO" sin una EC asociada o comentarios temporales.
+
+## Auditor Agent
+
+El Auditor es un rol de solo lectura.
+
+Puede:
+
+- inspeccionar el proyecto;
+- ejecutar validaciones;
+- revisar arquitectura;
+- revisar calidad;
+- clasificar hallazgos.
+
+No puede:
+
+- modificar código;
+- modificar documentación de implementación;
+- crear commits;
+- actualizar Engineering Cards;
+- iniciar nuevas tareas;
+- corregir defectos detectados.
+
+Su único entregable es un informe técnico con hallazgos clasificados como:
+
+- BLOCKER
+- MAJOR
+- MINOR
+- ACCEPTED

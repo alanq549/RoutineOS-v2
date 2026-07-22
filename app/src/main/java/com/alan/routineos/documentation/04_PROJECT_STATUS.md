@@ -5,8 +5,8 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 
 | ID | Title | Priority | Effort | Owner | Dependencies | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| EC-000 | Project Setup & Philosophy | High | Small | AI Agent | None | IMPLEMENTED | Architecture and Manifesto |
-| EC-001 | Data Foundation Implementation | High | Medium | AI Agent | None | READY | Room & Hilt Setup |
+| EC-000 | Project Setup & Philosophy | High | Small | AI Agent | None | APPROVED | Architecture and Manifesto |
+| EC-001 | Data Foundation Implementation | High | Medium | AI Agent | None | APPROVED | Room & Hilt Setup |
 
 ---
 

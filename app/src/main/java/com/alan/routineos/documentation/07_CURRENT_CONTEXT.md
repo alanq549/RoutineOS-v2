@@ -5,12 +5,12 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `chore/development-documentation` |
+| **Current Branch** | `feature/ec-001-data-foundation` |
 | **Current Phase** | Fase 1: Infraestructura de Ingeniería |
-| **Current Goal** | Iniciar Fase 2: Core Architecture |
+| **Current Goal** | Finalizar Auditoría de Capa de Datos |
 | **Current EC** | [EC-001_DATA_FOUNDATION](./EC/EC-001_DATA_FOUNDATION.md) |
 | **Next EC** | EC-002_CORE_ARCHITECTURE |
-| **Blocked By** | Ninguna |
+| **Blocked By** | Auditoría Técnica (Auto-Audit) |
 | **Working Directory** | `documentation/` |
 | **Current Sprint** | Sprint 0: Foundation |
 | **Last Updated** | 2026-07-19 |
@@ -18,6 +18,9 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- Framework documental finalizado y verificado.
-- EC-000 cerrada como base arquitectónica.
-- Se habilita EC-001 para implementación de código (Room & Hilt).
+- Infraestructura de Room y Hilt implementada con éxito.
+- Tests instrumentados de base de datos verificados (5/5 PASSED).
+- EC-001 APPROVED.
+- Next EC: EC-002
+- Project State:
+- Ready to start EC-002
