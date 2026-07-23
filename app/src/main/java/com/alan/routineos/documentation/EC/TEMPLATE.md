@@ -53,5 +53,13 @@ Consultar guía en [AUDITS/README.md](../AUDITS/README.md).
 ## Lecciones Aprendidas
 (Espacio para documentar hallazgos, dificultades o mejoras descubiertas durante el desarrollo).
 
+## Definition of Done (Obligatorio)
+Antes de marcar como COMPLETED, verificar:
+- [ ] Compila sin warnings nuevos
+- [ ] Tests existentes pasan (unitarios + los que aplique)
+- [ ] Checklist de [ARCHITECTURE_INVARIANTS.md](../08_ARCHITECTURE_INVARIANTS.md) revisado y sin violaciones
+- [ ] Si se usó Fake*Repository, está registrado en [MOCK_DATA_STATUS.md](../09_MOCK_DATA_STATUS.md)
+- [ ] Lecciones aprendidas documentadas arriba
+
 ## Estado
 **ESTADO ACTUAL:** [DRAFT / PENDING / READY / IN_PROGRESS / IMPLEMENTED / AUDIT_PENDING / APPROVED / MERGED / CLOSED]

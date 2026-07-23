@@ -38,3 +38,6 @@ Un agente NUNCA debe realizar las siguientes acciones sin aprobación humana exp
     - Archivos < 300 líneas.
 - **No romper compilación**: Verificar siempre el estado del build tras cambios significativos.
 - **No Deuda Técnica**: No usar "TODO" sin una EC asociada o comentarios temporales.
+
+### Reglas de Arquitectura y Dominio
+- **Abstracción de Dominio**: Antes de generar o modificar cualquier modelo de datos, entidad de dominio, o enum, el agente DEBE leer [08_ARCHITECTURE_INVARIANTS.md](./08_ARCHITECTURE_INVARIANTS.md) y verificar que ningún concepto de dominio específico (gym, universidad, hábito, tarea, evento) se esté codificando como tipo o enum. RoutineOS debe permanecer domain-agnostic.

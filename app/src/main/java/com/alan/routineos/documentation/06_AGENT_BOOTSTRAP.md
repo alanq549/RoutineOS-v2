@@ -12,6 +12,8 @@ Cada vez que recibas un prompt de "Continuar desarrollo" o similar, DEBES ejecut
 4. **[07_CURRENT_CONTEXT.md](./07_CURRENT_CONTEXT.md)**: Identificación del estado operativo vivo.
 5. **[04_PROJECT_STATUS.md](./04_PROJECT_STATUS.md)**: Identificación de la Engineering Card (EC) objetivo.
 6. **[03_AGENT_RULES.md](./03_AGENT_RULES.md)**: Activación de principios y restricciones.
+7. **[08_ARCHITECTURE_INVARIANTS.md](./08_ARCHITECTURE_INVARIANTS.md)**: Revisión de reglas de dominio antes de cualquier cambio de modelo.
+8. **[EC/EC_DEFINITION_OF_DONE.md](./EC/EC_DEFINITION_OF_DONE.md)**: Revisión de criterios de aceptación antes de proponer cierres de EC.
 
 ## Decision Tree
 1. **¿Hay una EC en `IN_PROGRESS`?**
