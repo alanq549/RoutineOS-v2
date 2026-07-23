@@ -5,12 +5,12 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-001-data-foundation` |
-| **Current Phase** | Fase 1: Infraestructura de Ingeniería |
-| **Current Goal** | Finalizar Auditoría de Capa de Datos |
-| **Current EC** | [EC-001_DATA_FOUNDATION](./EC/EC-001_DATA_FOUNDATION.md) |
-| **Next EC** | EC-002_CORE_ARCHITECTURE |
-| **Blocked By** | Auditoría Técnica (Auto-Audit) |
+| **Current Branch** | `feature/ec-003-design-system` |
+| **Current Phase** | Fase 2: Core Architecture & Data Layer |
+| **Current Goal** | Preparar e Iniciar EC-003 |
+| **Current EC** | Ninguna |
+| **Next EC** | EC-003_DESIGN_SYSTEM_FOUNDATIONS |
+| **Blocked By** | Ninguna |
 | **Working Directory** | `documentation/` |
 | **Current Sprint** | Sprint 0: Foundation |
 | **Last Updated** | 2026-07-19 |
@@ -18,9 +18,7 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- Infraestructura de Room y Hilt implementada con éxito.
-- Tests instrumentados de base de datos verificados (5/5 PASSED).
-- EC-001 APPROVED.
-- Next EC: EC-002
-- Project State:
-- Ready to start EC-002
+- EC-002_CORE_ARCHITECTURE implementada con éxito.
+- Repositorios y Modelos de Dominio verificados con tests.
+- Independencia total de la capa domain respecto a Room y Android.
+- Pendiente de Auditoría técnica.

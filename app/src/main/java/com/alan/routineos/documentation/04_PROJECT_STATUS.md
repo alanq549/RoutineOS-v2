@@ -7,6 +7,8 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | EC-000 | Project Setup & Philosophy | High | Small | AI Agent | None | APPROVED | Architecture and Manifesto |
 | EC-001 | Data Foundation Implementation | High | Medium | AI Agent | None | APPROVED | Room & Hilt Setup |
+| EC-002 | Core Architecture & Base Repositories | High | Medium | AI Agent | EC-001 | MERGED | Base Repositories & Domain Models |
+| EC-003 | Design System Foundations & Refinement | High | Medium | AI Agent | EC-000 | READY | Fonts, Atomic Components & Catalog |
 
 ---
 

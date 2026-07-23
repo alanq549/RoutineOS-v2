@@ -38,5 +38,52 @@ DEBES detenerte y pedir aprobación humana cuando:
 - Sea necesario modificar archivos protegidos de configuración (Gradle, Manifest) si no estaban en el alcance inicial.
 - Un archivo supere las 300 líneas y requiera refactorización.
 
+
+## Verificación obligatoria de rama
+
+Antes de modificar cualquier archivo:
+
+1. Ejecutar:
+
+   git branch --show-current
+
+2. Comparar el resultado con el campo:
+
+   branch:
+
+   de la Engineering Card.
+
+3. Si la rama no coincide:
+
+   git switch -c <branch>
+
+   (o git switch <branch> si ya existe)
+
+4. Verificar nuevamente:
+
+   git branch --show-current
+
+5. Solo entonces comenzar la implementación.
+
+Si la rama no puede crearse o cambiarse:
+DETENERSE y solicitar intervención del usuario.
 ---
+## Persistencia obligatoria de la auditoría
+
+Guarda el informe definitivo en:
+
+Documentation/EngineeringCards/<EC_ID>/audits/AUDIT_<EC_ID>.md
+
+Ejemplo:
+
+Documentation/EngineeringCards/EC-002_CORE_ARCHITECTURE/audits/AUDIT_EC-002_CORE_ARCHITECTURE.md
+
+No consideres terminada la auditoría hasta verificar:
+
+- que el archivo exista en esa ruta;
+- que aparezca en `git status --short`;
+- que no haya quedado únicamente en `.artifacts/`;
+- que no se hayan modificado archivos fuera del alcance.
+
+----
 **Protocolo finalizado: Esperando comando de ejecución.**
