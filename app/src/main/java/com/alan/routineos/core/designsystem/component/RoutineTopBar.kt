@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 
 /**
@@ -23,13 +26,24 @@ fun RoutineTopBar(
     modifier: Modifier = Modifier,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    containerColor: Color = RoutineTheme.colors.background.copy(alpha = 0.85f)
+    containerColor: Color = RoutineTheme.colors.background.copy(alpha = 0.85f),
+    borderColor: Color = RoutineTheme.colors.border
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(RoutineTheme.dimensions.toolbarHeight)
             .background(containerColor)
+            .drawBehind {
+                val strokeWidth = 1.dp.toPx()
+                val y = size.height - strokeWidth / 2
+                drawLine(
+                    color = borderColor,
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y),
+                    strokeWidth = strokeWidth
+                )
+            }
     ) {
         Row(
             modifier = Modifier
