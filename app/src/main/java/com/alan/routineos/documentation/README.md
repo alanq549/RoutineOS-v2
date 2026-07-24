@@ -15,8 +15,9 @@ Si es tu primera vez en el proyecto, sigue este orden para entenderlo en 10 minu
 6. **[04_PROJECT_STATUS.md](./04_PROJECT_STATUS.md)**: El tablero de tareas (Engineering Cards).
 
 ### Para Agentes de IA
-Los agentes DEBEN iniciar obligatoriamente en:
-- **[06_AGENT_BOOTSTRAP.md](./06_AGENT_BOOTSTRAP.md)**: Protocolo de arranque y algoritmo de ejecución.
+Los agentes DEBEN iniciar obligatoriamente en uno de los siguientes bootstraps según su rol asignado:
+- **[06_AGENT_BOOTSTRAP_IMPLEMENTADOR.md](./06_AGENT_BOOTSTRAP_IMPLEMENTADOR.md)**: Para desarrollo y corrección de funcionalidades.
+- **[06_AGENT_BOOTSTRAP_AUDITOR.md](./06_AGENT_BOOTSTRAP_AUDITOR.md)**: Para revisión técnica y validación de arquitectura.
 
 ## Estructura Documental
 
@@ -31,6 +32,7 @@ Los agentes DEBEN iniciar obligatoriamente en:
 | **[CURRENT_CONTEXT](./07_CURRENT_CONTEXT.md)** | Estado vivo: rama actual, tarea activa y bloqueos inmediatos. |
 | **[ARCH_INVARIANTS](./08_ARCHITECTURE_INVARIANTS.md)** | Reglas innegociables para mantener el motor domain-agnostic. |
 | **[MOCK_STATUS](./09_MOCK_DATA_STATUS.md)** | Rastreo de repositorios simulados (Fake Repositories). |
+| **[AUDIT_TEMPLATE](./AUDITS/AUDIT_TEMPLATE.md)** | Plantilla oficial para reportes de auditoría técnica. |
 
 ## Flujo General de Desarrollo
 1. Identificar la siguiente fase en el **Roadmap**.

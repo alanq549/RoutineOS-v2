@@ -17,7 +17,9 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 - **IN_PROGRESS**: Siendo trabajada actualmente por un desarrollador/agente.
 - **IMPLEMENTED**: Código escrito y documentación de implementación finalizada.
 - **AUDIT_PENDING**: En proceso de revisión técnica por un tercero o auto-auditoría.
-- **APPROVED**: Auditoría técnica superada con éxito.
+- **CHANGES_REQUESTED**: El auditor detectó problemas y solicitó cambios (vuelve a IN_PROGRESS).
+- **USER_REVIEW_PENDING**: Auditoría técnica aprobada, esperando validación final del usuario.
+- **APPROVED**: Auditoría técnica y validación de usuario superadas con éxito.
 - **MERGED**: Código integrado en `develop` y rama de trabajo eliminada.
 - **CLOSED**: Funcionalidad verificada y ciclo de vida finalizado.
 

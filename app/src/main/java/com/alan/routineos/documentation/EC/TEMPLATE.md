@@ -5,7 +5,7 @@ phase: [1-6]
 priority: [Low / Medium / High / Critical]
 effort: [Small / Medium / Large]
 owner: [User / AI Agent]
-status: [DRAFT / PENDING / READY / IN_PROGRESS / IMPLEMENTED / AUDIT_PENDING / APPROVED / MERGED / CLOSED]
+status: [DRAFT / PENDING / READY / IN_PROGRESS / IMPLEMENTED / AUDIT_PENDING / CHANGES_REQUESTED / USER_REVIEW_PENDING / APPROVED / MERGED / CLOSED]
 depends_on: [EC-ID, None]
 branch: [feature/name, fix/name, etc.]
 audit: [AUDIT-ID, Pending]
@@ -61,5 +61,14 @@ Antes de marcar como COMPLETED, verificar:
 - [ ] Si se usó Fake*Repository, está registrado en [MOCK_DATA_STATUS.md](../09_MOCK_DATA_STATUS.md)
 - [ ] Lecciones aprendidas documentadas arriba
 
+## Checklist de Validación de Usuario
+(El agente auditor completa esta sección SOLO cuando el estado pasa a
+USER_REVIEW_PENDING. Lenguaje llano, sin jerga técnica, describiendo
+comportamiento observable en la app — no líneas de código.)
+- [ ] [Qué debe ver/probar el usuario en la app]
+
+REGLA CRÍTICA: ningún agente puede marcar estos checkboxes ni cambiar el
+estado a APPROVED. Solo el usuario lo hace manualmente.
+
 ## Estado
-**ESTADO ACTUAL:** [DRAFT / PENDING / READY / IN_PROGRESS / IMPLEMENTED / AUDIT_PENDING / APPROVED / MERGED / CLOSED]
+**ESTADO ACTUAL:** [DRAFT / PENDING / READY / IN_PROGRESS / IMPLEMENTED / AUDIT_PENDING / CHANGES_REQUESTED / USER_REVIEW_PENDING / APPROVED / MERGED / CLOSED]
