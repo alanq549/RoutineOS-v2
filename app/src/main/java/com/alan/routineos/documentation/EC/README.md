@@ -13,7 +13,7 @@ Una Engineering Card es un documento de diseño técnico y seguimiento para una 
 2. **Análisis**: Se mapean los archivos afectados y las dependencias. Estado: `PENDING` o `READY`.
 3. **Ejecución**: Se registra el progreso y cualquier desviación del plan original. Estado: `IN_PROGRESS` e `IMPLEMENTED`.
 4. **Auditoría**: Se anotan los resultados de la revisión técnica. Estado: `AUDIT_PENDING` y `APPROVED`.
-5. **Cierre**: Se marca como `MERGED` o `CLOSED`.
+5. **Cierre**: Se marca como `MERGED` o `CLOSED`. Previo a esto, se debe verificar el cumplimiento del [EC_DEFINITION_OF_DONE.md](./EC_DEFINITION_OF_DONE.md).
 
 ## Ubicación
 Todas las ECs deben vivir en este directorio (`app/src/main/java/com/alan/routineos/documentation/EC/`) con el formato de nombre `EC-XXX-nombre-descriptivo.md`.

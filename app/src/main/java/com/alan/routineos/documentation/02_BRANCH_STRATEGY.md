@@ -43,3 +43,11 @@ Una tarea se considera terminada si:
 - Se ha realizado y documentado la auditoría técnica.
 - La documentación ha sido actualizada.
 - El estado en `04_PROJECT_STATUS.md` es `IMPLEMENTED` o `MERGED`.
+
+## Protocolo de rama por rol
+- Toda EC vive en UNA rama declarada en su frontmatter (`branch:`), creada una sola vez al pasar de READY a IN_PROGRESS.
+- Implementador y auditor trabajan SIEMPRE sobre esa misma rama — nunca sobre develop, nunca crean ramas paralelas para auditar.
+- Cada rol hace su propio commit local al cerrar su turno: el implementador antes de entregar a auditoría, el auditor antes de entregar el resultado.
+- Convención de mensajes: `feat(EC-XXX)`, `fix(EC-XXX)` para implementador; `audit(EC-XXX)` para auditor.
+- Ningún agente hace push ni merge sin aprobación humana explícita (regla ya vigente en [03_AGENT_RULES.md](./03_AGENT_RULES.md)).
+- El merge a develop ocurre solo después de que el usuario marca APPROVED, y lo ejecuta el usuario o el agente con autorización explícita en ese momento puntual.

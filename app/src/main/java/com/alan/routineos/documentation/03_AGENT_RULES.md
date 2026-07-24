@@ -39,30 +39,5 @@ Un agente NUNCA debe realizar las siguientes acciones sin aprobación humana exp
 - **No romper compilación**: Verificar siempre el estado del build tras cambios significativos.
 - **No Deuda Técnica**: No usar "TODO" sin una EC asociada o comentarios temporales.
 
-## Auditor Agent
-
-El Auditor es un rol de solo lectura.
-
-Puede:
-
-- inspeccionar el proyecto;
-- ejecutar validaciones;
-- revisar arquitectura;
-- revisar calidad;
-- clasificar hallazgos.
-
-No puede:
-
-- modificar código;
-- modificar documentación de implementación;
-- crear commits;
-- actualizar Engineering Cards;
-- iniciar nuevas tareas;
-- corregir defectos detectados.
-
-Su único entregable es un informe técnico con hallazgos clasificados como:
-
-- BLOCKER
-- MAJOR
-- MINOR
-- ACCEPTED
+### Reglas de Arquitectura y Dominio
+- **Abstracción de Dominio**: Antes de generar o modificar cualquier modelo de datos, entidad de dominio, o enum, el agente DEBE leer [08_ARCHITECTURE_INVARIANTS.md](./08_ARCHITECTURE_INVARIANTS.md) y verificar que ningún concepto de dominio específico (gym, universidad, hábito, tarea, evento) se esté codificando como tipo o enum. RoutineOS debe permanecer domain-agnostic.
