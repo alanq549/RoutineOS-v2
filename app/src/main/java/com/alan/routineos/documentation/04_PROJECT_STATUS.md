@@ -5,7 +5,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 
 | ID | Title | Priority | Effort | Owner | Dependencies | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| EC-000 | Project Setup & Philosophy | High | Small | AI Agent | None | APPROVED (pendiente confirmación) | Auditor asignó APPROVED indebidamente en auditoría retroactiva — requiere confirmación manual del usuario. Ver AUDITS/AUDIT_EC-000.md |
+| EC-000 | Project Setup & Philosophy | High | Small | AI Agent | None | CLOSED | Confirmado manualmente por el usuario. Ver AUDITS/AUDIT_EC-000.md |
 | EC-001 | Data Foundation Implementation | High | Medium | AI Agent | None | CHANGES_REQUESTED | Violación de invariante de dominio detectada en auditoría retroactiva. Ver AUDITS/AUDIT_EC-001.md. Corrección consolidada en EC-005. |
 | EC-002 | Core Architecture & Base Repositories | High | Medium | AI Agent | EC-001 | CHANGES_REQUESTED | Violación de invariante de dominio detectada en auditoría retroactiva. Ver AUDITS/AUDIT_EC-002.md. Corrección consolidada en EC-005. |
 | EC-003 | Design System Foundations & Refinement | High | Medium | AI Agent | EC-000 | COMPLETED | Fonts, Atomic Components & Catalog |
