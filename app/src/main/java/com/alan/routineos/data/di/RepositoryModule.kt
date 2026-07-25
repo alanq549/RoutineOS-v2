@@ -1,7 +1,7 @@
 package com.alan.routineos.data.di
 
-import com.alan.routineos.data.repository.OfflineRoutineRepository
-import com.alan.routineos.domain.repository.RoutineRepository
+import com.alan.routineos.data.repository.OfflineActivityRepository
+import com.alan.routineos.domain.repository.ActivityRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -14,7 +14,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindRoutineRepository(
-        offlineRoutineRepository: OfflineRoutineRepository
-    ): RoutineRepository
+    abstract fun bindActivityRepository(
+        offlineActivityRepository: OfflineActivityRepository
+    ): ActivityRepository
 }

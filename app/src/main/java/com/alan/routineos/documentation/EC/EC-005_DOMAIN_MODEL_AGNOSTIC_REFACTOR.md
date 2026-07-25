@@ -5,12 +5,12 @@ phase: 2
 priority: High
 effort: Medium
 owner: AI Agent
-status: READY
+status: IMPLEMENTED
 depends_on: EC-002
 branch: refactor/ec-005-domain-agnostic
 audit: Pending
 created: 2026-07-23
-updated: 2026-07-23
+updated: 2026-07-24
 ---
 
 # EC-005: Domain Model Agnostic Refactor
@@ -25,35 +25,35 @@ El análisis de gobernanza en `develop` demostró que modelar el dominio y la pe
 El acoplamiento actual de clases de datos y negocio con términos como `Task` (traducción de "tarea", prohibida explícitamente en las reglas) compromete la escalabilidad conceptual y el diseño agnóstico del motor.
 
 ## Alcance
-- [ ] Renombrar `RoutineEntity` a `ActivityDefinitionEntity`.
-- [ ] Renombrar `TaskEntity` a `ActivityNodeEntity`.
-- [ ] Renombrar `Routine` a `ActivityDefinition` en los modelos de dominio.
-- [ ] Renombrar `Task` a `ActivityNode` en los modelos de dominio.
-- [ ] Renombrar `RoutineRepository` a `ActivityRepository`.
-- [ ] Renombrar `OfflineRoutineRepository` a `OfflineActivityRepository`.
-- [ ] Renombrar `RoutineDao` a `ActivityDefinitionDao` y `TaskDao` a `ActivityNodeDao`.
-- [ ] Actualizar la base de datos `RoutineDatabase` para usar las nuevas entidades, renombrando las tablas internas a `activity_definitions` y `activity_nodes`.
-- [ ] Renombrar y actualizar la lógica de mappers en `RoutineMappers.kt` a `ActivityMappers.kt`.
-- [ ] Ajustar la inyección de dependencias en `DatabaseModule` y `RepositoryModule`.
-- [ ] Refactorear y verificar todas las pruebas locales e instrumentadas afectadas por el cambio.
-- [ ] Exclusión: No se crearán pantallas ni se alterará el flujo de usuario visual en esta EC.
+- [x] Renombrar `RoutineEntity` a `ActivityDefinitionEntity`.
+- [x] Renombrar `TaskEntity` a `ActivityNodeEntity`.
+- [x] Renombrar `Routine` a `ActivityDefinition` en los modelos de dominio.
+- [x] Renombrar `Task` a `ActivityNode` en los modelos de dominio.
+- [x] Renombrar `RoutineRepository` a `ActivityRepository`.
+- [x] Renombrar `OfflineRoutineRepository` a `OfflineActivityRepository`.
+- [x] Renombrar `RoutineDao` a `ActivityDefinitionDao` y `TaskDao` a `ActivityNodeDao`.
+- [x] Actualizar la base de datos `RoutineDatabase` para usar las nuevas entidades, renombrando las tablas internas a `activity_definitions` y `activity_nodes`.
+- [x] Renombrar y actualizar la lógica de mappers en `RoutineMappers.kt` a `ActivityMappers.kt`.
+- [x] Ajustar la inyección de dependencias en `DatabaseModule` y `RepositoryModule`.
+- [x] Refactorear y verificar todas las pruebas locales e instrumentadas afectadas por el cambio.
+- [x] Exclusión: No se crearán pantallas ni se alterará el flujo de usuario visual en esta EC.
 
 ## Archivos Afectados
-- `app/src/main/java/com/alan/routineos/data/local/RoutineDatabase.kt`
-- `app/src/main/java/com/alan/routineos/data/local/entities/RoutineEntity.kt` (Renombrar a `ActivityDefinitionEntity.kt`)
-- `app/src/main/java/com/alan/routineos/data/local/entities/TaskEntity.kt` (Renombrar a `ActivityNodeEntity.kt`)
-- `app/src/main/java/com/alan/routineos/data/local/dao/RoutineDao.kt` (Renombrar a `ActivityDefinitionDao.kt`)
-- `app/src/main/java/com/alan/routineos/data/local/dao/TaskDao.kt` (Renombrar a `ActivityNodeDao.kt`)
-- `app/src/main/java/com/alan/routineos/data/mapper/RoutineMappers.kt` (Renombrar a `ActivityMappers.kt`)
-- `app/src/main/java/com/alan/routineos/domain/model/Routine.kt` (Renombrar a `ActivityDefinition.kt`)
-- `app/src/main/java/com/alan/routineos/domain/model/Task.kt` (Renombrar a `ActivityNode.kt`)
-- `app/src/main/java/com/alan/routineos/domain/repository/RoutineRepository.kt` (Renombrar a `ActivityRepository.kt`)
-- `app/src/main/java/com/alan/routineos/data/repository/OfflineRoutineRepository.kt` (Renombrar a `OfflineActivityRepository.kt`)
+- `app/src/main/java/com/alan/routineos/data/local/RoutineOSDatabase.kt`
+- `app/src/main/java/com/alan/routineos/data/local/entities/ActivityDefinitionEntity.kt`
+- `app/src/main/java/com/alan/routineos/data/local/entities/ActivityNodeEntity.kt`
+- `app/src/main/java/com/alan/routineos/data/local/dao/ActivityDefinitionDao.kt`
+- `app/src/main/java/com/alan/routineos/data/local/dao/ActivityNodeDao.kt`
+- `app/src/main/java/com/alan/routineos/data/mapper/ActivityMappers.kt`
+- `app/src/main/java/com/alan/routineos/domain/model/ActivityDefinition.kt`
+- `app/src/main/java/com/alan/routineos/domain/model/ActivityNode.kt`
+- `app/src/main/java/com/alan/routineos/domain/repository/ActivityRepository.kt`
+- `app/src/main/java/com/alan/routineos/data/repository/OfflineActivityRepository.kt`
 - `app/src/main/java/com/alan/routineos/data/di/DatabaseModule.kt`
 - `app/src/main/java/com/alan/routineos/data/di/RepositoryModule.kt`
-- `app/src/test/java/com/alan/routineos/data/mapper/RoutineMapperTest.kt` (Renombrar a `ActivityMapperTest.kt`)
+- `app/src/test/java/com/alan/routineos/data/mapper/ActivityMapperTest.kt`
 - `app/src/androidTest/java/com/alan/routineos/data/local/RoomDatabaseTest.kt`
-- `app/src/androidTest/java/com/alan/routineos/data/repository/OfflineRoutineRepositoryTest.kt` (Renombrar a `OfflineActivityRepositoryTest.kt`)
+- `app/src/androidTest/java/com/alan/routineos/data/repository/OfflineActivityRepositoryTest.kt`
 
 ## Plan de Implementación
 1. Renombrar clases y archivos en la capa de persistencia (`entities` y `dao`), modificando el nombre de las tablas en Room `@Entity` a `activity_definitions` y `activity_nodes`.

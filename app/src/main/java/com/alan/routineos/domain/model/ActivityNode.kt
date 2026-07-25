@@ -1,7 +1,7 @@
 package com.alan.routineos.domain.model
 
-data class Task(
+data class ActivityNode(
     val id: String,
-    val routineId: String,
+    val activityDefinitionId: String,
     val title: String
 )
