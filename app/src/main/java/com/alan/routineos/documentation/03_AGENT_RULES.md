@@ -29,6 +29,7 @@ Un agente NUNCA debe realizar las siguientes acciones sin aprobación humana exp
 - **Push**: No subir cambios a repositorios remotos.
 - **Borrar Ramas**: No eliminar ninguna rama.
 - **Modificación de Alcance**: No alterar el objetivo de una EC aprobada.
+- **Campos de Estado**: Un agente NUNCA modifica el campo `status` de una EC, la tabla de 04_PROJECT_STATUS.md, ni 07_CURRENT_CONTEXT.md, salvo que sea el resultado explícito de un paso de su propio Decision Tree (ej. implementador pasando READY→IN_PROGRESS, auditor pasando AUDIT_PENDING→CHANGES_REQUESTED/USER_REVIEW_PENDING). Cualquier cambio de estado fuera de esos casos requiere instrucción explícita del usuario en el turno actual.
 
 ### Reglas de Calidad y Limpieza
 - **Nunca modificar archivos no relacionados**: El diff debe ser mínimo y centrado en la EC.
@@ -38,6 +39,7 @@ Un agente NUNCA debe realizar las siguientes acciones sin aprobación humana exp
     - Archivos < 300 líneas.
 - **No romper compilación**: Verificar siempre el estado del build tras cambios significativos.
 - **No Deuda Técnica**: No usar "TODO" sin una EC asociada o comentarios temporales.
+- **Verificación con evidencia**: Antes de reportar cualquier tarea como completada, ejecuta `git diff` sobre los archivos modificados e incluye el output real en tu reporte. Un resumen en prosa sin diff adjunto no es una confirmación válida de que el cambio se aplicó.
 
 ### Reglas de Arquitectura y Dominio
 - **Abstracción de Dominio**: Antes de generar o modificar cualquier modelo de datos, entidad de dominio, o enum, el agente DEBE leer [08_ARCHITECTURE_INVARIANTS.md](./08_ARCHITECTURE_INVARIANTS.md) y verificar que ningún concepto de dominio específico (gym, universidad, hábito, tarea, evento) se esté codificando como tipo o enum. RoutineOS debe permanecer domain-agnostic.

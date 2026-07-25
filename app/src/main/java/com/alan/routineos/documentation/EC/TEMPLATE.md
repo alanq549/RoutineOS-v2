@@ -71,4 +71,4 @@ REGLA CRÍTICA: ningún agente puede marcar estos checkboxes ni cambiar el
 estado a APPROVED. Solo el usuario lo hace manualmente.
 
 ## Estado
-**ESTADO ACTUAL:** [DRAFT / PENDING / READY / IN_PROGRESS / IMPLEMENTED / AUDIT_PENDING / CHANGES_REQUESTED / USER_REVIEW_PENDING / APPROVED / MERGED / CLOSED]
+El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

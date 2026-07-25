@@ -94,4 +94,4 @@ Antes de marcar como COMPLETED, verificar:
 - [ ] N/A (Esta EC representa una refactorización de arquitectura interna de persistencia y dominio, sin pantalla asociada).
 
 ## Estado
-**ESTADO ACTUAL:** READY
+El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

@@ -5,12 +5,12 @@ phase: 2
 priority: High
 effort: Medium
 owner: AI Agent
-status: IMPLEMENTED
+status: CHANGES_REQUESTED
 depends_on: EC-000
 branch: feature/ec-001-data-foundation
 audit: Pending
 created: 2026-07-19
-updated: 2026-07-19
+updated: 2026-07-24
 ---
 
 # EC-001: Data Foundation Implementation
@@ -74,4 +74,4 @@ Un sistema de persistencia funcional donde se puedan guardar y recuperar rutinas
 - KSP2 presenta problemas con firmas JVM `void` (V) en Room DAOs si se usa una versión de Room inferior a la 2.8.4.
 
 ## Estado
-**ESTADO ACTUAL:** APPROVED
+El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

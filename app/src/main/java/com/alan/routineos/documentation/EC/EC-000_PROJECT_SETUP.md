@@ -5,7 +5,7 @@ phase: 1
 priority: High
 effort: Small
 owner: AI Agent
-status: IMPLEMENTED
+status: CLOSED
 depends_on: None
 branch: chore/development-documentation
 audit: AUDIT-001
@@ -54,4 +54,4 @@ Un framework de ingeniería listo para soportar el desarrollo de producción de 
 La inversión inicial en documentación estructurada reduce drásticamente la alucinación de los agentes de IA y la fricción en el onboarding de humanos.
 
 ## Estado
-**ESTADO ACTUAL:** APPROVED
+El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.
