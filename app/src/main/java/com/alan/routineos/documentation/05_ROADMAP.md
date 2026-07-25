@@ -21,7 +21,6 @@ El proyecto sigue una progresión lógica donde cada capa sostiene a la siguient
 **Analytics & Insights (Fase 6)**
 
 ---
----
 **Nota de reordenamiento**: EC-006 (Routine Dashboard, originalmente numerada EC-004) quedó bloqueada por EC-005 (Domain Model Agnostic Refactor), tras detectarse en auditoría retroactiva que la capa de dominio (EC-001, EC-002) violaba el invariante domain-agnostic. Orden de ejecución real: EC-005 → EC-006, no por número sino por dependencia técnica.
 ---
 

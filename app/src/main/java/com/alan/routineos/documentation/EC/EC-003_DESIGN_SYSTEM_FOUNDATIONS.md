@@ -65,4 +65,4 @@ Un Design System de clase mundial, autocontenido y fiel a la narrativa técnica,
 (A completar tras la implementación).
 
 ## Estado
-**ESTADO ACTUAL:** READY
+El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

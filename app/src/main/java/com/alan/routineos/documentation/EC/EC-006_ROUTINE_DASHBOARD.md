@@ -76,4 +76,4 @@ Antes de marcar como COMPLETED, verificar:
 - [ ] Los títulos y descripciones utilizan tipografía con la fuente Inter.
 
 ## Estado
-**ESTADO ACTUAL:** PENDING
+El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

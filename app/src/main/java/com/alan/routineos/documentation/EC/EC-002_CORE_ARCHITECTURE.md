@@ -5,12 +5,12 @@ phase: 2
 priority: High
 effort: Medium
 owner: AI Agent
-status: MERGED
+status: CHANGES_REQUESTED
 depends_on: EC-001
 branch: feature/ec-002-core-architecture
 audit: Pending
 created: 2026-07-21
-updated: 2026-07-21
+updated: 2026-07-24
 ---
 
 # EC-002: Core Architecture & Base Repositories
@@ -64,4 +64,4 @@ Un puente funcional entre la base de datos y la lógica de negocio, permitiendo 
 (A completar tras la implementación).
 
 ## Estado
-**ESTADO ACTUAL:** IMPLEMENTED
+El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

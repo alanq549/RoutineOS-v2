@@ -19,6 +19,12 @@ Los agentes DEBEN iniciar obligatoriamente en uno de los siguientes bootstraps s
 - **[06_AGENT_BOOTSTRAP_IMPLEMENTADOR.md](./06_AGENT_BOOTSTRAP_IMPLEMENTADOR.md)**: Para desarrollo y corrección de funcionalidades.
 - **[06_AGENT_BOOTSTRAP_AUDITOR.md](./06_AGENT_BOOTSTRAP_AUDITOR.md)**: Para revisión técnica y validación de arquitectura.
 
+## Frases de Activación por Rol
+| Rol | Frase | Bootstrap |
+| :--- | :--- | :--- |
+| Implementador | "Continuar desarrollo" | [06_AGENT_BOOTSTRAP_IMPLEMENTADOR.md](./06_AGENT_BOOTSTRAP_IMPLEMENTADOR.md) |
+| Auditor | "Auditar EC" | [06_AGENT_BOOTSTRAP_AUDITOR.md](./06_AGENT_BOOTSTRAP_AUDITOR.md) |
+
 ## Estructura Documental
 
 | Documento | Responsabilidad |
