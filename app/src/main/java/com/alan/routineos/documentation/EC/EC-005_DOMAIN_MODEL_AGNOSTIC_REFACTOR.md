@@ -5,12 +5,12 @@ phase: 2
 priority: High
 effort: Medium
 owner: AI Agent
-status: IMPLEMENTED
+status: AUDIT_PENDING
 depends_on: EC-002
 branch: refactor/ec-005-domain-agnostic
 audit: Pending
 created: 2026-07-23
-updated: 2026-07-24
+updated: 2026-07-25
 ---
 
 # EC-005: Domain Model Agnostic Refactor
