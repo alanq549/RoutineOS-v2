@@ -6,19 +6,18 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | Key | Value |
 | :--- | :--- |
 | **Current Branch** | `develop` |
-| **Current Phase** | Fase 2: Core Architecture & Data Layer |
-| **Current Goal** | Refactorizar arquitectura a modelo domain-agnostic |
-| **Current EC** | [EC-005_DOMAIN_MODEL_AGNOSTIC_REFACTOR](./EC/EC-005_DOMAIN_MODEL_AGNOSTIC_REFACTOR.md) |
-| **Next EC** | [EC-003_DESIGN_SYSTEM_FOUNDATIONS](./EC/EC-003_DESIGN_SYSTEM_FOUNDATIONS.md) / [EC-006_ROUTINE_DASHBOARD](./EC/EC-006_ROUTINE_DASHBOARD.md) |
+| **Current Phase** | Fase 4: Routine Management |
+| **Current Goal** | Implementar Routine Dashboard Screen |
+| **Current EC** | [EC-006_ROUTINE_DASHBOARD](./EC/EC-006_ROUTINE_DASHBOARD.md) |
+| **Next EC** | [EC-007_ACTIVITY_CREATION_FLOW](./EC/EC-007_ACTIVITY_CREATION_FLOW.md) |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `documentation/` |
-| **Current Sprint** | Sprint 1: Refactor & UI |
-| **Last Updated** | 2026-07-23 |
+| **Working Directory** | `feature/dashboard/` |
+| **Current Sprint** | Sprint 2: Feature Layer |
+| **Last Updated** | 2026-07-26 |
 
 ---
 
 ## Notas Inmediatas
-- Auditoría retroactiva de EC-000, EC-001 y EC-002 finalizada.
-- Se detectó violación a invariantes de dominio (uso de Routine/Task/tarea).
-- Creada EC-005 (Domain Model Agnostic Refactor) en estado READY para corregir la arquitectura.
-- Creada EC-006 (Routine Dashboard Screen) en estado PENDING.
+- EC-005 (Domain Model Agnostic Refactor) finalizada y aprobada.
+- Arquitectura de persistencia y dominio saneada y domain-agnostic.
+- Iniciando EC-006: Routine Dashboard Screen. Se requiere saneamiento de terminología en capa feature/ heredada.

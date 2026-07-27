@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.alan.routineos.data.local.dao.RoutineDao
-import com.alan.routineos.data.local.dao.TaskDao
-import com.alan.routineos.data.local.entities.RoutineEntity
-import com.alan.routineos.data.local.entities.TaskEntity
+import com.alan.routineos.data.local.dao.ActivityDefinitionDao
+import com.alan.routineos.data.local.dao.ActivityNodeDao
+import com.alan.routineos.data.local.entities.ActivityDefinitionEntity
+import com.alan.routineos.data.local.entities.ActivityNodeEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -20,16 +20,16 @@ import java.io.IOException
 @RunWith(AndroidJUnit4::class)
 class RoomDatabaseTest {
 
-    private lateinit var db: RoutineDatabase
-    private lateinit var routineDao: RoutineDao
-    private lateinit var taskDao: TaskDao
+    private lateinit var db: RoutineOSDatabase
+    private lateinit var activityDefinitionDao: ActivityDefinitionDao
+    private lateinit var activityNodeDao: ActivityNodeDao
 
     @Before
     fun createDb() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(context, RoutineDatabase::class.java).build()
-        routineDao = db.routineDao()
-        taskDao = db.taskDao()
+        db = Room.inMemoryDatabaseBuilder(context, RoutineOSDatabase::class.java).build()
+        activityDefinitionDao = db.activityDefinitionDao()
+        activityNodeDao = db.activityNodeDao()
     }
 
     @After
@@ -40,63 +40,63 @@ class RoomDatabaseTest {
 
     @Test
     @Throws(Exception::class)
-    fun insertAndReadRoutine() = runBlocking {
-        val routine = RoutineEntity(id = "1", title = "Morning Routine", description = "Test description")
-        routineDao.insertRoutine(routine)
-        val allRoutines = routineDao.getAllRoutines().first()
-        assertEquals(1, allRoutines.size)
-        assertEquals("Morning Routine", allRoutines[0].title)
+    fun insertAndReadActivityDefinition() = runBlocking {
+        val activityDefinition = ActivityDefinitionEntity(id = "1", title = "Morning Activity", description = "Test description")
+        activityDefinitionDao.insertActivityDefinition(activityDefinition)
+        val allActivityDefinitions = activityDefinitionDao.getAllActivityDefinitions().first()
+        assertEquals(1, allActivityDefinitions.size)
+        assertEquals("Morning Activity", allActivityDefinitions[0].title)
     }
 
     @Test
     @Throws(Exception::class)
-    fun updateRoutine() = runBlocking {
-        val routine = RoutineEntity(id = "1", title = "Old Title", description = "Old")
-        routineDao.insertRoutine(routine)
+    fun updateActivityDefinition() = runBlocking {
+        val activityDefinition = ActivityDefinitionEntity(id = "1", title = "Old Title", description = "Old")
+        activityDefinitionDao.insertActivityDefinition(activityDefinition)
         
-        val updatedRoutine = routine.copy(title = "New Title")
-        routineDao.insertRoutine(updatedRoutine)
+        val updatedActivityDefinition = activityDefinition.copy(title = "New Title")
+        activityDefinitionDao.insertActivityDefinition(updatedActivityDefinition)
         
-        val result = routineDao.getRoutineById("1")
+        val result = activityDefinitionDao.getActivityDefinitionById("1")
         assertEquals("New Title", result?.title)
     }
 
     @Test
     @Throws(Exception::class)
-    fun deleteRoutine() = runBlocking {
-        val routine = RoutineEntity(id = "1", title = "Delete Me", description = "Test")
-        routineDao.insertRoutine(routine)
-        routineDao.deleteRoutine(routine)
+    fun deleteActivityDefinition() = runBlocking {
+        val activityDefinition = ActivityDefinitionEntity(id = "1", title = "Delete Me", description = "Test")
+        activityDefinitionDao.insertActivityDefinition(activityDefinition)
+        activityDefinitionDao.deleteActivityDefinition(activityDefinition)
         
-        val allRoutines = routineDao.getAllRoutines().first()
-        assertTrue(allRoutines.isEmpty())
+        val allActivityDefinitions = activityDefinitionDao.getAllActivityDefinitions().first()
+        assertTrue(allActivityDefinitions.isEmpty())
     }
 
     @Test
     @Throws(Exception::class)
-    fun cascadeDeleteTasks() = runBlocking {
-        val routine = RoutineEntity(id = "routine_1", title = "Parent", description = "Parent description")
-        routineDao.insertRoutine(routine)
+    fun cascadeDeleteNodes() = runBlocking {
+        val activityDefinition = ActivityDefinitionEntity(id = "ad_1", title = "Parent", description = "Parent description")
+        activityDefinitionDao.insertActivityDefinition(activityDefinition)
         
-        val task = TaskEntity(id = "task_1", routineId = "routine_1", title = "Child Task")
-        taskDao.insertTask(task)
+        val node = ActivityNodeEntity(id = "node_1", activityDefinitionId = "ad_1", title = "Child Node")
+        activityNodeDao.insertNode(node)
         
-        // Verify task exists
-        val tasksBefore = taskDao.getTasksForRoutine("routine_1").first()
-        assertEquals(1, tasksBefore.size)
+        // Verify node exists
+        val nodesBefore = activityNodeDao.getNodesForActivityDefinition("ad_1").first()
+        assertEquals(1, nodesBefore.size)
         
         // Delete parent
-        routineDao.deleteRoutine(routine)
+        activityDefinitionDao.deleteActivityDefinition(activityDefinition)
         
-        // Verify task is gone
-        val tasksAfter = taskDao.getTasksForRoutine("routine_1").first()
-        assertTrue(tasksAfter.isEmpty())
+        // Verify node is gone
+        val nodesAfter = activityNodeDao.getNodesForActivityDefinition("ad_1").first()
+        assertTrue(nodesAfter.isEmpty())
     }
 
     @Test
     @Throws(Exception::class)
-    fun readNonExistentRoutineReturnsNull() = runBlocking {
-        val result = routineDao.getRoutineById("999")
+    fun readNonExistentActivityDefinitionReturnsNull() = runBlocking {
+        val result = activityDefinitionDao.getActivityDefinitionById("999")
         assertNull(result)
     }
 }

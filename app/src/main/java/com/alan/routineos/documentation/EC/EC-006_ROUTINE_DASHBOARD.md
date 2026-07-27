@@ -30,6 +30,8 @@ Actualmente no existe una pantalla de inicio real conectada a la persistencia de
 - [ ] Renderizado de tarjetas de actividades con elevación/paddings de 16dp.
 - [ ] Aplicar la tipografía oficial **Inter** en todos los textos del Dashboard.
 - [ ] Conectar la navegación en `MainActivity`.
+- [ ] Eliminar terminología de dominio prohibida en la capa feature/ (RoutineCardModel, RoutineLibraryViewModel, RoutineRoutes, etc.), renombrando a equivalentes agnósticos.
+- [ ] Reemplazar FakeRoutineRepository por ActivityRepository real vía inyección de dependencias Hilt.
 - [ ] Exclusión: Esta EC no incluye pantallas de creación ni edición detallada de actividades (CRUD de creación se abordará en futuras ECs).
 
 ## Archivos Afectados

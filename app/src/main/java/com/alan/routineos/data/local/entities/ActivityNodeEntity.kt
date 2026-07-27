@@ -6,20 +6,20 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "tasks",
+    tableName = "activity_nodes",
     foreignKeys = [
         ForeignKey(
-            entity = RoutineEntity::class,
+            entity = ActivityDefinitionEntity::class,
             parentColumns = ["id"],
-            childColumns = ["routineId"],
+            childColumns = ["activityDefinitionId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("routineId")]
+    indices = [Index("activityDefinitionId")]
 )
-data class TaskEntity(
+data class ActivityNodeEntity(
     @PrimaryKey
     val id: String,
-    val routineId: String,
+    val activityDefinitionId: String,
     val title: String
 )

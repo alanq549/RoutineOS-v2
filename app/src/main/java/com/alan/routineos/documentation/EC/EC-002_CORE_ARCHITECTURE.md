@@ -5,7 +5,7 @@ phase: 2
 priority: High
 effort: Medium
 owner: AI Agent
-status: CHANGES_REQUESTED
+status: CLOSED
 depends_on: EC-001
 branch: feature/ec-002-core-architecture
 audit: Pending

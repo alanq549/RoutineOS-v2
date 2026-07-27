@@ -2,9 +2,9 @@ package com.alan.routineos.data.di
 
 import android.content.Context
 import androidx.room.Room
-import com.alan.routineos.data.local.RoutineDatabase
-import com.alan.routineos.data.local.dao.RoutineDao
-import com.alan.routineos.data.local.dao.TaskDao
+import com.alan.routineos.data.local.RoutineOSDatabase
+import com.alan.routineos.data.local.dao.ActivityDefinitionDao
+import com.alan.routineos.data.local.dao.ActivityNodeDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,19 +18,21 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): RoutineDatabase {
+    fun provideDatabase(@ApplicationContext context: Context): RoutineOSDatabase {
         return Room.databaseBuilder(
             context,
-            RoutineDatabase::class.java,
+            RoutineOSDatabase::class.java,
             "routine_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
     @Singleton
-    fun provideRoutineDao(db: RoutineDatabase): RoutineDao = db.routineDao()
+    fun provideActivityDefinitionDao(db: RoutineOSDatabase): ActivityDefinitionDao = db.activityDefinitionDao()
 
     @Provides
     @Singleton
-    fun provideTaskDao(db: RoutineDatabase): TaskDao = db.taskDao()
+    fun provideActivityNodeDao(db: RoutineOSDatabase): ActivityNodeDao = db.activityNodeDao()
 }
