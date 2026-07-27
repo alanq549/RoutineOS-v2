@@ -5,12 +5,12 @@ phase: 4
 priority: High
 effort: Medium
 owner: AI Agent
-status: PENDING
+status: IMPLEMENTED
 depends_on: EC-005
 branch: feature/ec-006-routine-dashboard
 audit: Pending
 created: 2026-07-23
-updated: 2026-07-23
+updated: 2026-07-26
 ---
 
 # EC-006: Routine Dashboard Screen
@@ -25,14 +25,14 @@ El Dashboard es el núcleo de interacción de RoutineOS v2 (Fase 4 del roadmap).
 Actualmente no existe una pantalla de inicio real conectada a la persistencia de datos. Las vistas previas utilizan datos estáticos aislados. Se requiere una pantalla interactiva y reactiva conectada al flujo de datos de la base de datos local.
 
 ## Alcance
-- [ ] Creación de `RoutineDashboardScreen` usando Jetpack Compose.
-- [ ] Implementación de `RoutineDashboardViewModel` consumiendo `ActivityRepository`.
-- [ ] Renderizado de tarjetas de actividades con elevación/paddings de 16dp.
-- [ ] Aplicar la tipografía oficial **Inter** en todos los textos del Dashboard.
-- [ ] Conectar la navegación en `MainActivity`.
-- [ ] Eliminar terminología de dominio prohibida en la capa feature/ (RoutineCardModel, RoutineLibraryViewModel, RoutineRoutes, etc.), renombrando a equivalentes agnósticos.
-- [ ] Reemplazar FakeRoutineRepository por ActivityRepository real vía inyección de dependencias Hilt.
-- [ ] Exclusión: Esta EC no incluye pantallas de creación ni edición detallada de actividades (CRUD de creación se abordará en futuras ECs).
+- [x] Creación de `DashboardScreen` usando Jetpack Compose.
+- [x] Implementación de `DashboardViewModel` consumiendo `ActivityRepository`.
+- [x] Renderizado de tarjetas de actividades con elevación/paddings de 16dp.
+- [x] Aplicar la tipografía oficial **Inter** en todos los textos del Dashboard.
+- [x] Conectar la navegación en `MainActivity`.
+- [x] Eliminar terminología de dominio prohibida en la capa feature/ (RoutineCardModel, RoutineLibraryViewModel, RoutineRoutes, etc.), renombrando a equivalentes agnósticos.
+- [x] Reemplazar FakeRoutineRepository por ActivityRepository real vía inyección de dependencias Hilt.
+- [x] Exclusión: Esta EC no incluye pantallas de creación ni edición detallada de actividades (CRUD de creación se abordará en futuras ECs).
 
 ## Archivos Afectados
 - `app/src/main/java/com/alan/routineos/feature/dashboard/RoutineDashboardScreen.kt`

@@ -47,7 +47,7 @@ class TodayViewModel(
         return items.firstOrNull { it.status == TimelineItemStatus.PENDING || it.status == TimelineItemStatus.ACTIVE }
     }
 
-    fun onTaskToggled(taskId: String) {
+    fun onNodeToggled(nodeId: String) {
         // Not implementing business logic beyond presentation state yet
     }
 }

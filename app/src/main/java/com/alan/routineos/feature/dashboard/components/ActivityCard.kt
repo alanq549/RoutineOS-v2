@@ -1,8 +1,9 @@
-package com.alan.routineos.feature.routines.components
+package com.alan.routineos.feature.dashboard.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,11 +28,11 @@ import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.component.RoutinePrimaryButton
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.routines.model.RoutineCardModel
+import com.alan.routineos.feature.dashboard.model.ActivityCardModel
 
 @Composable
-fun RoutineBentoCard(
-    routine: RoutineCardModel,
+fun ActivityCard(
+    activity: ActivityCardModel,
     modifier: Modifier = Modifier
 ) {
     RoutineCard(
@@ -45,7 +46,7 @@ fun RoutineBentoCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                val (icon, color) = when(routine.iconName) {
+                val (icon, color) = when(activity.iconName) {
                     "school" -> Icons.Default.School to RoutineTheme.colors.secondary
                     "fitness_center" -> Icons.Default.FitnessCenter to RoutineTheme.colors.tertiary
                     "wb_sunny" -> Icons.Default.WbSunny to RoutineTheme.colors.primary
@@ -56,12 +57,12 @@ fun RoutineBentoCard(
                 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = routine.frequency,
+                        text = activity.frequency,
                         style = RoutineTheme.typography.labelCaps,
                         color = RoutineTheme.colors.onSurfaceVariant
                     )
                     Text(
-                        text = routine.durationText,
+                        text = activity.durationText,
                         style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
                         color = RoutineTheme.colors.primary
                     )
@@ -71,14 +72,14 @@ fun RoutineBentoCard(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = routine.title,
+                text = activity.title,
                 style = RoutineTheme.typography.headlineMedium,
                 color = RoutineTheme.colors.onSurface,
                 fontWeight = FontWeight.Bold
             )
             
             Text(
-                text = routine.subtitle,
+                text = activity.subtitle,
                 style = RoutineTheme.typography.labelCaps,
                 color = RoutineTheme.colors.onSurfaceVariant
             )
@@ -93,7 +94,7 @@ fun RoutineBentoCard(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-               routine.summaryItems.forEach { summary ->
+               activity.summaryItems.forEach { summary ->
                    if (summary.dayName.isNotEmpty()) {
                        Text(
                            text = summary.dayName,
@@ -101,9 +102,9 @@ fun RoutineBentoCard(
                            color = RoutineTheme.colors.primary
                        )
                    }
-                   summary.activities.forEach { activity ->
+                   summary.activities.forEach { activityName ->
                        Text(
-                           text = "├ $activity",
+                           text = "├ $activityName",
                            style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
                            color = RoutineTheme.colors.onSurface,
                            modifier = Modifier.alpha(0.8f)
@@ -136,7 +137,7 @@ fun RoutineBentoCard(
 
 @Composable
 private fun BoxWithIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, color: androidx.compose.ui.graphics.Color) {
-    androidx.compose.foundation.layout.Box(
+    Box(
         modifier = Modifier
             .size(48.dp)
             .background(color.copy(alpha = 0.2f), RoutineTheme.shapes.medium),

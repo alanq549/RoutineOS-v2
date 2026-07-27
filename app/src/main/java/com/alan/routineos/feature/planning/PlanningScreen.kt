@@ -50,9 +50,9 @@ fun PlanningScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Routine Blocks
+            // Activity Blocks
             Column(modifier = Modifier.padding(horizontal = RoutineTheme.spacing.md)) {
-                RoutineSectionHeader(title = "BLOQUES DE RUTINA")
+                RoutineSectionHeader(title = "BLOQUES DE ACTIVIDAD")
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.sm))
                 uiState.blocks.forEach { block ->
                     PlanningTimeBlock(block = block)

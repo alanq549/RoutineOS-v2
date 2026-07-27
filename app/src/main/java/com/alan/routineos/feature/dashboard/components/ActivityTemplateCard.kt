@@ -1,4 +1,4 @@
-package com.alan.routineos.feature.routines.components
+package com.alan.routineos.feature.dashboard.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,11 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.routines.model.RoutineTemplateModel
+import com.alan.routineos.feature.dashboard.model.ActivityTemplateModel
 
 @Composable
-fun RoutineTemplateCard(
-    template: RoutineTemplateModel,
+fun ActivityTemplateCard(
+    template: ActivityTemplateModel,
     modifier: Modifier = Modifier
 ) {
     Row(

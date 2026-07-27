@@ -12,5 +12,5 @@ data class PlanningUiState(
 )
 
 enum class PlanningSegment {
-    PLANNER, ROUTINES
+    PLANNER, ACTIVITIES
 }

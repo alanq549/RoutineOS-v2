@@ -10,13 +10,13 @@ sealed class TodayTimelineItem {
     abstract val endTime: String?
     abstract val status: TimelineItemStatus
 
-    data class Routine(
+    data class Activity(
         override val id: String,
         val title: String,
         override val startTime: String,
         override val endTime: String?,
         override val status: TimelineItemStatus,
-        val subTasks: List<SubTask> = emptyList()
+        val nodes: List<ActivityNodeSnapshot> = emptyList()
     ) : TodayTimelineItem()
 
     data class Flexible(
@@ -40,7 +40,7 @@ sealed class TodayTimelineItem {
     ) : TodayTimelineItem()
 }
 
-data class SubTask(
+data class ActivityNodeSnapshot(
     val id: String,
     val title: String,
     val startTime: String,

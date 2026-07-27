@@ -1,17 +1,17 @@
-package com.alan.routineos.feature.routines
+package com.alan.routineos.feature.dashboard
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun RoutineLibraryRoute(
-    viewModel: RoutineLibraryViewModel = viewModel()
+fun DashboardRoute(
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    RoutineLibraryScreen(
+    DashboardScreen(
         uiState = uiState,
         onCategorySelected = viewModel::onCategorySelected
     )

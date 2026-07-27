@@ -1,21 +1,21 @@
-package com.alan.routineos.feature.routines.model
+package com.alan.routineos.feature.dashboard.model
 
-data class RoutineCardModel(
+data class ActivityCardModel(
     val id: String,
     val title: String,
     val iconName: String,
     val frequency: String,
     val durationText: String,
     val subtitle: String,
-    val summaryItems: List<RoutineSummaryDay> = emptyList()
+    val summaryItems: List<ActivitySummaryDay> = emptyList()
 )
 
-data class RoutineSummaryDay(
+data class ActivitySummaryDay(
     val dayName: String,
     val activities: List<String>
 )
 
-data class RoutineTemplateModel(
+data class ActivityTemplateModel(
     val id: String,
     val title: String,
     val description: String,
@@ -23,7 +23,7 @@ data class RoutineTemplateModel(
     val imageUrl: String? = null
 )
 
-data class RoutineCategory(
+data class ActivityCategory(
     val id: String,
     val name: String,
     val isSelected: Boolean = false

@@ -11,28 +11,28 @@ import com.alan.routineos.feature.stats.StatsRoute
 import com.alan.routineos.feature.today.TodayRoute
 
 @Composable
-fun RoutineNavHost(
+fun AppNavHost(
     navController: NavHostController,
     bottomBar: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = RoutineRoutes.Today.route,
+        startDestination = AppRoutes.Today.route,
         modifier = modifier
     ) {
-        composable(RoutineRoutes.Today.route) {
+        composable(AppRoutes.Today.route) {
             TodayRoute(bottomBar = bottomBar)
         }
 
-        composable(RoutineRoutes.Planning.route) {
+        composable(AppRoutes.Planning.route) {
             PlanningWorkspace(bottomBar = bottomBar)
         }
 
-        composable(RoutineRoutes.Stats.route) {
+        composable(AppRoutes.Stats.route) {
             StatsRoute(bottomBar = bottomBar)
         }
-        composable(RoutineRoutes.Account.route) {
+        composable(AppRoutes.Account.route) {
             AccountRoute(bottomBar = bottomBar)
         }
     }

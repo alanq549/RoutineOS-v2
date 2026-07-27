@@ -1,4 +1,4 @@
-package com.alan.routineos.feature.routines
+package com.alan.routineos.feature.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,12 +19,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.routines.components.RoutineBentoCard
-import com.alan.routineos.feature.routines.components.RoutineTemplateCard
+import com.alan.routineos.feature.dashboard.components.ActivityCard
+import com.alan.routineos.feature.dashboard.components.ActivityTemplateCard
+import com.alan.routineos.feature.dashboard.model.ActivityCategory
 
 @Composable
-fun RoutineLibraryScreen(
-    uiState: RoutineLibraryUiState,
+fun DashboardScreen(
+    uiState: DashboardUiState,
     onCategorySelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -48,17 +49,17 @@ fun RoutineLibraryScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // My Routines
+            // My Activities
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Mis rutinas",
+                    text = "Mis actividades",
                     style = RoutineTheme.typography.headlineMedium,
                     color = RoutineTheme.colors.onSurface,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "3 activas",
+                    text = "${uiState.myActivities.size} activas",
                     style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
                     color = RoutineTheme.colors.primary,
                     modifier = Modifier
@@ -70,8 +71,8 @@ fun RoutineLibraryScreen(
 
             Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
 
-            uiState.myRoutines.forEach { routine ->
-                RoutineBentoCard(routine = routine)
+            uiState.myActivities.forEach { activity ->
+                ActivityCard(activity = activity)
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
             }
 
@@ -96,7 +97,7 @@ fun RoutineLibraryScreen(
             Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
 
             uiState.recommendedTemplates.forEach { template ->
-                RoutineTemplateCard(template = template)
+                ActivityTemplateCard(template = template)
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
             }
         }
@@ -112,13 +113,13 @@ fun RoutineLibraryScreen(
                 .padding(RoutineTheme.spacing.lg)
                 .size(56.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Add routine")
+            Icon(Icons.Default.Add, contentDescription = "Add activity")
         }
     }
 }
 
 @Composable
-private fun CategoryChip(category: com.alan.routineos.feature.routines.model.RoutineCategory, onClick: () -> Unit) {
+private fun CategoryChip(category: ActivityCategory, onClick: () -> Unit) {
     val containerColor = if (category.isSelected) RoutineTheme.colors.primary else androidx.compose.ui.graphics.Color.Transparent
     val contentColor = if (category.isSelected) RoutineTheme.colors.onPrimary else RoutineTheme.colors.onSurfaceVariant
     val borderColor = if (category.isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.border
@@ -135,6 +136,21 @@ private fun CategoryChip(category: com.alan.routineos.feature.routines.model.Rou
             text = category.name,
             style = RoutineTheme.typography.labelCaps,
             color = contentColor
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun DashboardScreenPreview() {
+    RoutineTheme {
+        DashboardScreen(
+            uiState = DashboardUiState(
+                categories = listOf(ActivityCategory("1", "Todas", true)),
+                myActivities = emptyList(),
+                recommendedTemplates = emptyList()
+            ),
+            onCategorySelected = {}
         )
     }
 }

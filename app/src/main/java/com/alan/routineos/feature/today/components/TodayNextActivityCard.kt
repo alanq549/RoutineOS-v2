@@ -82,7 +82,7 @@ fun TodayNextActivityCard(
                         Spacer(modifier = Modifier.height(RoutineTheme.spacing.xs))
                         
                         val title = when(activity) {
-                            is TodayTimelineItem.Routine -> activity.title
+                            is TodayTimelineItem.Activity -> activity.title
                             is TodayTimelineItem.Flexible -> activity.activity
                             is TodayTimelineItem.Spontaneous -> activity.title
                         }
