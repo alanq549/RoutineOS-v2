@@ -1,7 +1,7 @@
 package com.alan.routineos.feature.planning.model
 
 enum class PlanningBlockType {
-    FLEXIBLE, EXACT, ROUTINE
+    FLEXIBLE, EXACT, ACTIVITY
 }
 
 data class PlanningBlock(

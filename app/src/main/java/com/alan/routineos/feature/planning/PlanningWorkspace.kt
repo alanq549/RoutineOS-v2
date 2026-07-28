@@ -19,8 +19,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.alan.routineos.core.designsystem.component.RoutineScaffold
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.core.navigation.RoutineRoutes
-import com.alan.routineos.feature.routines.RoutineLibraryRoute
+import com.alan.routineos.core.navigation.AppRoutes
+import com.alan.routineos.feature.dashboard.DashboardRoute
 import com.alan.routineos.feature.system.SystemRoute
 
 @Composable
@@ -30,7 +30,7 @@ fun PlanningWorkspace(
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: RoutineRoutes.Planner.route
+    val currentRoute = navBackStackEntry?.destination?.route ?: AppRoutes.Planner.route
 
     RoutineScaffold(
         modifier = modifier,
@@ -59,7 +59,7 @@ fun PlanningWorkspace(
                         currentRoute = currentRoute,
                         onNavigateToMode = { route ->
                             navController.navigate(route) {
-                                popUpTo(RoutineRoutes.Planner.route) {
+                                popUpTo(AppRoutes.Planner.route) {
                                     saveState = true
                                 }
                                 launchSingleTop = true
@@ -77,18 +77,18 @@ fun PlanningWorkspace(
         // NavHost will start exactly below the TopBar Column
         NavHost(
             navController = navController,
-            startDestination = RoutineRoutes.Planner.route,
+            startDestination = AppRoutes.Planner.route,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            composable(RoutineRoutes.Planner.route) {
+            composable(AppRoutes.Planner.route) {
                 PlanningRoute()
             }
-            composable(RoutineRoutes.Routines.route) {
-                RoutineLibraryRoute()
+            composable(AppRoutes.Activities.route) {
+                DashboardRoute()
             }
-            composable(RoutineRoutes.Systems.route) {
+            composable(AppRoutes.Systems.route) {
                 SystemRoute()
             }
         }
@@ -110,20 +110,20 @@ private fun PlanningSegmentedSelector(
     ) {
         SegmentModeButton(
             title = "PLANIFICADOR",
-            isSelected = currentRoute == RoutineRoutes.Planner.route,
-            onClick = { onNavigateToMode(RoutineRoutes.Planner.route) },
+            isSelected = currentRoute == AppRoutes.Planner.route,
+            onClick = { onNavigateToMode(AppRoutes.Planner.route) },
             modifier = Modifier.weight(1f)
         )
         SegmentModeButton(
-            title = "RUTINAS",
-            isSelected = currentRoute == RoutineRoutes.Routines.route,
-            onClick = { onNavigateToMode(RoutineRoutes.Routines.route) },
+            title = "ACTIVIDADES",
+            isSelected = currentRoute == AppRoutes.Activities.route,
+            onClick = { onNavigateToMode(AppRoutes.Activities.route) },
             modifier = Modifier.weight(1f)
         )
         SegmentModeButton(
             title = "SISTEMAS",
-            isSelected = currentRoute == RoutineRoutes.Systems.route,
-            onClick = { onNavigateToMode(RoutineRoutes.Systems.route) },
+            isSelected = currentRoute == AppRoutes.Systems.route,
+            onClick = { onNavigateToMode(AppRoutes.Systems.route) },
             modifier = Modifier.weight(1f)
         )
     }

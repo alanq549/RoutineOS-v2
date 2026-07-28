@@ -43,7 +43,7 @@ class FakePlanningRepository {
                 type = PlanningBlockType.EXACT,
                 startTime = "22:30",
                 endTime = null,
-                description = "Rutina nocturna: Sin pantallas 30min antes, lectura ligera."
+                description = "Actividad nocturna: Sin pantallas 30min antes, lectura ligera."
             )
         )
     )

@@ -10,7 +10,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-002 | Core Architecture & Base Repositories | High | Medium | AI Agent | EC-001 | CLOSED | Violación de invariante de dominio detectada en auditoría retroactiva. Ver AUDITS/AUDIT_EC-002.md. Corrección consolidada en EC-005. |
 | EC-003 | Design System Foundations & Refinement | High | Medium | AI Agent | EC-000 | CLOSED | Fonts, Atomic Components & Catalog |
 | EC-005 | Domain Model Agnostic Refactor | High | Medium | AI Agent | EC-002 | CLOSED | Domain & Database Agnostic Refactor |
-| EC-006 | Routine Dashboard Screen | High | Medium | AI Agent | EC-005 | READY | Reactive Dashboard Screen |
+| EC-006 | Routine Dashboard Screen | High | Medium | AI Agent | EC-005 | USER_REVIEW_PENDING | Reactive Dashboard Screen. Arquitectura agnóstica verificada. Fallos en Invariantes de Dominio y DI corregidos. |
 
 ---
 

@@ -1,6 +1,6 @@
 package com.alan.routineos.feature.today.data
 
-import com.alan.routineos.feature.today.model.SubTask
+import com.alan.routineos.feature.today.model.ActivityNodeSnapshot
 import com.alan.routineos.feature.today.model.TimelineItemStatus
 import com.alan.routineos.feature.today.model.TodayProgress
 import com.alan.routineos.feature.today.model.TodayTimelineItem
@@ -10,23 +10,23 @@ import kotlinx.coroutines.flow.flowOf
 class FakeTodayRepository {
     fun getTimelineItems(): Flow<List<TodayTimelineItem>> = flowOf(
         listOf(
-            TodayTimelineItem.Routine(
+            TodayTimelineItem.Activity(
                 id = "1",
                 title = "Entrenamiento Mañanero",
                 startTime = "08:00",
                 endTime = null,
                 status = TimelineItemStatus.COMPLETED
             ),
-            TodayTimelineItem.Routine(
+            TodayTimelineItem.Activity(
                 id = "2",
                 title = "Universidad",
                 startTime = "09:30",
                 endTime = "15:00",
                 status = TimelineItemStatus.ACTIVE,
-                subTasks = listOf(
-                    SubTask("2.1", "Programación", "09:30", "10:30", TimelineItemStatus.COMPLETED),
-                    SubTask("2.2", "Bases de datos", "11:00", "12:00", TimelineItemStatus.ACTIVE),
-                    SubTask("2.3", "Redes", "12:00", "14:00", TimelineItemStatus.PENDING)
+                nodes = listOf(
+                    ActivityNodeSnapshot("2.1", "Programación", "09:30", "10:30", TimelineItemStatus.COMPLETED),
+                    ActivityNodeSnapshot("2.2", "Bases de datos", "11:00", "12:00", TimelineItemStatus.ACTIVE),
+                    ActivityNodeSnapshot("2.3", "Redes", "12:00", "14:00", TimelineItemStatus.PENDING)
                 )
             ),
             TodayTimelineItem.Spontaneous(
@@ -47,7 +47,7 @@ class FakeTodayRepository {
                 status = TimelineItemStatus.PENDING,
                 progress = "2 de 3"
             ),
-            TodayTimelineItem.Routine(
+            TodayTimelineItem.Activity(
                 id = "5",
                 title = "Lectura Técnica",
                 startTime = "19:00",

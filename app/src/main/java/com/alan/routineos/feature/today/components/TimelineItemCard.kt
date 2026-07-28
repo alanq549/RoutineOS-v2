@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.today.model.SubTask
+import com.alan.routineos.feature.today.model.ActivityNodeSnapshot
 import com.alan.routineos.feature.today.model.TimelineItemStatus
 import com.alan.routineos.feature.today.model.TodayTimelineItem
 
@@ -68,7 +68,7 @@ fun TimelineItemCard(
                     )
                     
                     val title = when (item) {
-                        is TodayTimelineItem.Routine -> item.title
+                        is TodayTimelineItem.Activity -> item.title
                         is TodayTimelineItem.Flexible -> item.title
                         is TodayTimelineItem.Spontaneous -> item.title
                     }
@@ -116,7 +116,7 @@ fun TimelineItemCard(
                 }
             }
 
-            if (item is TodayTimelineItem.Routine && item.subTasks.isNotEmpty() && item.status == TimelineItemStatus.ACTIVE) {
+            if (item is TodayTimelineItem.Activity && item.nodes.isNotEmpty() && item.status == TimelineItemStatus.ACTIVE) {
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
                 Column(
                     modifier = Modifier
@@ -124,8 +124,8 @@ fun TimelineItemCard(
                         .drawThreadLine(RoutineTheme.colors.border)
                         .padding(start = RoutineTheme.spacing.md)
                 ) {
-                    item.subTasks.forEach { subTask ->
-                        SubTaskRow(subTask)
+                    item.nodes.forEach { node ->
+                        NodeRow(node)
                         Spacer(modifier = Modifier.height(RoutineTheme.spacing.sm))
                     }
                 }
@@ -145,7 +145,7 @@ fun TimelineItemCard(
 }
 
 @Composable
-private fun SubTaskRow(subTask: SubTask) {
+private fun NodeRow(node: ActivityNodeSnapshot) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -153,20 +153,20 @@ private fun SubTaskRow(subTask: SubTask) {
     ) {
         Column {
             Text(
-                text = "${subTask.startTime} – ${subTask.endTime}",
+                text = "${node.startTime} – ${node.endTime}",
                 style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
-                color = if (subTask.status == TimelineItemStatus.ACTIVE) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
+                color = if (node.status == TimelineItemStatus.ACTIVE) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
             )
             Text(
-                text = subTask.title,
+                text = node.title,
                 style = RoutineTheme.typography.bodyBase.copy(
                     fontSize = 14.sp,
-                    textDecoration = if (subTask.status == TimelineItemStatus.COMPLETED) TextDecoration.LineThrough else null
+                    textDecoration = if (node.status == TimelineItemStatus.COMPLETED) TextDecoration.LineThrough else null
                 ),
-                color = if (subTask.status == TimelineItemStatus.ACTIVE) RoutineTheme.colors.onSurface else RoutineTheme.colors.onSurfaceVariant
+                color = if (node.status == TimelineItemStatus.ACTIVE) RoutineTheme.colors.onSurface else RoutineTheme.colors.onSurfaceVariant
             )
         }
-        StatusIcon(status = subTask.status, size = 16.dp)
+        StatusIcon(status = node.status, size = 16.dp)
     }
 }
 

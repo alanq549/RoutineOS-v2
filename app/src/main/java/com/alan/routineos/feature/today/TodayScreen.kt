@@ -83,14 +83,14 @@ private fun PendingChipsSection() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(RoutineTheme.spacing.sm)
     ) {
-        RoutineChipWithCount(count = "2", label = "TAREAS")
-        RoutineChipWithCount(count = "1", label = "NOTA")
-        RoutineChipWithCount(count = "1", label = "RECORDATORIO")
+        ActivityChipWithCount(count = "2", label = "NODOS")
+        ActivityChipWithCount(count = "1", label = "NOTA")
+        ActivityChipWithCount(count = "1", label = "RECORDATORIO")
     }
 }
 
 @Composable
-private fun RoutineChipWithCount(count: String, label: String) {
+private fun ActivityChipWithCount(count: String, label: String) {
     Row(
         modifier = Modifier
             .background(RoutineTheme.colors.surface2, RoutineTheme.shapes.pill)

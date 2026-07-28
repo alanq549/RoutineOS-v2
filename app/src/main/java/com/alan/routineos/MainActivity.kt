@@ -28,8 +28,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.alan.routineos.core.designsystem.component.RoutineBottomBar
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.core.navigation.RoutineNavHost
-import com.alan.routineos.core.navigation.RoutineRoutes
+import com.alan.routineos.core.navigation.AppNavHost
+import com.alan.routineos.core.navigation.AppRoutes
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -48,9 +48,9 @@ class MainActivity : ComponentActivity() {
                         BottomNavItem(
                             label = "Today",
                             icon = Icons.Default.CalendarToday,
-                            isSelected = currentRoute == RoutineRoutes.Today.route,
+                            isSelected = currentRoute == AppRoutes.Today.route,
                             onClick = { 
-                                navController.navigate(RoutineRoutes.Today.route) {
+                                navController.navigate(AppRoutes.Today.route) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
                             icon = Icons.Default.CalendarMonth,
                             isSelected = isPlanningRoute(currentRoute),
                             onClick = { 
-                                navController.navigate(RoutineRoutes.Planning.route) {
+                                navController.navigate(AppRoutes.Planning.route) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
@@ -76,9 +76,9 @@ class MainActivity : ComponentActivity() {
                         BottomNavItem(
                             label = "Stats",
                             icon = Icons.Default.Insights,
-                            isSelected = currentRoute == RoutineRoutes.Stats.route,
+                            isSelected = currentRoute == AppRoutes.Stats.route,
                             onClick = { 
-                                navController.navigate(RoutineRoutes.Stats.route) {
+                                navController.navigate(AppRoutes.Stats.route) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
@@ -90,9 +90,9 @@ class MainActivity : ComponentActivity() {
                         BottomNavItem(
                             label = "Account",
                             icon = Icons.Default.Person,
-                            isSelected = currentRoute == RoutineRoutes.Account.route,
+                            isSelected = currentRoute == AppRoutes.Account.route,
                             onClick = { 
-                                navController.navigate(RoutineRoutes.Account.route) {
+                                navController.navigate(AppRoutes.Account.route) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
@@ -104,7 +104,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                RoutineNavHost(
+                AppNavHost(
                     navController = navController,
                     bottomBar = bottomBar
                 )
@@ -114,10 +114,10 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun isPlanningRoute(route: String?): Boolean {
-    return route == RoutineRoutes.Planner.route || 
-           route == RoutineRoutes.Routines.route || 
-           route == RoutineRoutes.Systems.route ||
-           route == RoutineRoutes.Planning.route
+    return route == AppRoutes.Planner.route || 
+           route == AppRoutes.Activities.route || 
+           route == AppRoutes.Systems.route ||
+           route == AppRoutes.Planning.route
 }
 
 @Composable
