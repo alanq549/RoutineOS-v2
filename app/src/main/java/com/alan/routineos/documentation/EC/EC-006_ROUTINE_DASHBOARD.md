@@ -5,10 +5,10 @@ phase: 4
 priority: High
 effort: Medium
 owner: AI Agent
-status: IMPLEMENTED
+status: CHANGES_REQUESTED
 depends_on: EC-005
 branch: feature/ec-006-routine-dashboard
-audit: Pending
+audit: AUDIT_EC-006
 created: 2026-07-23
 updated: 2026-07-26
 ---
@@ -35,8 +35,8 @@ Actualmente no existe una pantalla de inicio real conectada a la persistencia de
 - [x] Exclusión: Esta EC no incluye pantallas de creación ni edición detallada de actividades (CRUD de creación se abordará en futuras ECs).
 
 ## Archivos Afectados
-- `app/src/main/java/com/alan/routineos/feature/dashboard/RoutineDashboardScreen.kt`
-- `app/src/main/java/com/alan/routineos/feature/dashboard/RoutineDashboardViewModel.kt`
+- `app/src/main/java/com/alan/routineos/feature/dashboard/DashboardScreen.kt`
+- `app/src/main/java/com/alan/routineos/feature/dashboard/DashboardViewModel.kt`
 - `app/src/main/java/com/alan/routineos/MainActivity.kt`
 
 ## Plan de Implementación
@@ -47,9 +47,9 @@ Actualmente no existe una pantalla de inicio real conectada a la persistencia de
 5. Integrar la pantalla en la navegación de `MainActivity`.
 
 ## Validaciones
-- [ ] Compilación exitosa del módulo `app`.
-- [ ] Previews de Compose funcionales para diferentes estados del Dashboard (Vacío, Cargando, Con Datos).
-- [ ] Pruebas unitarias para `RoutineDashboardViewModel` simulando `ActivityRepository`.
+- [x] Compilación exitosa del módulo `app`.
+- [x] Previews de Compose funcionales para diferentes estados del Dashboard (Vacío, Cargando, Con Datos).
+- [ ] Pruebas unitarias para `DashboardViewModel` simulando `ActivityRepository`.
 
 ## Resultado Esperado
 Un Dashboard interactivo y visualmente impecable que carga automáticamente las definiciones de actividades almacenadas localmente, respetando las guías de diseño y tipografía del proyecto.
@@ -73,9 +73,10 @@ Antes de marcar como COMPLETED, verificar:
 - [ ] Lecciones aprendidas documentadas arriba
 
 ## Checklist de Validación de Usuario
-- [ ] Al abrir la aplicación, se visualiza el Dashboard con las actividades existentes.
-- [ ] Las tarjetas tienen un margen y relleno visualmente consistente de 16dp.
-- [ ] Los títulos y descripciones utilizan tipografía con la fuente Inter.
+- [ ] Abre la app y navega a "Planificar" -> "ACTIVIDADES". Confirma que se visualiza el Dashboard (Biblioteca de Actividades).
+- [ ] Verifica que los elementos visuales (tarjetas, textos) respetan el diseño (16dp de margen, fuente Inter).
+
+**Nota:** La pantalla de inicio ("Today") y otras secciones siguen utilizando datos simulados (Fakes) por estar fuera del alcance de esta Épica. Esta actualización solo habilita la conexión real en la pestaña de Actividades.
 
 ## Estado
 El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

@@ -18,6 +18,7 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- EC-005 (Domain Model Agnostic Refactor) finalizada y aprobada.
-- Arquitectura de persistencia y dominio saneada y domain-agnostic.
-- Iniciando EC-006: Routine Dashboard Screen. Se requiere saneamiento de terminología en capa feature/ heredada.
+- EC-006 (Routine Dashboard) en estado CHANGES_REQUESTED.
+- Se detectaron violaciones a invariantes de dominio en ViewModels y Fakes (strings hardcodeadas).
+- Deuda técnica detectada: ViewModels de feature layer sin inyección de dependencias Hilt.
+- Registro de Mocks actualizado en MOCK_DATA_STATUS.md.
