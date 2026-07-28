@@ -28,48 +28,20 @@ class DashboardViewModel @Inject constructor(
             repository.getActivityDefinitions().collect { activities ->
                 _uiState.value = DashboardUiState(
                     isLoading = false,
-                    categories = listOf(
-                        ActivityCategory("1", "Todas", isSelected = true),
-                        ActivityCategory("2", "Estudio"),
-                        ActivityCategory("3", "Salud"),
-                        ActivityCategory("4", "Trabajo"),
-                        ActivityCategory("5", "Personal"),
-                        ActivityCategory("6", "Descanso")
-                    ),
                     myActivities = activities.map { activity ->
                         ActivityCardModel(
                             id = activity.id,
                             title = activity.title,
-                            iconName = "school",
+                            iconName = "activity", // Generic icon key
                             frequency = "Frecuencia",
                             durationText = "Activo",
                             subtitle = activity.description,
                             summaryItems = emptyList()
                         )
-                    },
-                    recommendedTemplates = listOf(
-                        ActivityTemplateModel(
-                            id = "1",
-                            title = "Developer Deep Work",
-                            description = "Estructura para bloques de 4h de programación sin interrupciones.",
-                            iconName = "terminal"
-                        ),
-                        ActivityTemplateModel(
-                            id = "2",
-                            title = "Higiene del Sueño",
-                            description = "Optimiza tu descanso con este protocolo de 90 min antes de dormir.",
-                            iconName = "bedtime"
-                        )
-                    )
+                    }
                 )
             }
         }
-    }
-
-    fun onCategorySelected(categoryId: String) {
-        _uiState.value = _uiState.value.copy(
-            categories = _uiState.value.categories.map { it.copy(isSelected = it.id == categoryId) }
-        )
     }
 
     fun onSearchQueryChanged(query: String) {

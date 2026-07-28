@@ -5,12 +5,12 @@ phase: 4
 priority: High
 effort: Medium
 owner: AI Agent
-status: CHANGES_REQUESTED
+status: AUDIT_PENDING
 depends_on: EC-005
 branch: feature/ec-006-routine-dashboard
 audit: AUDIT_EC-006
 created: 2026-07-23
-updated: 2026-07-26
+updated: 2026-07-27
 ---
 
 # EC-006: Routine Dashboard Screen

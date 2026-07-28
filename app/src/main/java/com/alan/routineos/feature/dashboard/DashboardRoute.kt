@@ -12,7 +12,6 @@ fun DashboardRoute(
     val uiState by viewModel.uiState.collectAsState()
 
     DashboardScreen(
-        uiState = uiState,
-        onCategorySelected = viewModel::onCategorySelected
+        uiState = uiState
     )
 }

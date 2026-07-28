@@ -2,10 +2,7 @@ package com.alan.routineos.feature.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,19 +11,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.dashboard.components.ActivityCard
-import com.alan.routineos.feature.dashboard.components.ActivityTemplateCard
-import com.alan.routineos.feature.dashboard.model.ActivityCategory
 
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
-    onCategorySelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -37,19 +30,9 @@ fun DashboardScreen(
                 .padding(horizontal = RoutineTheme.spacing.md)
                 .padding(bottom = RoutineTheme.spacing.xl)
         ) {
-            // Categories
-            LazyRow(
-                modifier = Modifier.padding(top = RoutineTheme.spacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(uiState.categories) { category ->
-                    CategoryChip(category = category, onClick = { onCategorySelected(category.id) })
-                }
-            }
+            Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // My Activities
+            // My Activities Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Mis actividades",
@@ -71,34 +54,24 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
 
-            uiState.myActivities.forEach { activity ->
-                ActivityCard(activity = activity)
-                Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Recommended
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Plantillas recomendadas",
-                    style = RoutineTheme.typography.headlineMedium,
-                    color = RoutineTheme.colors.onSurface,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "VER TODAS",
-                    style = RoutineTheme.typography.labelCaps,
-                    color = RoutineTheme.colors.primary,
-                    modifier = Modifier.clickable { }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
-
-            uiState.recommendedTemplates.forEach { template ->
-                ActivityTemplateCard(template = template)
-                Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
+            if (uiState.myActivities.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No hay actividades registradas",
+                        style = RoutineTheme.typography.bodyBase,
+                        color = RoutineTheme.colors.onSurfaceVariant
+                    )
+                }
+            } else {
+                uiState.myActivities.forEach { activity ->
+                    ActivityCard(activity = activity)
+                    Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
+                }
             }
         }
         
@@ -118,39 +91,14 @@ fun DashboardScreen(
     }
 }
 
-@Composable
-private fun CategoryChip(category: ActivityCategory, onClick: () -> Unit) {
-    val containerColor = if (category.isSelected) RoutineTheme.colors.primary else androidx.compose.ui.graphics.Color.Transparent
-    val contentColor = if (category.isSelected) RoutineTheme.colors.onPrimary else RoutineTheme.colors.onSurfaceVariant
-    val borderColor = if (category.isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.border
-
-    Box(
-        modifier = Modifier
-            .clip(RoutineTheme.shapes.pill)
-            .background(containerColor)
-            .border(1.dp, borderColor, RoutineTheme.shapes.pill)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = category.name,
-            style = RoutineTheme.typography.labelCaps,
-            color = contentColor
-        )
-    }
-}
-
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true)
 @Composable
 fun DashboardScreenPreview() {
     RoutineTheme {
         DashboardScreen(
             uiState = DashboardUiState(
-                categories = listOf(ActivityCategory("1", "Todas", true)),
-                myActivities = emptyList(),
-                recommendedTemplates = emptyList()
-            ),
-            onCategorySelected = {}
+                myActivities = emptyList()
+            )
         )
     }
 }

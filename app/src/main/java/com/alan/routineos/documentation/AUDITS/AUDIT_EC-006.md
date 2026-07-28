@@ -11,7 +11,7 @@ Tras la revisión de la implementación de la EC-006, se han detectado múltiple
     - Se han detectado múltiples strings hardcodeadas en la lógica de negocio (ViewModels) y en los repositorios Fake que utilizan términos de dominio prohibidos:
         - `DashboardViewModel.kt`: Categorías hardcodeadas: "Estudio", "Salud", "Trabajo", "Descanso".
         - `FakeTodayRepository.kt`, `FakePlanningRepository.kt`, etc.: Títulos y descripciones como "Universidad", "Gym", "Dormir", "Programación".
-    - El principio central exige que el motor sea **domain-agnostic**. Aunque sean datos de ejemplo, no deben estar hardcodeados en el código fuente de la lógica/data layer. Deben ser inyectados desde recursos o persistidos en DB.
+    - El principio central exige que el motor sea **domain-agnostic**. Aunque sean datos de ejemplo, no deben estar hardcodeados en el código fuente de la lógica/data layer. Deben ser inyectados desde recursos or persistidos en DB.
 
 2.  **Inconsistencia en Inyección de Dependencias (Hilt)**:
     - Mientras que `DashboardViewModel` utiliza correctamente `@HiltViewModel` e inyecta `ActivityRepository`, otros ViewModels actualizados en esta sesión (`TodayViewModel`, `PlanningViewModel`, `StatsViewModel`, `SystemViewModel`) instancian sus repositorios manualmente:
@@ -47,3 +47,16 @@ Se ha re-evaluado la EC-006 limitando el juicio estrictamente a su alcance decla
 1. **Violación en Alcance:** Se verificó que `feature/dashboard/` (específicamente en `DashboardScreen.kt`, `DashboardViewModel.kt` y `ActivityModels.kt`) **SÍ contiene strings hardcodeadas de dominio específico** ("Estudio", "Salud", "Trabajo", "Descanso", "Developer Deep Work", "Higiene del Sueño"). Esto contraviene el principio agnóstico de `08_ARCHITECTURE_INVARIANTS.md` y debe corregirse (ej. moviendo a strings.xml o recursos dinámicos).
 2. **Hallazgos Fuera de Alcance:** Se confirma que las violaciones encontradas en `TodayViewModel`, `PlanningViewModel`, `StatsViewModel` y `SystemViewModel` son **pre-existentes** y están fuera del alcance de EC-006. Se recomienda una nueva Épica (EC-007) para su saneamiento.
 3. **Conexión Técnica:** La inyección de `ActivityRepository` vía Hilt en `DashboardViewModel` es correcta.
+
+## Ronda 3
+**Fecha:** 2026-07-27
+**Resultado:** AUDIT_PENDING
+
+### Resumen de la Corrección (Limpieza Quirúrgica)
+Se ha realizado una limpieza profunda de la capa `feature/dashboard` para eliminar todos los remanentes del prototipo inicial y asegurar el cumplimiento de las invariantes de arquitectura:
+
+1.  **Eliminación de Datos Estáticos**: Se eliminaron las listas hardcodeadas de `categories` y `recommendedTemplates` en el `DashboardViewModel`. El motor ahora solo expone datos reales provenientes de `ActivityRepository`.
+2.  **Saneamiento de Modelos**: Se borraron los modelos `ActivityCategory` y `ActivityTemplateModel`, ya que no forman parte del motor domain-agnostic actual.
+3.  **Refactor de UI**: Se eliminaron los componentes de interfaz para filtros de categorías y carruseles de plantillas en `DashboardScreen.kt`. La pantalla ahora es una lista pura y reactiva de actividades.
+4.  **Cumplimiento de Invariantes**: Al eliminar estos bloques, se han erradicado las strings de dominio prohibidas ("Estudio", "Salud", etc.) que estaban hardcodeadas en el código fuente de la lógica de negocio.
+5.  **Estado Esperado**: Se confirmó que el Dashboard muestra un estado vacío cuando no hay datos en la base de datos, lo cual es el comportamiento correcto tras la refactorización agnóstica.
