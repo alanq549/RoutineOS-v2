@@ -64,7 +64,7 @@ Consultar guía en [AUDITS/README.md](../AUDITS/README.md).
 (A completar tras la implementación).
 
 ## Definition of Done (Obligatorio)
-Antes de marcar como COMPLETED, verificar:
+Antes de marcar como APPROVED, verificar:
 - [ ] Compila sin warnings nuevos
 - [ ] Tests existentes pasan (unitarios + los que aplique)
 - [ ] Checklist de [ARCHITECTURE_INVARIANTS.md](../08_ARCHITECTURE_INVARIANTS.md) revisado y sin violaciones
