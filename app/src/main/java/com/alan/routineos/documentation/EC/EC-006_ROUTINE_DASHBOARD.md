@@ -5,7 +5,7 @@ phase: 4
 priority: High
 effort: Medium
 owner: AI Agent
-status: USER_REVIEW_PENDING
+status: APPROVED
 depends_on: EC-005
 branch: feature/ec-006-routine-dashboard
 audit: AUDIT_EC-006

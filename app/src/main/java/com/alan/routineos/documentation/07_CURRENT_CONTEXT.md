@@ -7,8 +7,8 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `develop` |
 | **Current Phase** | Fase 4: Routine Management |
-| **Current Goal** | Finalizar auditoría de Routine Dashboard Screen |
-| **Current EC** | [EC-006_ROUTINE_DASHBOARD](./EC/EC-006_ROUTINE_DASHBOARD.md) |
+| **Current Goal** | Ninguna |
+| **Current EC** | Ninguna |
 | **Next EC** | [EC-007_ACTIVITY_CREATION_FLOW](./EC/EC-007_ACTIVITY_CREATION_FLOW.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- EC-006 (Routine Dashboard) en estado USER_REVIEW_PENDING.
-- Se verificó la eliminación total de strings de dominio hardcodeadas en feature/dashboard.
-- Deuda técnica legacy (otros ViewModels) documentada en AUDIT_EC-006.md para futura EC-007.
+- EC-006 (Routine Dashboard) finalizada y aprobada por el usuario.
+- Saneamiento de la capa feature/dashboard completado.
+- Pendiente: Creación de EC-007 para sanear ViewModels legacy y estandarizar Hilt.
