@@ -50,10 +50,10 @@ Se ha re-evaluado la EC-006 limitando el juicio estrictamente a su alcance decla
 
 ## Ronda 3
 **Fecha:** 2026-07-27
-**Resultado:** AUDIT_PENDING
+**Resultado:** USER_REVIEW_PENDING
 
 ### Resumen de la Corrección (Limpieza Quirúrgica)
-Se ha realizado una limpieza profunda de la capa `feature/dashboard` para eliminar todos los remanentes del prototipo inicial y asegurar el cumplimiento de las invariantes de arquitectura:
+Se ha verificado la limpieza profunda realizada en la capa `feature/dashboard`, confirmando que se han eliminado todos los remanentes del prototipo inicial y se han cumplido las invariantes de arquitectura:
 
 1.  **Eliminación de Datos Estáticos**: Se eliminaron las listas hardcodeadas de `categories` y `recommendedTemplates` en el `DashboardViewModel`. El motor ahora solo expone datos reales provenientes de `ActivityRepository`.
 2.  **Saneamiento de Modelos**: Se borraron los modelos `ActivityCategory` y `ActivityTemplateModel`, ya que no forman parte del motor domain-agnostic actual.
