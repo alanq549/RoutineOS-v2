@@ -7,9 +7,9 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `develop` |
 | **Current Phase** | Fase 4: Routine Management |
-| **Current Goal** | Ninguna |
-| **Current EC** | Ninguna |
-| **Next EC** | [EC-007_ACTIVITY_CREATION_FLOW](./EC/EC-007_ACTIVITY_CREATION_FLOW.md) |
+| **Current Goal** | Implementar Activity Creation Flow |
+| **Current EC** | [EC-007_ACTIVITY_CREATION_FLOW](./EC/EC-007_ACTIVITY_CREATION_FLOW.md) |
+| **Next EC** | [EC-008_ACTIVITY_DETAIL_AND_NODES](./EC/EC-008_ACTIVITY_DETAIL_AND_NODES.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -20,4 +20,5 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ## Notas Inmediatas
 - EC-006 (Routine Dashboard) finalizada y aprobada por el usuario.
 - Saneamiento de la capa feature/dashboard completado.
-- Pendiente: Creación de EC-007 para sanear ViewModels legacy y estandarizar Hilt.
+- **Iniciando EC-007**: Implementación del flujo de creación de actividades para permitir persistencia de datos reales.
+- Se mantiene vigilancia estricta anti-remanentes de datos hardcodeados.
