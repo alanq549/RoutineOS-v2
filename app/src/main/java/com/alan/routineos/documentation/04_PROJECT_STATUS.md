@@ -11,7 +11,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-003 | Design System Foundations & Refinement | High | Medium | AI Agent | EC-000 | CLOSED | Fonts, Atomic Components & Catalog |
 | EC-005 | Domain Model Agnostic Refactor | High | Medium | AI Agent | EC-002 | CLOSED | Domain & Database Agnostic Refactor |
 | EC-006 | Routine Dashboard Screen | High | Medium | AI Agent | EC-005 | APPROVED | Reactive Dashboard Screen. Arquitectura agnóstica verificada. Fallos en Invariantes de Dominio y DI corregidos. |
-| EC-007 | Activity Creation Flow | High | Medium | AI Agent | EC-006 | READY | Creation flow for ActivityDefinitions. |
+| EC-007 | Activity Creation Flow | High | Medium | AI Agent | EC-006 | APPROVED | Creation flow for ActivityDefinitions. |
 
 ---
 

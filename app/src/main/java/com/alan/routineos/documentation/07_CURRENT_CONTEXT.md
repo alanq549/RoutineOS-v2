@@ -7,18 +7,17 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `develop` |
 | **Current Phase** | Fase 4: Routine Management |
-| **Current Goal** | Implementar Activity Creation Flow |
-| **Current EC** | [EC-007_ACTIVITY_CREATION_FLOW](./EC/EC-007_ACTIVITY_CREATION_FLOW.md) |
+| **Current Goal** | Definir próxima prioridad estratégica |
+| **Current EC** | Ninguna |
 | **Next EC** | [EC-008_ACTIVITY_DETAIL_AND_NODES](./EC/EC-008_ACTIVITY_DETAIL_AND_NODES.md) |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/dashboard/` |
+| **Working Directory** | `documentation/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
-| **Last Updated** | 2026-07-26 |
+| **Last Updated** | 2026-07-28 |
 
 ---
 
 ## Notas Inmediatas
-- EC-006 (Routine Dashboard) finalizada y aprobada por el usuario.
-- Saneamiento de la capa feature/dashboard completado.
-- **Iniciando EC-007**: Implementación del flujo de creación de actividades para permitir persistencia de datos reales.
-- Se mantiene vigilancia estricta anti-remanentes de datos hardcodeados.
+- EC-007 (Activity Creation Flow) aprobada por el usuario tras validación exitosa.
+- El motor de persistencia real está habilitado y verificado en el Dashboard.
+- Próximo paso: Detalle de actividad y gestión de nodos (EC-008).
