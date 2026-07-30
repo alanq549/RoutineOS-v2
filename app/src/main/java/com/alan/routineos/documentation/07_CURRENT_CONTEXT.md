@@ -7,8 +7,8 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `develop` |
 | **Current Phase** | Fase 4: Routine Management |
-| **Current Goal** | Definir próxima prioridad estratégica |
-| **Current EC** | Ninguna |
+| **Current Goal** | Iniciar implementación EC-009 |
+| **Current EC** | [EC-009_ACTIVITY_EXECUTION_ENGINE](./EC/EC-009_ACTIVITY_EXECUTION_ENGINE.md) |
 | **Next EC** | [EC-009_ACTIVITY_EXECUTION_ENGINE](./EC/EC-009_ACTIVITY_EXECUTION_ENGINE.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
@@ -19,5 +19,5 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 ## Notas Inmediatas
 - EC-008 (Activity Detail & Nodes) aprobada y cerrada formalmente.
-- Gestión de nodos funcional y persistencia real verificada.
-- Lista para iniciar Fase 4 - Motor de ejecución.
+- **Iniciando EC-009**: Implementación del motor de ejecución agnóstico basado en JSON.
+- Se mantiene la vigilancia sobre la abstracción de dominio en la capa de persistencia.
