@@ -7,11 +7,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun DashboardRoute(
+    onAddActivity: () -> Unit,
+    onActivityClick: (String) -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     DashboardScreen(
-        uiState = uiState
+        uiState = uiState,
+        onAddActivity = onAddActivity,
+        onActivityClick = onActivityClick
     )
 }

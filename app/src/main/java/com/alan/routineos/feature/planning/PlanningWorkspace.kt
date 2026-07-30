@@ -25,6 +25,8 @@ import com.alan.routineos.feature.system.SystemRoute
 
 @Composable
 fun PlanningWorkspace(
+    onAddActivity: () -> Unit,
+    onActivityClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     bottomBar: @Composable () -> Unit = {}
 ) {
@@ -86,7 +88,10 @@ fun PlanningWorkspace(
                 PlanningRoute()
             }
             composable(AppRoutes.Activities.route) {
-                DashboardRoute()
+                DashboardRoute(
+                    onAddActivity = onAddActivity,
+                    onActivityClick = onActivityClick
+                )
             }
             composable(AppRoutes.Systems.route) {
                 SystemRoute()

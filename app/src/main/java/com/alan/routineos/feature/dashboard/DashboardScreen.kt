@@ -20,6 +20,8 @@ import com.alan.routineos.feature.dashboard.components.ActivityCard
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
+    onAddActivity: () -> Unit,
+    onActivityClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -69,7 +71,10 @@ fun DashboardScreen(
                 }
             } else {
                 uiState.myActivities.forEach { activity ->
-                    ActivityCard(activity = activity)
+                    ActivityCard(
+                        activity = activity,
+                        onClick = { onActivityClick(activity.id) }
+                    )
                     Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
                 }
             }
@@ -77,7 +82,7 @@ fun DashboardScreen(
         
         // FAB
         FloatingActionButton(
-            onClick = { },
+            onClick = onAddActivity,
             containerColor = RoutineTheme.colors.primary,
             contentColor = RoutineTheme.colors.onPrimary,
             shape = RoutineTheme.shapes.medium,
@@ -98,7 +103,9 @@ fun DashboardScreenPreview() {
         DashboardScreen(
             uiState = DashboardUiState(
                 myActivities = emptyList()
-            )
+            ),
+            onAddActivity = {},
+            onActivityClick = {}
         )
     }
 }

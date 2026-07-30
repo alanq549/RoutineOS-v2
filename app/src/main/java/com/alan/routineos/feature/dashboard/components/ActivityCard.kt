@@ -2,6 +2,7 @@ package com.alan.routineos.feature.dashboard.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,10 +34,13 @@ import com.alan.routineos.feature.dashboard.model.ActivityCardModel
 @Composable
 fun ActivityCard(
     activity: ActivityCardModel,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     RoutineCard(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         containerColor = RoutineTheme.colors.surface3,
         border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border)
     ) {
@@ -120,7 +124,7 @@ fun ActivityCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RoutinePrimaryButton(onClick = { }) {
+                RoutinePrimaryButton(onClick = onClick) {
                     Text("ABRIR", style = RoutineTheme.typography.labelCaps)
                 }
                 
