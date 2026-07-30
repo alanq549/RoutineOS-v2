@@ -5,10 +5,10 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-008-activity-detail-nodes` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 4: Routine Management |
-| **Current Goal** | Validar EC-008 con el usuario |
-| **Current EC** | [EC-008_ACTIVITY_DETAIL_AND_NODES](./EC/EC-008_ACTIVITY_DETAIL_AND_NODES.md) |
+| **Current Goal** | Definir próxima prioridad estratégica |
+| **Current EC** | Ninguna |
 | **Next EC** | [EC-009_ACTIVITY_EXECUTION_ENGINE](./EC/EC-009_ACTIVITY_EXECUTION_ENGINE.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- EC-008 (Activity Detail & Nodes) auditada (Ronda 3). Estado: USER_REVIEW_PENDING.
-- Se verificó el cumplimiento de todos los límites de líneas en `ActivityDetailScreen.kt`.
-- El flujo de detalle y gestión de nodos es completamente funcional y agnóstico.
+- EC-008 (Activity Detail & Nodes) aprobada y cerrada formalmente.
+- Gestión de nodos funcional y persistencia real verificada.
+- Lista para iniciar Fase 4 - Motor de ejecución.
