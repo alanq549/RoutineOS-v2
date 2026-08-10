@@ -5,7 +5,7 @@ phase: 4
 priority: High
 effort: Medium
 owner: AI Agent
-status: USER_REVIEW_PENDING
+status: APPROVED
 depends_on: EC-008
 branch: feature/ec-009-activity-execution-engine
 audit: AUDIT_EC-009

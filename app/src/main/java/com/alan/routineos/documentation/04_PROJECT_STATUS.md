@@ -13,7 +13,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-006 | Routine Dashboard Screen | High | Medium | AI Agent | EC-005 | APPROVED | Reactive Dashboard Screen. Arquitectura agnóstica verificada. Fallos en Invariantes de Dominio y DI corregidos. |
 | EC-007 | Activity Creation Flow | High | Medium | AI Agent | EC-006 | APPROVED | Creation flow for ActivityDefinitions. |
 | EC-008 | Activity Detail & Nodes Management | High | Medium | AI Agent | EC-007 | APPROVED | Detail screen and node management. Calidad de código verificada. |
-| EC-009 | Activity Execution Engine | High | Medium | AI Agent | EC-008 | USER_REVIEW_PENDING | Generic JSON-based execution tracking. Calidad de código verificada. |
+| EC-009 | Activity Execution Engine | High | Medium | AI Agent | EC-008 | APPROVED | Generic JSON-based execution tracking. Calidad de código verificada. |
 
 ---
 
