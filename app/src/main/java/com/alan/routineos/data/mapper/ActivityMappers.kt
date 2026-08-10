@@ -1,8 +1,10 @@
 package com.alan.routineos.data.mapper
 
 import com.alan.routineos.data.local.entities.ActivityDefinitionEntity
+import com.alan.routineos.data.local.entities.ActivityExecutionEntity
 import com.alan.routineos.data.local.entities.ActivityNodeEntity
 import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
 
 fun ActivityDefinitionEntity.toDomain(): ActivityDefinition {
@@ -34,5 +36,23 @@ fun ActivityNode.toEntity(): ActivityNodeEntity {
         id = id,
         activityDefinitionId = activityDefinitionId,
         title = title
+    )
+}
+
+fun ActivityExecutionEntity.toDomain(): ActivityExecution {
+    return ActivityExecution(
+        id = id,
+        nodeId = nodeId,
+        completedAt = completedAt,
+        metadataJson = metadataJson
+    )
+}
+
+fun ActivityExecution.toEntity(): ActivityExecutionEntity {
+    return ActivityExecutionEntity(
+        id = id,
+        nodeId = nodeId,
+        completedAt = completedAt,
+        metadataJson = metadataJson
     )
 }

@@ -1,6 +1,7 @@
 package com.alan.routineos.domain.repository
 
 import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
 import kotlinx.coroutines.flow.Flow
 
@@ -12,4 +13,7 @@ interface ActivityRepository {
     fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>>
     suspend fun upsertNode(node: ActivityNode)
     suspend fun deleteNode(node: ActivityNode)
+    
+    suspend fun registerExecution(nodeId: String, metadataJson: String)
+    fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>>
 }

@@ -1,19 +1,24 @@
 package com.alan.routineos.data.repository
 
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
+import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
+import com.alan.routineos.data.local.entities.ActivityExecutionEntity
 import com.alan.routineos.data.mapper.toDomain
 import com.alan.routineos.data.mapper.toEntity
 import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.repository.ActivityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 import javax.inject.Inject
 
 class OfflineActivityRepository @Inject constructor(
     private val activityDefinitionDao: ActivityDefinitionDao,
-    private val activityNodeDao: ActivityNodeDao
+    private val activityNodeDao: ActivityNodeDao,
+    private val activityExecutionDao: ActivityExecutionDao
 ) : ActivityRepository {
 
     override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> {
@@ -46,5 +51,21 @@ class OfflineActivityRepository @Inject constructor(
 
     override suspend fun deleteNode(node: ActivityNode) {
         activityNodeDao.deleteNode(node.toEntity())
+    }
+
+    override suspend fun registerExecution(nodeId: String, metadataJson: String) {
+        val execution = ActivityExecutionEntity(
+            id = UUID.randomUUID().toString(),
+            nodeId = nodeId,
+            completedAt = System.currentTimeMillis(),
+            metadataJson = metadataJson
+        )
+        activityExecutionDao.insertExecution(execution)
+    }
+
+    override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> {
+        return activityExecutionDao.getExecutionsForNode(nodeId).map { entities ->
+            entities.map { it.toDomain() }
+        }
     }
 }

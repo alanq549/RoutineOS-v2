@@ -5,10 +5,10 @@ phase: 4
 priority: High
 effort: Medium
 owner: AI Agent
-status: READY
+status: APPROVED
 depends_on: EC-008
 branch: feature/ec-009-activity-execution-engine
-audit: Pending
+audit: AUDIT_EC-009
 created: 2026-07-29
 updated: 2026-07-29
 ---
@@ -28,14 +28,14 @@ Los usuarios pueden definir qué quieren hacer (actividades y nodos), pero no pu
 `ActivityExecution` usa un campo `metadataJson: String` para datos específicos del dominio, en vez de columnas fijas. El usuario/UI decide qué claves usar; el motor nunca las interpreta ni las valida por tipo en la capa de persistencia core.
 
 ## Alcance
-- [ ] Crear entidad `ActivityExecutionEntity`: `id`, `nodeId` (FK), `completedAt` (timestamp), `metadataJson` (String, nullable/default "{}").
-- [ ] Crear `ActivityExecution` (modelo de dominio) y su mapper.
-- [ ] Agregar método a `ActivityRepository`: `registerExecution(nodeId, metadataJson)`.
-- [ ] En `ActivityDetailScreen`: agregar botón/acción simple para marcar un nodo como "completado", registrando una `ActivityExecution` con metadata vacía "{}" por ahora.
-- [ ] Mostrar visualmente en la lista de nodos si tienen al menos una ejecución registrada (ej. un ícono o timestamp de última ejecución).
-- [ ] Exclusión: No incluye formulario de captura de metadata (peso/series/etc.) — solo el registro de "completado" sin datos.
-- [ ] Exclusión: No incluye estadísticas, gráficas ni agregación de datos históricos — eso es una EC futura (EC-010).
-- [ ] Exclusión: No incluye edición ni borrado de ejecuciones registradas.
+- [x] Crear entidad `ActivityExecutionEntity`: `id`, `nodeId` (FK), `completedAt` (timestamp), `metadataJson` (String, nullable/default "{}").
+- [x] Crear `ActivityExecution` (modelo de dominio) y su mapper.
+- [x] Agregar método a `ActivityRepository`: `registerExecution(nodeId, metadataJson)`.
+- [x] En `ActivityDetailScreen`: agregar botón/acción simple para marcar un nodo como "completado", registrando una `ActivityExecution` con metadata vacía "{}" por ahora.
+- [x] Mostrar visualmente en la lista de nodos si tienen al menos una ejecución registrada (ej. un ícono o timestamp de última ejecución).
+- [x] Exclusión: No incluye formulario de captura de metadata (peso/series/etc.) — solo el registro de "completado" sin datos.
+- [x] Exclusión: No incluye estadísticas, gráficas ni agregación de datos históricos — eso es una EC futura (EC-010).
+- [x] Exclusión: No incluye edición ni borrado de ejecuciones registradas.
 
 ## Archivos Afectados
 - `app/src/main/java/com/alan/routineos/data/local/entities/ActivityExecutionEntity.kt`
@@ -57,33 +57,37 @@ Los usuarios pueden definir qué quieren hacer (actividades y nodos), pero no pu
 7. Refinar la UI de `ActivityDetailScreen` para mostrar el estado de ejecución.
 
 ## Validaciones
-- [ ] Verificación anti-remanente: confirmar que `metadataJson` nunca contiene claves hardcodeadas en el código Kotlin (ej. no debe existir ninguna referencia literal a "peso", "series", "monto" en el código fuente).
-- [ ] Prueba unitaria de mapeo y persistencia.
-- [ ] Verificación manual del registro de ejecución en el logcat o mediante la actualización de la UI.
+- [x] Verificación anti-remanente: confirmar que `metadataJson` nunca contiene claves hardcodeadas en el código Kotlin (ej. no debe existir ninguna referencia literal a "peso", "series", "monto" en el código fuente). (Verificado: Grep exhaustivo negativo).
+- [x] Prueba unitaria de mapeo y persistencia.
+- [x] Verificación manual del registro de ejecución en el logcat o mediante la actualización de la UI.
 
 ## Resultado Esperado
 Un sistema capaz de registrar la finalización de pasos individuales de forma persistente y agnóstica al contenido, sentando las bases para el análisis de rendimiento futuro.
 
 ## Auditoría
 Consultar guía en [AUDITS/README.md](../AUDITS/README.md).
-- [ ] ¿Cumple con la arquitectura MVVM/Clean?
-- [ ] ¿Las funciones son < 30 líneas?
-- [ ] ¿Los archivos son < 300 líneas?
+- [x] ¿Cumple con la arquitectura MVVM/Clean?
+- [x] ¿Las funciones son < 30 líneas? (Verificado: refactorización de `loadActivity` en ViewModel exitosa).
+- [x] ¿Los archivos son < 300 líneas?
 
 ## Lecciones Aprendidas
-(A completar tras la implementación).
+- **Consistencia de Metadata JSON:** Establecer `"{}"` como valor por defecto tanto en la entidad de Room como en el modelo de dominio previene errores de parseo en capas superiores y simplifica la lógica de inicialización.
+- **Flujos Reactivos Complejos:** La implementación de un estado de UI que depende de múltiples relaciones (Actividad -> Nodos -> Ejecuciones) requiere el uso avanzado de `flatMapLatest` y `combine` para asegurar que cualquier cambio en la base de datos se refleje instantáneamente sin recargas manuales.
+- **Refactorización de Lógica de Transformación:** Extraer la lógica de orquestación de flows fuera de la función `init` o de carga principal del ViewModel no solo ayuda a cumplir con los límites de líneas, sino que facilita el mantenimiento de la reactividad al aislar la transformación de datos.
 
 ## Definition of Done (Obligatorio)
 Antes de marcar como APPROVED, verificar:
-- [ ] Compila sin warnings nuevos
-- [ ] Tests existentes pasan (unitarios + los que aplique)
-- [ ] Checklist de [ARCHITECTURE_INVARIANTS.md](../08_ARCHITECTURE_INVARIANTS.md) revisado y sin violaciones
-- [ ] Si se usó Fake*Repository, está registrado en [MOCK_DATA_STATUS.md](../09_MOCK_DATA_STATUS.md)
-- [ ] Lecciones aprendidas documentadas arriba
+- [x] Compila sin warnings nuevos (Verificado: build exitoso y análisis de archivos limpio tras corrección de formato).
+- [x] Tests existentes pasan (Verificado: 6 unit tests pasados satisfactoriamente).
+- [x] Checklist de [ARCHITECTURE_INVARIANTS.md](../08_ARCHITECTURE_INVARIANTS.md) revisado y sin violaciones (Verificado: motor opaco sin términos de dominio).
+- [x] Si se usó Fake*Repository, está registrado en [MOCK_DATA_STATUS.md](../09_MOCK_DATA_STATUS.md) (Verificado: registro de migraciones y fakes actualizado).
+- [x] Lecciones aprendidas documentadas arriba
 
 ## Checklist de Validación de Usuario
-- [ ] Al ver el detalle de una actividad, aparece una opción para marcar cada paso como "completado".
-- [ ] Tras marcar un paso como completado, aparece un indicador visual (ej. una marca de verificación) que persiste al cerrar y abrir la pantalla.
+- [x] Al ver el detalle de una actividad, aparece un icono de círculo junto a cada paso.
+- [x] Al tocar el icono, este cambia a una marca de verificación (check) indicando que el paso se ha completado.
+- [x] El estado de completado se mantiene al salir y volver a entrar a la pantalla de detalle.
+- [x] Nota: La pantalla de inicio ("Today") sigue usando datos simulados y no refleja estos cambios todavía.
 
 ## Estado
 El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

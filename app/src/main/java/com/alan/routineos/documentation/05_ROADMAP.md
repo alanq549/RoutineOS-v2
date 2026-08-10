@@ -22,6 +22,8 @@ El proyecto sigue una progresión lógica donde cada capa sostiene a la siguient
 
 ---
 **Nota de reordenamiento**: EC-006 (Routine Dashboard, originalmente numerada EC-004) quedó bloqueada por EC-005 (Domain Model Agnostic Refactor), tras detectarse en auditoría retroactiva que la capa de dominio (EC-001, EC-002) violaba el invariante domain-agnostic. Orden de ejecución real: EC-005 → EC-006, no por número sino por dependencia técnica.
+    
+**Decisión de Diseño (EC-013)**: Se ha decidido consolidar el `PlanningWorkspace` en una vista única, eliminando las sub-pestañas. La vista "Sistemas" (`SystemRoute`) queda temporalmente sin ruta de acceso en la navegación principal hasta que se defina su ubicación final (Home o Stats).
 ---
 
 ## Fases del Proyecto

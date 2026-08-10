@@ -7,14 +7,21 @@ import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.repository.ActivityRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+data class ActivityNodeWithExecution(
+    val node: ActivityNode,
+    val isCompleted: Boolean,
+    val lastCompletionTimestamp: Long? = null,
+)
+
 data class ActivityDetailUiState(
     val activity: ActivityDefinition? = null,
-    val nodes: List<ActivityNode> = emptyList(),
+    val nodes: List<ActivityNodeWithExecution> = emptyList(),
     val isLoading: Boolean = true,
     val newNodeTitle: String = ""
 )
@@ -34,20 +41,41 @@ class ActivityDetailViewModel @Inject constructor(
         loadActivity()
     }
 
+@OptIn(ExperimentalCoroutinesApi::class)
     private fun loadActivity() {
         viewModelScope.launch {
             val activityFlow = flow { emit(repository.getActivityDefinitionById(activityId)) }
             val nodesFlow = repository.getNodesForActivityDefinition(activityId)
 
-            combine(activityFlow, nodesFlow) { activity, nodes ->
+            nodesFlow.flatMapLatest { nodes ->
+                getNodesWithExecutionsFlow(nodes)
+            }.combine(activityFlow) { nodesWithExecution, activity ->
                 ActivityDetailUiState(
                     activity = activity,
-                    nodes = nodes,
+                    nodes = nodesWithExecution,
                     isLoading = false
                 )
             }.collect { newState ->
                 _uiState.value = newState
             }
+        }
+    }
+
+    private fun getNodesWithExecutionsFlow(nodes: List<ActivityNode>): Flow<List<ActivityNodeWithExecution>> {
+        val executionFlows = nodes.map { node ->
+            repository.getExecutionsForNode(node.id).map { executions ->
+                ActivityNodeWithExecution(
+                    node = node,
+                    isCompleted = executions.isNotEmpty(),
+                    lastCompletionTimestamp = executions.firstOrNull()?.completedAt
+                )
+            }
+        }
+
+        return if (executionFlows.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            combine(executionFlows) { it.toList() }
         }
     }
 
@@ -67,6 +95,12 @@ class ActivityDetailViewModel @Inject constructor(
             )
             repository.upsertNode(newNode)
             _uiState.update { it.copy(newNodeTitle = "") }
+        }
+    }
+
+    fun completeNode(nodeId: String) {
+        viewModelScope.launch {
+            repository.registerExecution(nodeId, "{}")
         }
     }
 }
