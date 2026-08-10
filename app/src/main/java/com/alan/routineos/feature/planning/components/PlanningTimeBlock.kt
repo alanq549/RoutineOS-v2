@@ -178,11 +178,14 @@ fun PlanningTimeBlock(
                     }
                 }
 
-                IconButton(onClick = { }) {
+                IconButton(
+                    onClick = { },
+                    enabled = false
+                ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = null,
-                        tint = RoutineTheme.colors.onSurfaceVariant
+                        tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.38f)
                     )
                 }
             }

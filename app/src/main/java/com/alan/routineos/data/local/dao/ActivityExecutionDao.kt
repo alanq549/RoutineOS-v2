@@ -14,4 +14,7 @@ interface ActivityExecutionDao {
 
     @Query("SELECT * FROM activity_executions WHERE nodeId = :nodeId ORDER BY completedAt DESC")
     fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecutionEntity>>
+
+    @Query("DELETE FROM activity_executions WHERE nodeId = :nodeId")
+    suspend fun deleteExecutionsForNode(nodeId: String)
 }

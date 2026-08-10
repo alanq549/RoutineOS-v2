@@ -68,4 +68,9 @@ class OfflineActivityRepository @Inject constructor(
             entities.map { it.toDomain() }
         }
     }
+
+    override suspend fun deleteExecutionsForNode(nodeId: String) {
+        // TODO(EC-011): scope by scheduledDate
+        activityExecutionDao.deleteExecutionsForNode(nodeId)
+    }
 }

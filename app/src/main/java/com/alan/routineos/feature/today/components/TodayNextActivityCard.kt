@@ -110,16 +110,19 @@ fun TodayNextActivityCard(
                     }
 
                     IconButton(
-                        onClick = { },
+                        onClick = { /* Pending EC-012 */ },
+                        enabled = false,
                         modifier = Modifier
                             .size(44.dp)
                             .clip(RoutineTheme.shapes.small),
                         colors = IconButtonDefaults.iconButtonColors(
                             containerColor = RoutineTheme.colors.primary,
-                            contentColor = RoutineTheme.colors.onPrimary
+                            contentColor = RoutineTheme.colors.onPrimary,
+                            disabledContainerColor = RoutineTheme.colors.onSurface.copy(alpha = 0.12f),
+                            disabledContentColor = RoutineTheme.colors.onSurface.copy(alpha = 0.38f)
                         )
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Start")
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
                     }
                 }
             }

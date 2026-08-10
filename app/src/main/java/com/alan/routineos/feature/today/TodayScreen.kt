@@ -117,13 +117,20 @@ private fun ActivityChipWithCount(count: String, label: String) {
 
 @Composable
 private fun TodayFAB(modifier: Modifier = Modifier) {
-    FloatingActionButton(
-        onClick = { },
-        containerColor = RoutineTheme.colors.primary,
-        contentColor = RoutineTheme.colors.onPrimary,
-        shape = RoutineTheme.shapes.pill,
-        modifier = modifier.size(56.dp)
+    // Disabled FAB as per EC-010 until EC-012 defines the action
+    Box(
+        modifier = modifier
+            .size(56.dp)
+            .background(
+                color = RoutineTheme.colors.onSurface.copy(alpha = 0.12f),
+                shape = RoutineTheme.shapes.pill
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(Icons.Default.Add, contentDescription = "Add activity")
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            tint = RoutineTheme.colors.onSurface.copy(alpha = 0.38f)
+        )
     }
 }
