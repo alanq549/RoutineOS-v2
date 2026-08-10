@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.alan.routineos.data.local.RoutineOSDatabase
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
+import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
 import dagger.Module
 import dagger.Provides
@@ -35,4 +36,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideActivityNodeDao(db: RoutineOSDatabase): ActivityNodeDao = db.activityNodeDao()
+
+    @Provides
+    @Singleton
+    fun provideActivityExecutionDao(db: RoutineOSDatabase): ActivityExecutionDao = db.activityExecutionDao()
 }

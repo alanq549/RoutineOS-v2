@@ -2,6 +2,7 @@ package com.alan.routineos.feature.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -9,6 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -24,7 +27,7 @@ import com.alan.routineos.core.designsystem.theme.RoutineTheme
 @Composable
 fun ActivityDetailRoute(
     onBack: () -> Unit,
-    viewModel: ActivityDetailViewModel = hiltViewModel()
+    viewModel: ActivityDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -32,7 +35,8 @@ fun ActivityDetailRoute(
         uiState = uiState,
         onBackClick = onBack,
         onNewNodeTitleChanged = viewModel::onNewNodeTitleChanged,
-        onAddNodeClick = viewModel::addNode
+        onAddNodeClick = viewModel::addNode,
+        onCompleteNodeClick = viewModel::completeNode
     )
 }
 
@@ -41,7 +45,8 @@ fun ActivityDetailScreen(
     uiState: ActivityDetailUiState,
     onBackClick: () -> Unit,
     onNewNodeTitleChanged: (String) -> Unit,
-    onAddNodeClick: () -> Unit
+    onAddNodeClick: () -> Unit,
+    onCompleteNodeClick: (String) -> Unit
 ) {
     RoutineScaffold(
         topBar = { ActivityDetailTopBar(uiState.activity?.title, onBackClick) }
@@ -50,7 +55,8 @@ fun ActivityDetailScreen(
             uiState = uiState,
             paddingValues = paddingValues,
             onNewNodeTitleChanged = onNewNodeTitleChanged,
-            onAddNodeClick = onAddNodeClick
+            onAddNodeClick = onAddNodeClick,
+            onCompleteNodeClick = onCompleteNodeClick
         )
     }
 }
@@ -79,14 +85,15 @@ private fun ActivityDetailContent(
     uiState: ActivityDetailUiState,
     paddingValues: PaddingValues,
     onNewNodeTitleChanged: (String) -> Unit,
-    onAddNodeClick: () -> Unit
+    onAddNodeClick: () -> Unit,
+    onCompleteNodeClick: (String) -> Unit
 ) {
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
     } else {
-        NodesList(uiState, paddingValues, onNewNodeTitleChanged, onAddNodeClick)
+        NodesList(uiState, paddingValues, onNewNodeTitleChanged, onAddNodeClick, onCompleteNodeClick)
     }
 }
 
@@ -95,7 +102,8 @@ private fun NodesList(
     uiState: ActivityDetailUiState,
     paddingValues: PaddingValues,
     onNewNodeTitleChanged: (String) -> Unit,
-    onAddNodeClick: () -> Unit
+    onAddNodeClick: () -> Unit,
+    onCompleteNodeClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -113,7 +121,7 @@ private fun NodesList(
                 onAddClick = onAddNodeClick
             )
         }
-        NodesContent(uiState.nodes)
+        nodesContent(uiState.nodes, onCompleteNodeClick)
         item { ListBottomSpacer() }
     }
 }
@@ -133,11 +141,19 @@ private fun NodesSectionTitle() {
     )
 }
 
-private fun LazyListScope.NodesContent(nodes: List<com.alan.routineos.domain.model.ActivityNode>) {
+private fun LazyListScope.nodesContent(
+    nodes: List<ActivityNodeWithExecution>,
+    onCompleteNodeClick: (String) -> Unit
+) {
     if (nodes.isEmpty()) {
         item { EmptyNodesMessage() }
     } else {
-        items(nodes) { node -> NodeItem(title = node.title) }
+        items(nodes) { nodeWithExecution ->
+            NodeItem(
+                nodeWithExecution = nodeWithExecution,
+                onCompleteClick = { onCompleteNodeClick(nodeWithExecution.node.id) }
+            )
+        }
     }
 }
 
@@ -208,7 +224,10 @@ private fun AddNodeIconButton(onClick: () -> Unit, enabled: Boolean) {
 }
 
 @Composable
-private fun NodeItem(title: String) {
+private fun NodeItem(
+    nodeWithExecution: ActivityNodeWithExecution,
+    onCompleteClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -217,18 +236,29 @@ private fun NodeItem(title: String) {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        CompletionIcon(nodeWithExecution.isCompleted, onCompleteClick)
         Text(
-            text = "•",
-            style = RoutineTheme.typography.headlineMedium,
-            color = RoutineTheme.colors.primary,
-            modifier = Modifier.padding(end = 12.dp)
-        )
-        Text(
-            text = title,
+            text = nodeWithExecution.node.title,
             style = RoutineTheme.typography.bodyBase,
             color = RoutineTheme.colors.onSurface
         )
     }
+}
+
+@Composable
+private fun CompletionIcon(isCompleted: Boolean, onClick: () -> Unit) {
+    val icon = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked
+    val tint = if (isCompleted) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
+    
+    Icon(
+        imageVector = icon,
+        contentDescription = "Complete",
+        tint = tint,
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .size(24.dp)
+            .clickable(onClick = onClick)
+    )
 }
 
 @Composable
@@ -252,7 +282,8 @@ fun ActivityDetailScreenPreview() {
             ),
             onBackClick = {},
             onNewNodeTitleChanged = {},
-            onAddNodeClick = {}
+            onAddNodeClick = {},
+            onCompleteNodeClick = {}
         )
     }
 }
