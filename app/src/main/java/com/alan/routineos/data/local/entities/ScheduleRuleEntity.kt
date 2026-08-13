@@ -9,18 +9,28 @@ import androidx.room.PrimaryKey
     tableName = "schedule_rules",
     foreignKeys = [
         ForeignKey(
+            entity = ActivityDefinitionEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["activityDefinitionId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
             entity = ActivityNodeEntity::class,
             parentColumns = ["id"],
-            childColumns = ["nodeId"],
+            childColumns = ["activityNodeId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("nodeId")]
+    indices = [
+        Index("activityDefinitionId"),
+        Index("activityNodeId")
+    ]
 )
 data class ScheduleRuleEntity(
     @PrimaryKey
     val id: String,
-    val nodeId: String,
+    val activityDefinitionId: String? = null,
+    val activityNodeId: String? = null,
     val type: String, // FIXED_DAYS, FLEXIBLE_FREQUENCY
     val daysOfWeek: String = "", // Comma-separated ints: "1,3,5"
     val frequencyPerPeriod: Int = 0
