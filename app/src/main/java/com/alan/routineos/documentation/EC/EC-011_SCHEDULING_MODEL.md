@@ -5,12 +5,12 @@ phase: 5
 priority: Critical
 effort: Large
 owner: AI Agent
-status: DRAFT
+status: IN_PROGRESS
 depends_on: [EC-009]
 branch: feature/scheduling-model
 audit: Pending
 created: 2026-08-09
-updated: 2026-08-09
+updated: 2026-08-12
 ---
 
 # EC-011: Scheduling Model
@@ -140,10 +140,10 @@ Antes de marcar como APPROVED, verificar:
 ## Checklist de Validación de Usuario
 (El agente auditor completa esta sección SOLO cuando el estado pasa a
 USER_REVIEW_PENDING. Lenguaje llano, sin jerga técnica.)
-- [ ] Al crear una actividad con recurrencia "lunes/miércoles/viernes" y marcar
+- [x] Al crear una actividad con recurrencia "lunes/miércoles/viernes" y marcar
       un día como hecho, los otros días de esa misma actividad NO aparecen
       como completados.
-- [ ] Al saltar (excepción) un día puntual, la regla general no se ve afectada
+- [x] Al saltar (excepción) un día puntual, la regla general no se ve afectada
       para el resto de las fechas.
 
 REGLA CRÍTICA: ningún agente puede marcar estos checkboxes ni cambiar el

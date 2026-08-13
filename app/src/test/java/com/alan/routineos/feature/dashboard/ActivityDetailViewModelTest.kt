@@ -73,13 +73,23 @@ class ActivityDetailViewModelTest {
         override suspend fun upsertNode(node: ActivityNode) = TODO()
         override suspend fun deleteNode(node: ActivityNode) = TODO()
         
-        override suspend fun registerExecution(nodeId: String, metadataJson: String) {
+        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String) {
             registerExecutionCallCount++
         }
         
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = MutableStateFlow(emptyList())
-        override suspend fun deleteExecutionsForNode(nodeId: String) {
+
+        override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = MutableStateFlow(emptyList())
+
+        override suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) {
             // Not used in this specific test case
         }
+
+        override fun getRulesForNode(nodeId: String): Flow<List<com.alan.routineos.domain.model.ScheduleRule>> = TODO()
+        override suspend fun upsertRule(rule: com.alan.routineos.domain.model.ScheduleRule) = TODO()
+        override suspend fun deleteRule(rule: com.alan.routineos.domain.model.ScheduleRule) = TODO()
+        override fun getExceptionsForRule(ruleId: String): Flow<List<com.alan.routineos.domain.model.ScheduleException>> = TODO()
+        override suspend fun upsertException(exception: com.alan.routineos.domain.model.ScheduleException) = TODO()
+        override suspend fun deleteException(exception: com.alan.routineos.domain.model.ScheduleException) = TODO()
     }
 }

@@ -7,9 +7,9 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `feature/ec-010-interaction-cleanup` |
 | **Current Phase** | Fase 4: Routine Management |
-| **Current Goal** | Definir próxima prioridad estratégica |
-| **Current EC** | Ninguna |
-| **Next EC** | [EC-011_SCHEDULING_MODEL](./EC/EC-011_SCHEDULING_MODEL.md) |
+| **Current Goal** | Finalizar implementación de Scheduling Model (EC-011) |
+| **Current EC** | [EC-011_SCHEDULING_MODEL](./EC/EC-011_SCHEDULING_MODEL.md) |
+| **Next EC** | [EC-012_TODAY_REAL_INTEGRATION](./EC/EC-012_TODAY_REAL_INTEGRATION.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |

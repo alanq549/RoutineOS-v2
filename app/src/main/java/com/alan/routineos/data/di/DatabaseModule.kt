@@ -6,6 +6,8 @@ import com.alan.routineos.data.local.RoutineOSDatabase
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
+import com.alan.routineos.data.local.dao.ScheduleExceptionDao
+import com.alan.routineos.data.local.dao.ScheduleRuleDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,4 +42,12 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideActivityExecutionDao(db: RoutineOSDatabase): ActivityExecutionDao = db.activityExecutionDao()
+
+    @Provides
+    @Singleton
+    fun provideScheduleRuleDao(db: RoutineOSDatabase): ScheduleRuleDao = db.scheduleRuleDao()
+
+    @Provides
+    @Singleton
+    fun provideScheduleExceptionDao(db: RoutineOSDatabase): ScheduleExceptionDao = db.scheduleExceptionDao()
 }
