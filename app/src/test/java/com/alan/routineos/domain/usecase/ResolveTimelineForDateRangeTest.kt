@@ -8,13 +8,19 @@ import java.time.LocalDate
 class ResolveTimelineForDateRangeTest {
 
     private val resolver = ResolveTimelineForDateRange()
-    private val testNode = ActivityNode("node1", "act1", "Node 1")
+    private val testNode = ActivityNode(
+        id = "node1",
+        activityDefinitionId = "act1",
+        parentId = null,
+        position = 0,
+        title = "Node 1"
+    )
 
     @Test
     fun `FIXED_DAYS rule resolves correctly`() {
         val rule = ScheduleRule(
             id = "r1",
-            nodeId = "node1",
+            target = ScheduleTarget.Node("node1"),
             type = ScheduleRuleType.FIXED_DAYS,
             daysOfWeek = setOf(1, 3, 5) // Mon, Wed, Fri
         )
@@ -35,7 +41,7 @@ class ResolveTimelineForDateRangeTest {
     fun `SKIPPED exception removes instance`() {
         val rule = ScheduleRule(
             id = "r1",
-            nodeId = "node1",
+            target = ScheduleTarget.Node("node1"),
             type = ScheduleRuleType.FIXED_DAYS,
             daysOfWeek = setOf(1) // Mon
         )
@@ -55,7 +61,7 @@ class ResolveTimelineForDateRangeTest {
     fun `RESCHEDULED exception moves instance`() {
         val rule = ScheduleRule(
             id = "r1",
-            nodeId = "node1",
+            target = ScheduleTarget.Node("node1"),
             type = ScheduleRuleType.FIXED_DAYS,
             daysOfWeek = setOf(1) // Mon
         )

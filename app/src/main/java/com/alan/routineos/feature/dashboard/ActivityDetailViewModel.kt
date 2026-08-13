@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.repository.ActivityRepository
-import com.alan.routineos.domain.usecase.ActivityNodeTree
 import com.alan.routineos.domain.usecase.GetActivityTreeUseCase
+import com.alan.routineos.feature.dashboard.model.ActivityNodeUiProjection
+import com.alan.routineos.feature.dashboard.model.toUiProjection
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -24,24 +24,11 @@ sealed class ActivityDetailUiEvent {
     ) : ActivityDetailUiEvent()
 }
 
-data class ActivityNodeWithExecution(
-    val node: ActivityNode,
-    val isCompleted: Boolean,
-    val lastCompletionTimestamp: Long? = null,
-)
-
 data class ActivityDetailUiState(
     val activity: ActivityDefinition? = null,
-    val nodes: List<ActivityNodeTreeWithExecution> = emptyList(),
+    val nodes: List<ActivityNodeUiProjection> = emptyList(),
     val isLoading: Boolean = true,
     val newNodeTitle: String = ""
-)
-
-data class ActivityNodeTreeWithExecution(
-    val treeNode: ActivityNodeTree,
-    val isCompleted: Boolean,
-    val lastCompletionTimestamp: Long? = null,
-    val isExpanded: Boolean = true
 )
 
 @HiltViewModel
@@ -61,57 +48,27 @@ class ActivityDetailViewModel @Inject constructor(
     val uiEvent: SharedFlow<ActivityDetailUiEvent> = _uiEvent.asSharedFlow()
 
     private val processingNodeIds = MutableStateFlow<Set<String>>(emptySet())
+    private val expandedNodes = MutableStateFlow<Set<String>>(emptySet())
 
     init {
         loadActivity()
     }
 
-@OptIn(ExperimentalCoroutinesApi::class)
     private fun loadActivity() {
         viewModelScope.launch {
             val activityFlow = flow { emit(repository.getActivityDefinitionById(activityId)) }
-            val treeFlow = getActivityTreeUseCase(activityId)
+            val treeFlow = getActivityTreeUseCase(activityId, referenceDate)
 
-            treeFlow.flatMapLatest { treeNodes ->
-                getTreeWithExecutionsFlow(treeNodes)
-            }.combine(activityFlow) { nodesWithExecution, activity ->
+            combine(activityFlow, treeFlow, expandedNodes) { activity, tree, expanded ->
                 ActivityDetailUiState(
                     activity = activity,
-                    nodes = nodesWithExecution,
+                    nodes = tree.toUiProjection(expandedNodes = expanded),
                     isLoading = false
                 )
             }.collect { newState ->
                 _uiState.value = newState
             }
         }
-    }
-
-    private fun getTreeWithExecutionsFlow(treeNodes: List<ActivityNodeTree>): Flow<List<ActivityNodeTreeWithExecution>> {
-        if (treeNodes.isEmpty()) return flowOf(emptyList())
-
-        // Flatten the tree for execution status check, but keep hierarchy info
-        val flatTree = flattenTree(treeNodes)
-
-        val executionFlows = flatTree.map { treeNode ->
-            repository.getExecutionsForNodeOnDate(treeNode.node.id, referenceDate).map { executions ->
-                ActivityNodeTreeWithExecution(
-                    treeNode = treeNode,
-                    isCompleted = executions.isNotEmpty(), // Simplified: leaf completion
-                    lastCompletionTimestamp = executions.firstOrNull()?.completedAt
-                )
-            }
-        }
-
-        return combine(executionFlows) { it.toList() }
-    }
-
-    private fun flattenTree(tree: List<ActivityNodeTree>): List<ActivityNodeTree> {
-        val result = mutableListOf<ActivityNodeTree>()
-        tree.forEach { item ->
-            result.add(item)
-            result.addAll(flattenTree(item.children))
-        }
-        return result
     }
 
     fun onNewNodeTitleChanged(title: String) {
@@ -127,7 +84,7 @@ class ActivityDetailViewModel @Inject constructor(
                 id = UUID.randomUUID().toString(),
                 activityDefinitionId = activityId,
                 parentId = null,
-                position = _uiState.value.nodes.size,
+                position = _uiState.value.nodes.filter { it.depth == 0 }.size,
                 title = title
             )
             repository.upsertNode(newNode)
@@ -142,8 +99,13 @@ class ActivityDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val nodeWithExecution = _uiState.value.nodes.find { it.treeNode.node.id == nodeId }
-                if (nodeWithExecution?.isCompleted == true) {
+                val nodeProjection = _uiState.value.nodes.find { it.id == nodeId }
+                if (nodeProjection?.isLeaf == false) {
+                    _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Los contenedores se completan mediante sus hijos"))
+                    return@launch
+                }
+
+                if (nodeProjection?.status == com.alan.routineos.domain.model.NodeStatus.COMPLETED) {
                     repository.deleteExecutionsForNodeOnDate(nodeId, referenceDate)
                     _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso marcado como pendiente", "Deshacer", nodeId))
                 } else {
@@ -155,6 +117,12 @@ class ActivityDetailViewModel @Inject constructor(
             } finally {
                 processingNodeIds.update { it - nodeId }
             }
+        }
+    }
+
+    fun toggleExpand(nodeId: String) {
+        expandedNodes.update {
+            if (it.contains(nodeId)) it - nodeId else it + nodeId
         }
     }
 }

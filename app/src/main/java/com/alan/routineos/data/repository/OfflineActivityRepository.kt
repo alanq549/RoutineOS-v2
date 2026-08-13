@@ -14,6 +14,7 @@ import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleRule
 import com.alan.routineos.domain.repository.ActivityRepository
+import com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
@@ -24,7 +25,8 @@ class OfflineActivityRepository @Inject constructor(
     private val activityNodeDao: ActivityNodeDao,
     private val activityExecutionDao: ActivityExecutionDao,
     private val scheduleRuleDao: ScheduleRuleDao,
-    private val scheduleExceptionDao: ScheduleExceptionDao
+    private val scheduleExceptionDao: ScheduleExceptionDao,
+    private val validateActivityNodeUseCase: ValidateActivityNodeUseCase
 ) : ActivityRepository {
 
     override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> {
@@ -52,6 +54,14 @@ class OfflineActivityRepository @Inject constructor(
     }
 
     override suspend fun upsertNode(node: ActivityNode) {
+        val allNodes = activityNodeDao.getNodesListForActivityDefinition(node.activityDefinitionId)
+            .map { it.toDomain() }
+        
+        val error = validateActivityNodeUseCase(node, allNodes)
+        if (error != null) {
+            throw IllegalArgumentException("Node validation failed: $error")
+        }
+        
         activityNodeDao.insertNode(node.toEntity())
     }
 
@@ -60,16 +70,37 @@ class OfflineActivityRepository @Inject constructor(
     }
 
     override suspend fun reorderNodes(nodeIds: List<String>) {
+        if (nodeIds.isEmpty()) return
+        
+        // Load first node to get activityDefinitionId and parentId (for sibling boundary check)
+        val firstNode = activityNodeDao.getNodeById(nodeIds[0]) ?: return
+        val expectedParentId = firstNode.parentId
+        val expectedDefId = firstNode.activityDefinitionId
+
         val entities = nodeIds.mapIndexedNotNull { index, id ->
-            activityNodeDao.getNodeById(id)?.copy(position = index)
+            val node = activityNodeDao.getNodeById(id)
+            if (node != null && node.parentId == expectedParentId && node.activityDefinitionId == expectedDefId) {
+                node.copy(position = index)
+            } else {
+                null
+            }
         }
         activityNodeDao.updateNodes(entities)
     }
 
     override suspend fun moveNode(nodeId: String, newParentId: String?) {
-        activityNodeDao.getNodeById(nodeId)?.let { node ->
-            activityNodeDao.insertNode(node.copy(parentId = newParentId))
+        val nodeEntity = activityNodeDao.getNodeById(nodeId) ?: return
+        val node = nodeEntity.toDomain().copy(parentId = newParentId)
+        
+        val allNodes = activityNodeDao.getNodesListForActivityDefinition(node.activityDefinitionId)
+            .map { it.toDomain() }
+
+        val error = validateActivityNodeUseCase(node, allNodes)
+        if (error != null) {
+            throw IllegalArgumentException("Node move validation failed: $error")
         }
+
+        activityNodeDao.insertNode(node.toEntity())
     }
 
     override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String) {

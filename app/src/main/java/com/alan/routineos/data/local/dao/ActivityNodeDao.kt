@@ -20,4 +20,7 @@ interface ActivityNodeDao {
 
     @Query("SELECT * FROM activity_nodes WHERE id = :id")
     suspend fun getNodeById(id: String): ActivityNodeEntity?
+
+    @Query("SELECT * FROM activity_nodes WHERE activityDefinitionId = :activityDefinitionId")
+    suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNodeEntity>
 }
