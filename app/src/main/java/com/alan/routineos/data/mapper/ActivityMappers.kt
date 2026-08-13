@@ -12,6 +12,7 @@ import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleExceptionType
 import com.alan.routineos.domain.model.ScheduleRule
 import com.alan.routineos.domain.model.ScheduleRuleType
+import com.alan.routineos.domain.model.ScheduleTarget
 
 fun ActivityDefinitionEntity.toDomain(): ActivityDefinition {
     return ActivityDefinition(
@@ -33,6 +34,8 @@ fun ActivityNodeEntity.toDomain(): ActivityNode {
     return ActivityNode(
         id = id,
         activityDefinitionId = activityDefinitionId,
+        parentId = parentId,
+        position = position,
         title = title
     )
 }
@@ -41,6 +44,8 @@ fun ActivityNode.toEntity(): ActivityNodeEntity {
     return ActivityNodeEntity(
         id = id,
         activityDefinitionId = activityDefinitionId,
+        parentId = parentId,
+        position = position,
         title = title
     )
 }
@@ -66,9 +71,14 @@ fun ActivityExecution.toEntity(): ActivityExecutionEntity {
 }
 
 fun ScheduleRuleEntity.toDomain(): ScheduleRule {
+    val target = when {
+        activityDefinitionId != null -> ScheduleTarget.Definition(activityDefinitionId)
+        activityNodeId != null -> ScheduleTarget.Node(activityNodeId)
+        else -> throw IllegalStateException("ScheduleRuleEntity must have a target")
+    }
     return ScheduleRule(
         id = id,
-        nodeId = nodeId,
+        target = target,
         type = ScheduleRuleType.valueOf(type),
         daysOfWeek = if (daysOfWeek.isBlank()) emptySet() else daysOfWeek.split(",").map { it.toInt() }.toSet(),
         frequencyPerPeriod = frequencyPerPeriod
@@ -78,7 +88,8 @@ fun ScheduleRuleEntity.toDomain(): ScheduleRule {
 fun ScheduleRule.toEntity(): ScheduleRuleEntity {
     return ScheduleRuleEntity(
         id = id,
-        nodeId = nodeId,
+        activityDefinitionId = (target as? ScheduleTarget.Definition)?.id,
+        activityNodeId = (target as? ScheduleTarget.Node)?.id,
         type = type.name,
         daysOfWeek = daysOfWeek.joinToString(","),
         frequencyPerPeriod = frequencyPerPeriod

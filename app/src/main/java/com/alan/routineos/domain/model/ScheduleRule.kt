@@ -5,9 +5,14 @@ enum class ScheduleRuleType {
     FLEXIBLE_FREQUENCY
 }
 
+sealed class ScheduleTarget {
+    data class Definition(val id: String) : ScheduleTarget()
+    data class Node(val id: String) : ScheduleTarget()
+}
+
 data class ScheduleRule(
     val id: String,
-    val nodeId: String,
+    val target: ScheduleTarget,
     val type: ScheduleRuleType,
     val daysOfWeek: Set<Int> = emptySet(), // 1 (Mon) to 7 (Sun)
     val frequencyPerPeriod: Int = 0

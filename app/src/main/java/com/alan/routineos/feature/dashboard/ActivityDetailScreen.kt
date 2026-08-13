@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.alan.routineos.core.designsystem.component.RoutineScaffold
 import com.alan.routineos.core.designsystem.component.RoutineTopBar
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.feature.dashboard.model.ActivityNodeUiProjection
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
@@ -37,6 +40,7 @@ fun ActivityDetailRoute(
         onNewNodeTitleChanged = viewModel::onNewNodeTitleChanged,
         onAddNodeClick = viewModel::addNode,
         onCompleteNodeClick = viewModel::toggleNodeCompletion,
+        onExpandClick = viewModel::toggleExpand,
         uiEvent = viewModel.uiEvent
     )
 }
@@ -48,6 +52,7 @@ fun ActivityDetailScreen(
     onNewNodeTitleChanged: (String) -> Unit,
     onAddNodeClick: () -> Unit,
     onCompleteNodeClick: (String) -> Unit,
+    onExpandClick: (String) -> Unit,
     uiEvent: SharedFlow<ActivityDetailUiEvent>
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -78,7 +83,8 @@ fun ActivityDetailScreen(
             paddingValues = paddingValues,
             onNewNodeTitleChanged = onNewNodeTitleChanged,
             onAddNodeClick = onAddNodeClick,
-            onCompleteNodeClick = onCompleteNodeClick
+            onCompleteNodeClick = onCompleteNodeClick,
+            onExpandClick = onExpandClick
         )
     }
 }
@@ -108,14 +114,15 @@ private fun ActivityDetailContent(
     paddingValues: PaddingValues,
     onNewNodeTitleChanged: (String) -> Unit,
     onAddNodeClick: () -> Unit,
-    onCompleteNodeClick: (String) -> Unit
+    onCompleteNodeClick: (String) -> Unit,
+    onExpandClick: (String) -> Unit
 ) {
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
     } else {
-        NodesList(uiState, paddingValues, onNewNodeTitleChanged, onAddNodeClick, onCompleteNodeClick)
+        NodesList(uiState, paddingValues, onNewNodeTitleChanged, onAddNodeClick, onCompleteNodeClick, onExpandClick)
     }
 }
 
@@ -125,7 +132,8 @@ private fun NodesList(
     paddingValues: PaddingValues,
     onNewNodeTitleChanged: (String) -> Unit,
     onAddNodeClick: () -> Unit,
-    onCompleteNodeClick: (String) -> Unit
+    onCompleteNodeClick: (String) -> Unit,
+    onExpandClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -143,7 +151,7 @@ private fun NodesList(
                 onAddClick = onAddNodeClick
             )
         }
-        nodesContent(uiState.nodes, onCompleteNodeClick)
+        nodesContent(uiState.nodes, onCompleteNodeClick, onExpandClick)
         item { ListBottomSpacer() }
     }
 }
@@ -164,16 +172,18 @@ private fun NodesSectionTitle() {
 }
 
 private fun LazyListScope.nodesContent(
-    nodes: List<ActivityNodeWithExecution>,
-    onCompleteNodeClick: (String) -> Unit
+    nodes: List<ActivityNodeUiProjection>,
+    onCompleteNodeClick: (String) -> Unit,
+    onExpandClick: (String) -> Unit
 ) {
     if (nodes.isEmpty()) {
         item { EmptyNodesMessage() }
     } else {
-        items(nodes) { nodeWithExecution ->
+        items(nodes, key = { it.id }) { nodeProjection ->
             NodeItem(
-                nodeWithExecution = nodeWithExecution,
-                onCompleteClick = { onCompleteNodeClick(nodeWithExecution.node.id) }
+                projection = nodeProjection,
+                onCompleteClick = { onCompleteNodeClick(nodeProjection.id) },
+                onExpandClick = { onExpandClick(nodeProjection.id) }
             )
         }
     }
@@ -247,39 +257,65 @@ private fun AddNodeIconButton(onClick: () -> Unit, enabled: Boolean) {
 
 @Composable
 private fun NodeItem(
-    nodeWithExecution: ActivityNodeWithExecution,
-    onCompleteClick: () -> Unit
+    projection: ActivityNodeUiProjection,
+    onCompleteClick: () -> Unit,
+    onExpandClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(start = (projection.depth * 24).dp)
             .background(RoutineTheme.colors.surface1, RoutineTheme.shapes.small)
             .border(1.dp, RoutineTheme.colors.border, RoutineTheme.shapes.small)
+            .clickable(onClick = onExpandClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CompletionIcon(nodeWithExecution.isCompleted, onCompleteClick)
-        Text(
-            text = nodeWithExecution.node.title,
-            style = RoutineTheme.typography.bodyBase,
-            color = RoutineTheme.colors.onSurface
+        CompletionIcon(
+            isCompleted = projection.status == com.alan.routineos.domain.model.NodeStatus.COMPLETED,
+            isLeaf = projection.isLeaf,
+            onClick = onCompleteClick
         )
+        Text(
+            text = projection.title,
+            style = RoutineTheme.typography.bodyBase,
+            color = RoutineTheme.colors.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        if (!projection.isLeaf) {
+            Icon(
+                imageVector = if (projection.isExpanded) {
+                    Icons.Default.ExpandMore
+                } else {
+                    Icons.Default.ChevronRight
+                },
+                contentDescription = if (projection.isExpanded) "Collapse" else "Expand",
+                tint = RoutineTheme.colors.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 
 @Composable
-private fun CompletionIcon(isCompleted: Boolean, onClick: () -> Unit) {
+private fun CompletionIcon(
+    isCompleted: Boolean,
+    isLeaf: Boolean,
+    onClick: () -> Unit
+) {
     val icon = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked
     val tint = if (isCompleted) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
     
+    val alpha = if (isLeaf) 1f else 0.5f // Visual hint that only leaves are primary targets
+
     Icon(
         imageVector = icon,
         contentDescription = "Complete",
-        tint = tint,
+        tint = tint.copy(alpha = alpha),
         modifier = Modifier
             .padding(end = 12.dp)
             .size(24.dp)
-            .clickable(onClick = onClick)
+            .clickable(enabled = isLeaf, onClick = onClick)
     )
 }
 
@@ -299,13 +335,21 @@ fun ActivityDetailScreenPreview() {
     RoutineTheme {
         ActivityDetailScreen(
             uiState = ActivityDetailUiState(
-                activity = com.alan.routineos.domain.model.ActivityDefinition("1", "Actividad de Prueba", "Descripción"),
+                activity = com.alan.routineos.domain.model.ActivityDefinition("1", "Universidad", "Ciclo 02 - 2026"),
+                nodes = listOf(
+                    ActivityNodeUiProjection("1", "Bases de Datos", com.alan.routineos.domain.model.NodeStatus.IN_PROGRESS, 0, true, false),
+                    ActivityNodeUiProjection("1.1", "SQL Lab", com.alan.routineos.domain.model.NodeStatus.COMPLETED, 1, true, true),
+                    ActivityNodeUiProjection("1.2", "NoSQL Lab", com.alan.routineos.domain.model.NodeStatus.PENDING, 1, true, true),
+                    ActivityNodeUiProjection("2", "Redes", com.alan.routineos.domain.model.NodeStatus.PENDING, 0, false, false),
+                    ActivityNodeUiProjection("3", "Ingeniería de Software", com.alan.routineos.domain.model.NodeStatus.PENDING, 0, true, true)
+                ),
                 isLoading = false
             ),
             onBackClick = {},
             onNewNodeTitleChanged = {},
             onAddNodeClick = {},
             onCompleteNodeClick = {},
+            onExpandClick = {},
             uiEvent = MutableSharedFlow()
         )
     }

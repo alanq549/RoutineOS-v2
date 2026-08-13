@@ -13,13 +13,24 @@ import androidx.room.PrimaryKey
             parentColumns = ["id"],
             childColumns = ["activityDefinitionId"],
             onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = ActivityNodeEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["parentId"],
+            onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("activityDefinitionId")]
+    indices = [
+        Index("activityDefinitionId"),
+        Index("parentId")
+    ]
 )
 data class ActivityNodeEntity(
     @PrimaryKey
     val id: String,
     val activityDefinitionId: String,
+    val parentId: String?,
+    val position: Int,
     val title: String
 )

@@ -31,21 +31,37 @@ class ActivityMapperTest {
 
     @Test
     fun `ActivityNodeEntity toDomain maps correctly`() {
-        val entity = ActivityNodeEntity(id = "1", activityDefinitionId = "ad1", title = "Node")
+        val entity = ActivityNodeEntity(
+            id = "1",
+            activityDefinitionId = "ad1",
+            parentId = "parent1",
+            position = 5,
+            title = "Node"
+        )
         val domain = entity.toDomain()
         
         assertEquals(entity.id, domain.id)
         assertEquals(entity.activityDefinitionId, domain.activityDefinitionId)
+        assertEquals(entity.parentId, domain.parentId)
+        assertEquals(entity.position, domain.position)
         assertEquals(entity.title, domain.title)
     }
 
     @Test
     fun `ActivityNode toEntity maps correctly`() {
-        val domain = ActivityNode(id = "1", activityDefinitionId = "ad1", title = "Node")
+        val domain = ActivityNode(
+            id = "1",
+            activityDefinitionId = "ad1",
+            parentId = "parent1",
+            position = 5,
+            title = "Node"
+        )
         val entity = domain.toEntity()
         
         assertEquals(domain.id, entity.id)
         assertEquals(domain.activityDefinitionId, entity.activityDefinitionId)
+        assertEquals(domain.parentId, entity.parentId)
+        assertEquals(domain.position, entity.position)
         assertEquals(domain.title, entity.title)
     }
 

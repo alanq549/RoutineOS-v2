@@ -5,6 +5,7 @@ import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.repository.ActivityRepository
+import com.alan.routineos.domain.usecase.GetActivityTreeUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,7 @@ class ActivityDetailViewModelTest {
         repository = FakeActivityRepository()
         viewModel = ActivityDetailViewModel(
             repository = repository,
+            getActivityTreeUseCase = GetActivityTreeUseCase(repository),
             savedStateHandle = SavedStateHandle(mapOf("activityId" to "act1"))
         )
     }
@@ -41,7 +43,13 @@ class ActivityDetailViewModelTest {
     fun `toggleNodeCompletion avoids duplicate calls on fast double-tap`() = runTest {
         val nodeId = "node1"
         // Initial state: 1 node, not completed
-        repository.setNodes(listOf(ActivityNode("node1", "act1", "Node 1")))
+        repository.setNodes(listOf(ActivityNode(
+            id = "node1",
+            activityDefinitionId = "act1",
+            parentId = null,
+            position = 0,
+            title = "Node 1"
+        )))
         
         // Advance to collect initial state in the ViewModel's flow
         advanceUntilIdle()
@@ -72,6 +80,8 @@ class ActivityDetailViewModelTest {
         override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = _nodes
         override suspend fun upsertNode(node: ActivityNode) = TODO()
         override suspend fun deleteNode(node: ActivityNode) = TODO()
+        override suspend fun reorderNodes(nodeIds: List<String>) = TODO()
+        override suspend fun moveNode(nodeId: String, newParentId: String?) = TODO()
         
         override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String) {
             registerExecutionCallCount++
@@ -86,6 +96,7 @@ class ActivityDetailViewModelTest {
         }
 
         override fun getRulesForNode(nodeId: String): Flow<List<com.alan.routineos.domain.model.ScheduleRule>> = TODO()
+        override fun getRulesForDefinition(definitionId: String): Flow<List<com.alan.routineos.domain.model.ScheduleRule>> = TODO()
         override suspend fun upsertRule(rule: com.alan.routineos.domain.model.ScheduleRule) = TODO()
         override suspend fun deleteRule(rule: com.alan.routineos.domain.model.ScheduleRule) = TODO()
         override fun getExceptionsForRule(ruleId: String): Flow<List<com.alan.routineos.domain.model.ScheduleException>> = TODO()
