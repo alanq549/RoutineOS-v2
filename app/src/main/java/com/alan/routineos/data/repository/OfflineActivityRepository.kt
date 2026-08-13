@@ -53,6 +53,14 @@ class OfflineActivityRepository @Inject constructor(
         }
     }
 
+    override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> {
+        return activityNodeDao.getNodesListForActivityDefinition(activityDefinitionId).map { it.toDomain() }
+    }
+
+    override suspend fun getNodeById(id: String): ActivityNode? {
+        return activityNodeDao.getNodeById(id)?.toDomain()
+    }
+
     override suspend fun upsertNode(node: ActivityNode) {
         val allNodes = activityNodeDao.getNodesListForActivityDefinition(node.activityDefinitionId)
             .map { it.toDomain() }

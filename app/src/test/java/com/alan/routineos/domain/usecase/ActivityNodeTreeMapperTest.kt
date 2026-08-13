@@ -24,6 +24,8 @@ class ActivityNodeTreeMapperTest {
         
         val repository = object : FakeActivityRepository() {
             override fun getNodesForActivityDefinition(activityDefinitionId: String) = flowOf(nodes)
+            override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String) = nodes
+            override suspend fun getNodeById(id: String) = nodes.find { it.id == id }
         }
         
         val useCase = GetActivityTreeUseCase(repository)
@@ -49,6 +51,8 @@ class ActivityNodeTreeMapperTest {
         override suspend fun upsertActivityDefinition(activityDefinition: com.alan.routineos.domain.model.ActivityDefinition) = TODO()
         override suspend fun deleteActivityDefinition(activityDefinition: com.alan.routineos.domain.model.ActivityDefinition) = TODO()
         override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = TODO()
+        override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> = emptyList()
+        override suspend fun getNodeById(id: String): ActivityNode? = TODO()
         override suspend fun upsertNode(node: ActivityNode) = TODO()
         override suspend fun deleteNode(node: ActivityNode) = TODO()
         override suspend fun reorderNodes(nodeIds: List<String>) = TODO()

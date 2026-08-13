@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ActivityNodeDao {
-    @Query("SELECT * FROM activity_nodes WHERE activityDefinitionId = :activityDefinitionId")
+    @Query("SELECT * FROM activity_nodes WHERE activityDefinitionId = :activityDefinitionId AND isDeleted = 0")
     fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNodeEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertNode(node: ActivityNodeEntity)
 
     @Delete
@@ -21,6 +21,6 @@ interface ActivityNodeDao {
     @Query("SELECT * FROM activity_nodes WHERE id = :id")
     suspend fun getNodeById(id: String): ActivityNodeEntity?
 
-    @Query("SELECT * FROM activity_nodes WHERE activityDefinitionId = :activityDefinitionId")
+    @Query("SELECT * FROM activity_nodes WHERE activityDefinitionId = :activityDefinitionId AND isDeleted = 0")
     suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNodeEntity>
 }

@@ -78,7 +78,7 @@ class RoomDatabaseTest {
         val activityDefinition = ActivityDefinitionEntity(id = "ad_1", title = "Parent", description = "Parent description")
         activityDefinitionDao.insertActivityDefinition(activityDefinition)
         
-        val node = ActivityNodeEntity(id = "node_1", activityDefinitionId = "ad_1", title = "Child Node")
+        val node = ActivityNodeEntity(id = "node_1", activityDefinitionId = "ad_1", parentId = null, position = 0, title = "Child Node")
         activityNodeDao.insertNode(node)
         
         // Verify node exists

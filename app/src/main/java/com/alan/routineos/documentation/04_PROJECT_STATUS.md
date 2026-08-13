@@ -16,7 +16,8 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-009 | Activity Execution Engine | High | Medium | AI Agent | EC-008 | APPROVED | Generic JSON-based execution tracking. Calidad de código verificada. |
 | EC-010 | Interaction Cleanup | High | Small | AI Agent | EC-009 | CLOSED | Surgical cleanup of dead tap targets and snackbar feedback. |
 | EC-011 | Scheduling Model | Critical | Large | AI Agent | EC-009 | CLOSED | ScheduleRule, ScheduleException & TimelineInstance. |
-| EC-RE-001 | Hierarchical Activity Nodes | Critical | Large | AI Agent | EC-011 | APPROVED | Hierarchical tree refactor and validation implemented. |
+| EC-RE-001 | Hierarchical Activity Nodes | Critical | Large | AI Agent | EC-011 | CLOSED | Hierarchical tree refactor and validation implemented. |
+| EC-RE-002 | Progressive Activity Editor | Critical | Large | AI Agent | EC-RE-001 | APPROVED | Inline hierarchical editing with persistent Undo support. |
 
 ---
 

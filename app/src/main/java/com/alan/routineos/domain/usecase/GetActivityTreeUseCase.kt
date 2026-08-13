@@ -40,7 +40,7 @@ class GetActivityTreeUseCase @Inject constructor(
         completedIds: Set<String>
     ): List<ActivityNodeTree> {
         return allNodes
-            .filter { it.parentId == parentId }
+            .filter { it.parentId == parentId && !it.isDeleted }
             .sortedBy { it.position }
             .map { node ->
                 val children = buildTree(allNodes, node.id, completedIds)

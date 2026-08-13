@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.repository.ActivityRepository
-import com.alan.routineos.domain.usecase.GetActivityTreeUseCase
+import com.alan.routineos.domain.usecase.*
 import com.alan.routineos.feature.dashboard.model.ActivityNodeUiProjection
 import com.alan.routineos.feature.dashboard.model.toUiProjection
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +20,8 @@ sealed class ActivityDetailUiEvent {
     data class ShowSnackbar(
         val message: String,
         val actionLabel: String? = null,
-        val nodeId: String? = null
+        val nodeId: String? = null,
+        val deletedBatch: List<String>? = null
     ) : ActivityDetailUiEvent()
 }
 
@@ -28,13 +29,18 @@ data class ActivityDetailUiState(
     val activity: ActivityDefinition? = null,
     val nodes: List<ActivityNodeUiProjection> = emptyList(),
     val isLoading: Boolean = true,
-    val newNodeTitle: String = ""
+    val newNodeTitle: String = "",
+    val editingNodeId: String? = null
 )
 
 @HiltViewModel
 class ActivityDetailViewModel @Inject constructor(
     private val repository: ActivityRepository,
     private val getActivityTreeUseCase: GetActivityTreeUseCase,
+    private val addChildUseCase: AddChildUseCase,
+    private val updateNodeUseCase: UpdateNodeUseCase,
+    private val deleteBranchUseCase: DeleteBranchUseCase,
+    private val restoreBranchUseCase: RestoreBranchUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -85,10 +91,60 @@ class ActivityDetailViewModel @Inject constructor(
                 activityDefinitionId = activityId,
                 parentId = null,
                 position = _uiState.value.nodes.filter { it.depth == 0 }.size,
-                title = title
+                title = title,
+                description = "",
+                isDeleted = false
             )
             repository.upsertNode(newNode)
             _uiState.update { it.copy(newNodeTitle = "") }
+        }
+    }
+
+    fun onAddChild(parentId: String, title: String) {
+        viewModelScope.launch {
+            try {
+                addChildUseCase(parentId, title)
+                expandedNodes.update { it + parentId }
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al añadir sub-paso"))
+            }
+        }
+    }
+
+    fun onUpdateNode(nodeId: String, newTitle: String) {
+        viewModelScope.launch {
+            try {
+                updateNodeUseCase(nodeId, newTitle)
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al actualizar paso"))
+            }
+        }
+    }
+
+    fun onDeleteBranch(nodeId: String) {
+        viewModelScope.launch {
+            try {
+                val affectedIds = deleteBranchUseCase(nodeId)
+                _uiEvent.emit(
+                    ActivityDetailUiEvent.ShowSnackbar(
+                        message = "Rama eliminada",
+                        actionLabel = "Deshacer",
+                        deletedBatch = affectedIds
+                    )
+                )
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al eliminar rama"))
+            }
+        }
+    }
+
+    fun onRestoreBranch(nodeIds: List<String>) {
+        viewModelScope.launch {
+            try {
+                restoreBranchUseCase(nodeIds)
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al restaurar rama"))
+            }
         }
     }
 
@@ -124,5 +180,9 @@ class ActivityDetailViewModel @Inject constructor(
         expandedNodes.update {
             if (it.contains(nodeId)) it - nodeId else it + nodeId
         }
+    }
+
+    fun setEditingNode(nodeId: String?) {
+        _uiState.update { it.copy(editingNodeId = nodeId) }
     }
 }

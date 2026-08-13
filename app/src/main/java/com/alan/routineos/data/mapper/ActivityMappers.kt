@@ -36,7 +36,9 @@ fun ActivityNodeEntity.toDomain(): ActivityNode {
         activityDefinitionId = activityDefinitionId,
         parentId = parentId,
         position = position,
-        title = title
+        title = title,
+        description = description,
+        isDeleted = isDeleted
     )
 }
 
@@ -46,7 +48,9 @@ fun ActivityNode.toEntity(): ActivityNodeEntity {
         activityDefinitionId = activityDefinitionId,
         parentId = parentId,
         position = position,
-        title = title
+        title = title,
+        description = description,
+        isDeleted = isDeleted
     )
 }
 

@@ -72,6 +72,7 @@ class ReorderNodesTest {
         override suspend fun getActivityDefinitionById(id: String): com.alan.routineos.data.local.entities.ActivityDefinitionEntity? = null
         override suspend fun insertActivityDefinition(activityDefinition: com.alan.routineos.data.local.entities.ActivityDefinitionEntity) {}
         override suspend fun deleteActivityDefinition(activityDefinition: com.alan.routineos.data.local.entities.ActivityDefinitionEntity) {}
+        override suspend fun getDefinitionsList(): List<com.alan.routineos.data.local.entities.ActivityDefinitionEntity> = emptyList()
     }
     
     private class FakeActivityExecutionDao : ActivityExecutionDao {

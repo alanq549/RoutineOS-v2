@@ -9,7 +9,7 @@ interface ScheduleExceptionDao {
     @Query("SELECT * FROM schedule_exceptions WHERE scheduleRuleId = :ruleId")
     fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleExceptionEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertException(exception: ScheduleExceptionEntity)
 
     @Delete
