@@ -5,10 +5,10 @@ phase: 4
 priority: High
 effort: Small
 owner: AI Agent
-status: IMPLEMENTED
+status: APPROVED
 depends_on: [EC-009]
 branch: feature/ec-010-interaction-cleanup
-audit: Pending
+audit: AUDIT_EC-010
 created: 2026-08-09
 updated: 2026-08-09
 ---
