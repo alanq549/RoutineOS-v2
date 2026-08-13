@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -281,10 +283,15 @@ private fun NodeItem(
             modifier = Modifier.weight(1f)
         )
         if (!projection.isLeaf) {
-            Text(
-                text = if (projection.isExpanded) "▼" else "▶",
-                style = RoutineTheme.typography.labelCaps,
-                color = RoutineTheme.colors.onSurfaceVariant
+            Icon(
+                imageVector = if (projection.isExpanded) {
+                    Icons.Default.ExpandMore
+                } else {
+                    Icons.Default.ChevronRight
+                },
+                contentDescription = if (projection.isExpanded) "Collapse" else "Expand",
+                tint = RoutineTheme.colors.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
             )
         }
     }

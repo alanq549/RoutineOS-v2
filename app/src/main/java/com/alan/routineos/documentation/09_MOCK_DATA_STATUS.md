@@ -10,6 +10,12 @@ en vez de la capa Room real, para evitar que queden como deuda técnica invisibl
 | Stats | FakeStatsRepository | Sí | Pre-existente (commit 7525a2a, 2026-07-19) — detectado en auditoría de EC-006 | Pendiente | 🟡 Activo |
 | System | FakeSystemRepository | Sí | Pre-existente (commit 7525a2a, 2026-07-19) — detectado en auditoría de EC-006 | Pendiente | 🟡 Activo |
 
+## Datos Semilla (Development Seed)
+
+| Entidad | Origen | Propósito | Estado |
+|---|---|---|---|
+| Universidad (Demo Jerárquica) | DatabaseSeed.kt | Validar jerarquía de 3 niveles en Dashboard/Detalle. | 🟢 Activo (Dev only) |
+
 ## Deuda Técnica de Infraestructura
 
 | Tarea | Origen | Impacto | Estado |

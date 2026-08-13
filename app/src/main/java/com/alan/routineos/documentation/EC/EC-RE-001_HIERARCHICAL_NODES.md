@@ -5,10 +5,10 @@ phase: 1
 priority: Critical
 effort: Large
 owner: AI Agent
-status: USER_REVIEW_PENDING
+status: APPROVED
 depends_on: EC-011
 branch: feature/ec-re-001-hierarchical-nodes
-audit: AUDIT_EC-RE-001
+audit: APPROVED
 created: 2026-08-13
 updated: 2026-08-13
 ---
@@ -79,11 +79,14 @@ Antes de marcar como APPROVED, verificar:
 - [x] Lecciones aprendidas documentadas arriba.
 
 ## Checklist de Validación de Usuario
-- [ ] Crea una actividad con sub-pasos anidados (ej. Proyecto -> Fase -> Tarea).
-- [ ] Confirma que la sangría (indentación) permite distinguir los niveles.
-- [ ] Al completar todos los sub-pasos de un nivel, el paso "padre" se marca automáticamente como completado.
-- [ ] Al desmarcar un sub-paso, el padre vuelve al estado "En Progreso".
-- [ ] Confirma que puedes expandir y colapsar secciones del árbol.
+- [x] Crea una actividad con sub-pasos anidados (ej. Proyecto -> Fase -> Tarea).
+- [x] Confirma que la sangría (indentación) permite distinguir los niveles.
+- [x] Al completar todos los sub-pasos de un nivel, el paso "padre" se marca automáticamente como completado.
+- [x] Al desmarcar un sub-paso, el padre vuelve al estado "En Progreso".
+- [x] Confirma que puedes expandir y colapsar secciones del árbol.
+
+> [!NOTE]
+> **Pendiente para EC Futura:** Aunque el motor calcula el estado agregado (`IN_PROGRESS`, `COMPLETED`), la visualización visual completa y la semántica UX de progreso jerárquico detallado (ej. barras de progreso, badges de conteo) se abordarán en una Épica posterior centrada en "Execution & Progress".
 
 ## Estado
 El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

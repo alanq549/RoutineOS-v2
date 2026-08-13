@@ -7,8 +7,8 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `feature/ec-re-001-hierarchical-nodes` |
 | **Current Phase** | Fase 1: Activity Core (Baseline v2) |
-| **Current Goal** | Validar EC-RE-001 con el usuario |
-| **Current EC** | [EC-RE-001_HIERARCHICAL_NODES](./EC/EC-RE-001_HIERARCHICAL_NODES.md) |
+| **Current Goal** | Definir contrato técnico/UX para EC-RE-002 |
+| **Current EC** | Ninguna |
 | **Next EC** | [EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR](./EC/EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-001 Auditada**: Verificación técnica exitosa (23 tests pasados). Estructura jerárquica, integridad de ciclos y propagación de estados validados.
-- **Estado**: USER_REVIEW_PENDING.
-- Lista para validación visual de profundidad 3 y completion recursivo.
+- **EC-RE-001 Cerrada**: Estructura jerárquica de 3 niveles validada satisfactoriamente en dispositivo.
+- **Siguiente paso**: Documentar el contrato del Editor Progresivo (EC-RE-002) priorizando la revelación progresiva y el agnosticismo de significado.
+- **Observación UX**: La visualización avanzada de progreso agregado queda para una iteración posterior.

@@ -17,4 +17,7 @@ interface ActivityDefinitionDao {
 
     @Delete
     suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinitionEntity)
+
+    @Query("SELECT * FROM activity_definitions")
+    suspend fun getDefinitionsList(): List<ActivityDefinitionEntity>
 }
