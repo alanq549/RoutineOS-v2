@@ -164,7 +164,7 @@ private fun NodesSectionTitle() {
 }
 
 private fun LazyListScope.nodesContent(
-    nodes: List<ActivityNodeWithExecution>,
+    nodes: List<ActivityNodeTreeWithExecution>,
     onCompleteNodeClick: (String) -> Unit
 ) {
     if (nodes.isEmpty()) {
@@ -173,7 +173,7 @@ private fun LazyListScope.nodesContent(
         items(nodes) { nodeWithExecution ->
             NodeItem(
                 nodeWithExecution = nodeWithExecution,
-                onCompleteClick = { onCompleteNodeClick(nodeWithExecution.node.id) }
+                onCompleteClick = { onCompleteNodeClick(nodeWithExecution.treeNode.node.id) }
             )
         }
     }
@@ -247,12 +247,13 @@ private fun AddNodeIconButton(onClick: () -> Unit, enabled: Boolean) {
 
 @Composable
 private fun NodeItem(
-    nodeWithExecution: ActivityNodeWithExecution,
+    nodeWithExecution: ActivityNodeTreeWithExecution,
     onCompleteClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(start = (nodeWithExecution.treeNode.depth * 24).dp)
             .background(RoutineTheme.colors.surface1, RoutineTheme.shapes.small)
             .border(1.dp, RoutineTheme.colors.border, RoutineTheme.shapes.small)
             .padding(16.dp),
@@ -260,7 +261,7 @@ private fun NodeItem(
     ) {
         CompletionIcon(nodeWithExecution.isCompleted, onCompleteClick)
         Text(
-            text = nodeWithExecution.node.title,
+            text = nodeWithExecution.treeNode.node.title,
             style = RoutineTheme.typography.bodyBase,
             color = RoutineTheme.colors.onSurface
         )

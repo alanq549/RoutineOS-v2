@@ -15,6 +15,8 @@ interface ActivityRepository {
     fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>>
     suspend fun upsertNode(node: ActivityNode)
     suspend fun deleteNode(node: ActivityNode)
+    suspend fun reorderNodes(nodeIds: List<String>)
+    suspend fun moveNode(nodeId: String, newParentId: String?)
     
     suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String)
     fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>>

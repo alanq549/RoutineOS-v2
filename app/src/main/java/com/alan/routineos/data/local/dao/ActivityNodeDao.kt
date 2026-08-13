@@ -14,4 +14,10 @@ interface ActivityNodeDao {
 
     @Delete
     suspend fun deleteNode(node: ActivityNodeEntity)
+
+    @Update
+    suspend fun updateNodes(nodes: List<ActivityNodeEntity>)
+
+    @Query("SELECT * FROM activity_nodes WHERE id = :id")
+    suspend fun getNodeById(id: String): ActivityNodeEntity?
 }

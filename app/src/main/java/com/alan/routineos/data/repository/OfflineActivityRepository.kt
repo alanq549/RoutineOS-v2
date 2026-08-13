@@ -59,6 +59,19 @@ class OfflineActivityRepository @Inject constructor(
         activityNodeDao.deleteNode(node.toEntity())
     }
 
+    override suspend fun reorderNodes(nodeIds: List<String>) {
+        val entities = nodeIds.mapIndexedNotNull { index, id ->
+            activityNodeDao.getNodeById(id)?.copy(position = index)
+        }
+        activityNodeDao.updateNodes(entities)
+    }
+
+    override suspend fun moveNode(nodeId: String, newParentId: String?) {
+        activityNodeDao.getNodeById(nodeId)?.let { node ->
+            activityNodeDao.insertNode(node.copy(parentId = newParentId))
+        }
+    }
+
     override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String) {
         val execution = ActivityExecutionEntity(
             id = UUID.randomUUID().toString(),
