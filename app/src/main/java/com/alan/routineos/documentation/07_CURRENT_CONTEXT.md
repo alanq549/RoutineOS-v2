@@ -7,7 +7,7 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `feature/ec-re-001-hierarchical-nodes` |
 | **Current Phase** | Fase 1: Activity Core (Baseline v2) |
-| **Current Goal** | Finalizar correcciones de Hierarchical Nodes (EC-RE-001) |
+| **Current Goal** | Validar EC-RE-001 con el usuario |
 | **Current EC** | [EC-RE-001_HIERARCHICAL_NODES](./EC/EC-RE-001_HIERARCHICAL_NODES.md) |
 | **Next EC** | [EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR](./EC/EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR.md) |
 | **Blocked By** | Ninguna |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **Correcciones EC-RE-001 completadas**: Se implementó validación de ciclos en Dominio, lógica de completion jerárquica (Opción C) y separación estricta entre Dominio y UI.
-- **Calidad Verificada**: 18 tests exitosos y build exitoso.
-- Lista para auditoría final antes de proceder con el Editor Progresivo.
+- **EC-RE-001 Auditada**: Verificación técnica exitosa (23 tests pasados). Estructura jerárquica, integridad de ciclos y propagación de estados validados.
+- **Estado**: USER_REVIEW_PENDING.
+- Lista para validación visual de profundidad 3 y completion recursivo.

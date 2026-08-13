@@ -5,10 +5,10 @@ phase: 1
 priority: Critical
 effort: Large
 owner: AI Agent
-status: AUDIT_PENDING
+status: USER_REVIEW_PENDING
 depends_on: EC-011
 branch: feature/ec-re-001-hierarchical-nodes
-audit: Pending
+audit: AUDIT_EC-RE-001
 created: 2026-08-13
 updated: 2026-08-13
 ---
@@ -77,6 +77,13 @@ Antes de marcar como APPROVED, verificar:
 - [x] Checklist de [ARCHITECTURE_INVARIANTS.md](../08_ARCHITECTURE_INVARIANTS.md) revisado y sin violaciones.
 - [x] Si se usó Fake*Repository, está registrado en [MOCK_DATA_STATUS.md](../09_MOCK_DATA_STATUS.md).
 - [x] Lecciones aprendidas documentadas arriba.
+
+## Checklist de Validación de Usuario
+- [ ] Crea una actividad con sub-pasos anidados (ej. Proyecto -> Fase -> Tarea).
+- [ ] Confirma que la sangría (indentación) permite distinguir los niveles.
+- [ ] Al completar todos los sub-pasos de un nivel, el paso "padre" se marca automáticamente como completado.
+- [ ] Al desmarcar un sub-paso, el padre vuelve al estado "En Progreso".
+- [ ] Confirma que puedes expandir y colapsar secciones del árbol.
 
 ## Estado
 El estado vigente de esta EC es el declarado en el campo `status` del frontmatter (arriba de este documento). No dupliques el valor aquí.

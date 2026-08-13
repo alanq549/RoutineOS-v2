@@ -328,7 +328,14 @@ fun ActivityDetailScreenPreview() {
     RoutineTheme {
         ActivityDetailScreen(
             uiState = ActivityDetailUiState(
-                activity = com.alan.routineos.domain.model.ActivityDefinition("1", "Actividad de Prueba", "Descripción"),
+                activity = com.alan.routineos.domain.model.ActivityDefinition("1", "Universidad", "Ciclo 02 - 2026"),
+                nodes = listOf(
+                    ActivityNodeUiProjection("1", "Bases de Datos", com.alan.routineos.domain.model.NodeStatus.IN_PROGRESS, 0, true, false),
+                    ActivityNodeUiProjection("1.1", "SQL Lab", com.alan.routineos.domain.model.NodeStatus.COMPLETED, 1, true, true),
+                    ActivityNodeUiProjection("1.2", "NoSQL Lab", com.alan.routineos.domain.model.NodeStatus.PENDING, 1, true, true),
+                    ActivityNodeUiProjection("2", "Redes", com.alan.routineos.domain.model.NodeStatus.PENDING, 0, false, false),
+                    ActivityNodeUiProjection("3", "Ingeniería de Software", com.alan.routineos.domain.model.NodeStatus.PENDING, 0, true, true)
+                ),
                 isLoading = false
             ),
             onBackClick = {},

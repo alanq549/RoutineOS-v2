@@ -24,9 +24,11 @@ class FakeTodayRepository {
                 endTime = "15:00",
                 status = TimelineItemStatus.ACTIVE,
                 nodes = listOf(
-                    ActivityNodeSnapshot("2.1", "Programación", "09:30", "10:30", TimelineItemStatus.COMPLETED),
-                    ActivityNodeSnapshot("2.2", "Bases de datos", "11:00", "12:00", TimelineItemStatus.ACTIVE),
-                    ActivityNodeSnapshot("2.3", "Redes", "12:00", "14:00", TimelineItemStatus.PENDING)
+                    ActivityNodeSnapshot("2.1", "Bases de datos", "09:30", "11:00", TimelineItemStatus.ACTIVE),
+                    ActivityNodeSnapshot("2.1.1", "SQL Lab", "09:30", "10:15", TimelineItemStatus.COMPLETED),
+                    ActivityNodeSnapshot("2.1.2", "NoSQL Lab", "10:15", "11:00", TimelineItemStatus.PENDING),
+                    ActivityNodeSnapshot("2.2", "Redes", "11:00", "12:00", TimelineItemStatus.PENDING),
+                    ActivityNodeSnapshot("2.3", "Ingeniería de Software", "12:00", "14:00", TimelineItemStatus.PENDING)
                 )
             ),
             TodayTimelineItem.Spontaneous(
