@@ -5,7 +5,7 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-010-interaction-cleanup` |
+| **Current Branch** | `feature/scheduling-model` |
 | **Current Phase** | Fase 4: Routine Management |
 | **Current Goal** | Finalizar implementación de Scheduling Model (EC-011) |
 | **Current EC** | [EC-011_SCHEDULING_MODEL](./EC/EC-011_SCHEDULING_MODEL.md) |
