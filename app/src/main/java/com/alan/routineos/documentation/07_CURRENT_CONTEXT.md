@@ -5,11 +5,11 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/scheduling-model` |
-| **Current Phase** | Fase 4: Routine Management |
-| **Current Goal** | Finalizar implementación de Scheduling Model (EC-011) |
-| **Current EC** | [EC-011_SCHEDULING_MODEL](./EC/EC-011_SCHEDULING_MODEL.md) |
-| **Next EC** | [EC-012_TODAY_REAL_INTEGRATION](./EC/EC-012_TODAY_REAL_INTEGRATION.md) |
+| **Current Branch** | `feature/ec-re-001-hierarchical-nodes` |
+| **Current Phase** | Fase 1: Activity Core (Baseline v2) |
+| **Current Goal** | Implementar Hierarchical Activity Nodes (EC-RE-001) |
+| **Current EC** | [EC-RE-001_HIERARCHICAL_NODES](./EC/EC-RE-001_HIERARCHICAL_NODES.md) |
+| **Next EC** | [EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR](./EC/EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- EC-010 (Interaction Cleanup) aprobada y cerrada formalmente.
-- Placeholders muertos eliminados y feedback de "Deshacer" funcional en ejecución de nodos.
-- Lista para iniciar Fase 4 - Agendamiento (EC-011).
+- **Re-baseline Estratégico completado**: El proyecto ahora se enfoca en ser un "OS Adaptable".
+- **Iniciando EC-RE-001**: Implementación de la estructura jerárquica para nodos de actividad.
+- Migración destructiva V5 planeada para limpiar la deuda técnica de los modelos planos.
