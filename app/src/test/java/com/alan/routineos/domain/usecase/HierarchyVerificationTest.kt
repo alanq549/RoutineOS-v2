@@ -141,7 +141,49 @@ class HierarchyVerificationTest {
         assertEquals("Node D", treeUpdated[0].children[2].node.title)
     }
 
-    private class FakeActivityRepository : ActivityRepository {
+    @Test
+    fun `DeleteBranch and RestoreBranch handle precise restoration correctly`() = runBlocking {
+        val defId = "act1"
+        // Structure: A -> B (deleted), A -> C -> D
+        val nodeA = ActivityNode("A", defId, null, 0, "A")
+        val nodeB = ActivityNode("B", defId, "A", 0, "B", isDeleted = true)
+        val nodeC = ActivityNode("C", defId, "A", 1, "C")
+        val nodeD = ActivityNode("D", defId, "C", 0, "D")
+        
+        val currentNodes = mutableListOf(nodeA, nodeB, nodeC, nodeD)
+        
+        val repository = object : FakeActivityRepository() {
+            override suspend fun getNodesListForActivityDefinition(id: String) = currentNodes
+            override suspend fun getNodeById(id: String) = currentNodes.find { it.id == id }
+            override suspend fun upsertNode(node: ActivityNode) {
+                val index = currentNodes.indexOfFirst { it.id == node.id }
+                if (index != -1) currentNodes[index] = node else currentNodes.add(node)
+            }
+        }
+        
+        val deleteBranch = DeleteBranchUseCase(repository)
+        val restoreBranch = RestoreBranchUseCase(repository)
+
+        // 1. Delete branch starting at A
+        val affectedIds = deleteBranch("A")
+
+        // Should include A, C, D but NOT B (B was already deleted)
+        assertEquals(3, affectedIds.size)
+        assertTrue(affectedIds.contains("A"))
+        assertTrue(affectedIds.contains("C"))
+        assertTrue(affectedIds.contains("D"))
+        
+        // 2. Restore branch
+        restoreBranch(affectedIds)
+
+        // A, C, D should be active. B should REMAIN deleted.
+        assertTrue("A should be active", currentNodes.find { it.id == "A" }?.isDeleted == false)
+        assertTrue("C should be active", currentNodes.find { it.id == "C" }?.isDeleted == false)
+        assertTrue("D should be active", currentNodes.find { it.id == "D" }?.isDeleted == false)
+        assertTrue("B should remain deleted", currentNodes.find { it.id == "B" }?.isDeleted == true)
+    }
+
+    private open class FakeActivityRepository : ActivityRepository {
         private var nodes = emptyList<ActivityNode>()
         private var completedIds = setOf<String>()
 
@@ -155,6 +197,8 @@ class HierarchyVerificationTest {
         override suspend fun upsertActivityDefinition(activityDefinition: ActivityDefinition) {}
         override suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition) {}
         override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = flowOf(nodes)
+        override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> = nodes
+        override suspend fun getNodeById(id: String): ActivityNode? = nodes.find { it.id == id }
         override suspend fun upsertNode(node: ActivityNode) {}
         override suspend fun deleteNode(node: ActivityNode) {}
         override suspend fun reorderNodes(nodeIds: List<String>) {}

@@ -5,7 +5,7 @@ import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.repository.ActivityRepository
-import com.alan.routineos.domain.usecase.GetActivityTreeUseCase
+import com.alan.routineos.domain.usecase.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +30,10 @@ class ActivityDetailViewModelTest {
         viewModel = ActivityDetailViewModel(
             repository = repository,
             getActivityTreeUseCase = GetActivityTreeUseCase(repository),
+            addChildUseCase = AddChildUseCase(repository, ValidateActivityNodeUseCase()),
+            updateNodeUseCase = UpdateNodeUseCase(repository),
+            deleteBranchUseCase = DeleteBranchUseCase(repository),
+            restoreBranchUseCase = RestoreBranchUseCase(repository),
             savedStateHandle = SavedStateHandle(mapOf("activityId" to "act1"))
         )
     }
@@ -78,7 +82,9 @@ class ActivityDetailViewModelTest {
         override suspend fun upsertActivityDefinition(activityDefinition: ActivityDefinition) = TODO()
         override suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition) = TODO()
         override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = _nodes
-        override suspend fun upsertNode(node: ActivityNode) = TODO()
+        override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> = _nodes.value
+        override suspend fun getNodeById(id: String): ActivityNode? = _nodes.value.find { it.id == id }
+        override suspend fun upsertNode(node: ActivityNode) {}
         override suspend fun deleteNode(node: ActivityNode) = TODO()
         override suspend fun reorderNodes(nodeIds: List<String>) = TODO()
         override suspend fun moveNode(nodeId: String, newParentId: String?) = TODO()

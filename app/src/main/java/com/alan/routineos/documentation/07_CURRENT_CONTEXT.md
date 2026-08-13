@@ -5,11 +5,11 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-re-001-hierarchical-nodes` |
+| **Current Branch** | `feature/ec-re-002-progressive-activity-editor` |
 | **Current Phase** | Fase 1: Activity Core (Baseline v2) |
-| **Current Goal** | Definir contrato técnico/UX para EC-RE-002 |
+| **Current Goal** | Generar contrato técnico para Fase 2 |
 | **Current EC** | Ninguna |
-| **Next EC** | [EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR](./EC/EC-RE-002_PROGRESSIVE_ACTIVITY_EDITOR.md) |
+| **Next EC** | [EC-RE-003_FLEXIBLE_SCHEDULING_ENGINE](./EC/EC-RE-003_FLEXIBLE_SCHEDULING_ENGINE.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-001 Cerrada**: Estructura jerárquica de 3 niveles validada satisfactoriamente en dispositivo.
-- **Siguiente paso**: Documentar el contrato del Editor Progresivo (EC-RE-002) priorizando la revelación progresiva y el agnosticismo de significado.
-- **Observación UX**: La visualización avanzada de progreso agregado queda para una iteración posterior.
+- **EC-RE-002 Cerrada**: Editor Progresivo validado satisfactoriamente. Se corrigió el bug de integridad (REPLACE -> @Upsert).
+- **Estado**: Lista para definir Fase 2: Scheduling & Planning.
+- Se mantiene la observación UX sobre la nomenclatura de Scheduling/Metadata.

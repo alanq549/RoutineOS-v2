@@ -12,7 +12,7 @@ interface ActivityDefinitionDao {
     @Query("SELECT * FROM activity_definitions WHERE id = :id")
     suspend fun getActivityDefinitionById(id: String): ActivityDefinitionEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertActivityDefinition(activityDefinition: ActivityDefinitionEntity)
 
     @Delete

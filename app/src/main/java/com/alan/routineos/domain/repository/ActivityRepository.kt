@@ -13,6 +13,8 @@ interface ActivityRepository {
     suspend fun upsertActivityDefinition(activityDefinition: ActivityDefinition)
     suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition)
     fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>>
+    suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode>
+    suspend fun getNodeById(id: String): ActivityNode?
     suspend fun upsertNode(node: ActivityNode)
     suspend fun deleteNode(node: ActivityNode)
     suspend fun reorderNodes(nodeIds: List<String>)

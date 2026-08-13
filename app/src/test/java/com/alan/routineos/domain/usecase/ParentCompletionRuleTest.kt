@@ -22,6 +22,7 @@ class ParentCompletionRuleTest {
         
         val repository = object : FakeActivityRepository() {
             override fun getNodesForActivityDefinition(activityDefinitionId: String) = flowOf(nodes)
+            override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String) = nodes
             override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> {
                 // Return execution only for Child 1
                 return if (nodeId == "1.1") flowOf(listOf(ActivityExecution("e1", "1.1", 0, 0))) 
@@ -45,6 +46,7 @@ class ParentCompletionRuleTest {
         
         val repository = object : FakeActivityRepository() {
             override fun getNodesForActivityDefinition(activityDefinitionId: String) = flowOf(nodes)
+            override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String) = nodes
             override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) = 
                 flowOf(listOf(ActivityExecution("e1", nodeId, 0, 0)))
         }
@@ -61,7 +63,9 @@ class ParentCompletionRuleTest {
         override suspend fun upsertActivityDefinition(activityDefinition: ActivityDefinition) = TODO()
         override suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition) = TODO()
         override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = TODO()
-        override suspend fun upsertNode(node: ActivityNode) = TODO()
+        override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> = emptyList()
+        override suspend fun getNodeById(id: String): ActivityNode? = null
+        override suspend fun upsertNode(node: ActivityNode) {}
         override suspend fun deleteNode(node: ActivityNode) = TODO()
         override suspend fun reorderNodes(nodeIds: List<String>) = TODO()
         override suspend fun moveNode(nodeId: String, newParentId: String?) = TODO()

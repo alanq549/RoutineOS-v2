@@ -32,7 +32,14 @@ class OfflineActivityRepositoryTest {
         db = Room.inMemoryDatabaseBuilder(context, RoutineOSDatabase::class.java).build()
         activityDefinitionDao = db.activityDefinitionDao()
         activityNodeDao = db.activityNodeDao()
-        repository = OfflineActivityRepository(activityDefinitionDao, activityNodeDao)
+        repository = OfflineActivityRepository(
+            activityDefinitionDao = activityDefinitionDao,
+            activityNodeDao = activityNodeDao,
+            activityExecutionDao = db.activityExecutionDao(),
+            scheduleRuleDao = db.scheduleRuleDao(),
+            scheduleExceptionDao = db.scheduleExceptionDao(),
+            validateActivityNodeUseCase = com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase()
+        )
     }
 
     @After
@@ -88,7 +95,7 @@ class OfflineActivityRepositoryTest {
         val activityDefinition = ActivityDefinition(id = "ad1", title = "Activity", description = "Desc")
         repository.upsertActivityDefinition(activityDefinition)
         
-        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", title = "Node")
+        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", parentId = null, position = 0, title = "Node")
         repository.upsertNode(node)
         
         val result = repository.getNodesForActivityDefinition("ad1").first()
@@ -101,7 +108,7 @@ class OfflineActivityRepositoryTest {
         val activityDefinition = ActivityDefinition(id = "ad1", title = "Activity", description = "Desc")
         repository.upsertActivityDefinition(activityDefinition)
 
-        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", title = "Old Node")
+        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", parentId = null, position = 0, title = "Old Node")
         repository.upsertNode(node)
 
         val updated = node.copy(title = "New Node")
@@ -117,7 +124,7 @@ class OfflineActivityRepositoryTest {
         val activityDefinition = ActivityDefinition(id = "ad1", title = "Activity", description = "Desc")
         repository.upsertActivityDefinition(activityDefinition)
 
-        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", title = "Node")
+        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", parentId = null, position = 0, title = "Node")
         repository.upsertNode(node)
         repository.deleteNode(node)
 
@@ -130,7 +137,7 @@ class OfflineActivityRepositoryTest {
         val activityDefinition = ActivityDefinition(id = "ad1", title = "Activity", description = "Desc")
         repository.upsertActivityDefinition(activityDefinition)
 
-        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", title = "Node")
+        val node = ActivityNode(id = "n1", activityDefinitionId = "ad1", parentId = null, position = 0, title = "Node")
         repository.upsertNode(node)
 
         repository.deleteActivityDefinition(activityDefinition)
