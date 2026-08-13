@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 
@@ -41,6 +42,7 @@ class ActivityDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val activityId: String = checkNotNull(savedStateHandle["activityId"])
+    private val referenceDate: Long = LocalDate.now().toEpochDay()
 
     private val _uiState = MutableStateFlow(ActivityDetailUiState())
     val uiState: StateFlow<ActivityDetailUiState> = _uiState.asStateFlow()
@@ -76,7 +78,7 @@ class ActivityDetailViewModel @Inject constructor(
 
     private fun getNodesWithExecutionsFlow(nodes: List<ActivityNode>): Flow<List<ActivityNodeWithExecution>> {
         val executionFlows = nodes.map { node ->
-            repository.getExecutionsForNode(node.id).map { executions ->
+            repository.getExecutionsForNodeOnDate(node.id, referenceDate).map { executions ->
                 ActivityNodeWithExecution(
                     node = node,
                     isCompleted = executions.isNotEmpty(),
@@ -120,10 +122,10 @@ class ActivityDetailViewModel @Inject constructor(
             try {
                 val nodeWithExecution = _uiState.value.nodes.find { it.node.id == nodeId }
                 if (nodeWithExecution?.isCompleted == true) {
-                    repository.deleteExecutionsForNode(nodeId)
+                    repository.deleteExecutionsForNodeOnDate(nodeId, referenceDate)
                     _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso marcado como pendiente", "Deshacer", nodeId))
                 } else {
-                    repository.registerExecution(nodeId, "{}")
+                    repository.registerExecution(nodeId, referenceDate, "{}")
                     _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso completado", "Deshacer", nodeId))
                 }
             } catch (e: Exception) {

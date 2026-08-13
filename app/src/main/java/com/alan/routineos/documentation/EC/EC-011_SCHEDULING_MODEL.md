@@ -5,12 +5,12 @@ phase: 5
 priority: Critical
 effort: Large
 owner: AI Agent
-status: DRAFT
+status: IN_PROGRESS
 depends_on: [EC-009]
 branch: feature/scheduling-model
 audit: Pending
 created: 2026-08-09
-updated: 2026-08-09
+updated: 2026-08-12
 ---
 
 # EC-011: Scheduling Model
@@ -30,7 +30,7 @@ implementó el motor de ejecución (`ActivityExecution`) asumiendo un nodo
 no-recurrente; esta EC extiende el modelo para soportar recurrencia sin romper
 lo ya auditado en EC-009.
 
-## Proble comunicación
+## Problemas Identificados
 1. `ActivityNode(id, activityDefinitionId, title)` no puede expresar "todos los
    lunes/miércoles/viernes" ni "3 veces por semana, el usuario elige cuándo"
    (horario flexible vs. fijo, mencionado como requisito por el usuario).
@@ -140,11 +140,17 @@ Antes de marcar como APPROVED, verificar:
 ## Checklist de Validación de Usuario
 (El agente auditor completa esta sección SOLO cuando el estado pasa a
 USER_REVIEW_PENDING. Lenguaje llano, sin jerga técnica.)
-- [ ] Al crear una actividad con recurrencia "lunes/miércoles/viernes" y marcar
-      un día como hecho, los otros días de esa misma actividad NO aparecen
-      como completados.
-- [ ] Al saltar (excepción) un día puntual, la regla general no se ve afectada
-      para el resto de las fechas.
+- [ ] En la pantalla de **Detalle de Actividad**, al completar un paso, el estado
+      es independiente para cada día (verificable cambiando la fecha del sistema).
+- [ ] Los tests unitar
+- ios confirman que las reglas de "Lunes/Miércoles/Viernes"
+      y las excepciones de "Saltar día" funcionan lógicamente antes de tener UI.
+
+> [!NOTE]
+> La validación visual de recurrencias en la pantalla principal ("Today") es
+> el objetivo de la **EC-012**, ya que esta EC (011) no incluye cambios en
+> la interfaz de Today.
+
 
 REGLA CRÍTICA: ningún agente puede marcar estos checkboxes ni cambiar el
 estado a APPROVED. Solo el usuario lo hace manualmente.

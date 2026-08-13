@@ -21,16 +21,11 @@ anidado de 3 rutas) dentro de `Planning`, unificando el módulo en una sola
 vista de trabajo que integre el catálogo de actividades como panel de soporte
 y saque la vista "Sistemas" del flujo de planificación diaria.
 
-## Contexto
-El análisis de arquitectura de información sobre `PlanningWorkspace`
-(`analysis_planning_structure.artifact.md`) identificó que las 3 vistas
-internas (PLANIFICADOR / ACTIVIDADES / SISTEMAS) representan niveles de
-abstracción distintos (asignación / inventario / taxonomía) que no deberían
-vivir como pestañas de igual jerarquía, porque obligan al usuario a saltar de
-contexto para una tarea que debería resolverse en una sola superficie. Esta EC
-ejecuta esa consolidación. Depende de EC-012 porque reutiliza el mismo patrón
-de interacción directa (tap, bottom sheet, snackbar) que Today ya habrá
-adoptado, para no introducir un tercer patrón distinto en la misma app.
+## Decisión de Diseño: Dashboard vs. Catalog
+Se decide renombrar `Dashboard*` a `ActivityCatalog*` para resolver una
+ambigüedad semántica: el término "Dashboard" se reserva para la pantalla de
+inicio unificada (futura), mientras que la funcionalidad actual representa un
+inventario o "Catálogo" de actividades disponibles para ser planificadas.
 
 ## Problema
 1. `PlanningWorkspace.kt` monta un `NavHost` interno con 3 rutas

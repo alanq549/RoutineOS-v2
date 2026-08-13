@@ -23,12 +23,10 @@ navegación, sin diálogo de confirmación.
 
 ## Contexto
 `Today` es el `startDestination` de la app (`AppNavHost.kt`) y la pantalla de
-uso diario más frecuente, pero hoy es enteramente mock: `FakeTodayRepository`,
-`onNodeToggled` vacío, FAB con `onClick = { }`, y `TimelineItemCard`/`NodeRow`
-sin ningún `clickable`. La única acción de completar nodo que funciona hoy vive
-en `ActivityDetailViewModel`, tres pantallas de navegación de distancia. Esta
-EC cierra esa brecha usando lo que EC-011 (resolución de instancias por fecha)
-y EC-010 (reglas de interacción) ya dejaron definido.
+uso diario más frecuente, pero hoy es enteramente mock. Esta EC cierra la brecha
+usando el motor de agendamiento (EC-011) y sanea la deuda técnica de inyección
+de dependencias detectada en la **Auditoría EC-006 (Ronda 2)**, migrando el
+ViewModel a Hilt.
 
 ## Problema
 1. `TodayViewModel` no está en el grafo de Hilt (se instancia con
