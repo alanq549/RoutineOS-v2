@@ -14,6 +14,7 @@ fun RoutineScaffold(
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     RoutineSurface(
@@ -22,6 +23,7 @@ fun RoutineScaffold(
         Scaffold(
             topBar = topBar,
             bottomBar = bottomBar,
+            snackbarHost = snackbarHost,
             containerColor = RoutineTheme.colors.background,
             contentColor = RoutineTheme.colors.onSurface,
             contentWindowInsets = WindowInsets.safeDrawing

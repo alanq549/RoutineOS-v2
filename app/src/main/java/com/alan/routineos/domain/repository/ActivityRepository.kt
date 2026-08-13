@@ -16,4 +16,5 @@ interface ActivityRepository {
     
     suspend fun registerExecution(nodeId: String, metadataJson: String)
     fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>>
+    suspend fun deleteExecutionsForNode(nodeId: String)
 }

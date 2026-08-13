@@ -13,6 +13,14 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+sealed class ActivityDetailUiEvent {
+    data class ShowSnackbar(
+        val message: String,
+        val actionLabel: String? = null,
+        val nodeId: String? = null
+    ) : ActivityDetailUiEvent()
+}
+
 data class ActivityNodeWithExecution(
     val node: ActivityNode,
     val isCompleted: Boolean,
@@ -36,6 +44,11 @@ class ActivityDetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(ActivityDetailUiState())
     val uiState: StateFlow<ActivityDetailUiState> = _uiState.asStateFlow()
+
+    private val _uiEvent = MutableSharedFlow<ActivityDetailUiEvent>()
+    val uiEvent: SharedFlow<ActivityDetailUiEvent> = _uiEvent.asSharedFlow()
+
+    private val processingNodeIds = MutableStateFlow<Set<String>>(emptySet())
 
     init {
         loadActivity()
@@ -98,9 +111,26 @@ class ActivityDetailViewModel @Inject constructor(
         }
     }
 
-    fun completeNode(nodeId: String) {
+    fun toggleNodeCompletion(nodeId: String) {
+        if (processingNodeIds.value.contains(nodeId)) return
+
+        processingNodeIds.update { it + nodeId }
+
         viewModelScope.launch {
-            repository.registerExecution(nodeId, "{}")
+            try {
+                val nodeWithExecution = _uiState.value.nodes.find { it.node.id == nodeId }
+                if (nodeWithExecution?.isCompleted == true) {
+                    repository.deleteExecutionsForNode(nodeId)
+                    _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso marcado como pendiente", "Deshacer", nodeId))
+                } else {
+                    repository.registerExecution(nodeId, "{}")
+                    _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso completado", "Deshacer", nodeId))
+                }
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al actualizar paso"))
+            } finally {
+                processingNodeIds.update { it - nodeId }
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.alan.routineos.feature.planning
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,18 +101,23 @@ fun PlanningScreen(
             }
         }
         
-        // FAB
-        FloatingActionButton(
-            onClick = { },
-            containerColor = RoutineTheme.colors.primary,
-            contentColor = RoutineTheme.colors.onPrimary,
-            shape = RoutineTheme.shapes.medium,
+        // FAB - Disabled as per EC-010 until EC-013 defines the action
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(RoutineTheme.spacing.lg)
                 .size(56.dp)
+                .background(
+                    color = RoutineTheme.colors.onSurface.copy(alpha = 0.12f),
+                    shape = RoutineTheme.shapes.medium
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Add activity")
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                tint = RoutineTheme.colors.onSurface.copy(alpha = 0.38f)
+            )
         }
     }
 }

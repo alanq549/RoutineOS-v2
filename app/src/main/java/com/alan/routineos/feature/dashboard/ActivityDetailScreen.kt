@@ -13,9 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,6 +21,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.alan.routineos.core.designsystem.component.RoutineScaffold
 import com.alan.routineos.core.designsystem.component.RoutineTopBar
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun ActivityDetailRoute(
@@ -36,7 +36,8 @@ fun ActivityDetailRoute(
         onBackClick = onBack,
         onNewNodeTitleChanged = viewModel::onNewNodeTitleChanged,
         onAddNodeClick = viewModel::addNode,
-        onCompleteNodeClick = viewModel::completeNode
+        onCompleteNodeClick = viewModel::toggleNodeCompletion,
+        uiEvent = viewModel.uiEvent
     )
 }
 
@@ -46,10 +47,31 @@ fun ActivityDetailScreen(
     onBackClick: () -> Unit,
     onNewNodeTitleChanged: (String) -> Unit,
     onAddNodeClick: () -> Unit,
-    onCompleteNodeClick: (String) -> Unit
+    onCompleteNodeClick: (String) -> Unit,
+    uiEvent: SharedFlow<ActivityDetailUiEvent>
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is ActivityDetailUiEvent.ShowSnackbar -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = event.actionLabel,
+                        duration = SnackbarDuration.Short
+                    )
+                    if (result == SnackbarResult.ActionPerformed && event.nodeId != null) {
+                        onCompleteNodeClick(event.nodeId)
+                    }
+                }
+            }
+        }
+    }
+
     RoutineScaffold(
-        topBar = { ActivityDetailTopBar(uiState.activity?.title, onBackClick) }
+        topBar = { ActivityDetailTopBar(uiState.activity?.title, onBackClick) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         ActivityDetailContent(
             uiState = uiState,
@@ -283,7 +305,8 @@ fun ActivityDetailScreenPreview() {
             onBackClick = {},
             onNewNodeTitleChanged = {},
             onAddNodeClick = {},
-            onCompleteNodeClick = {}
+            onCompleteNodeClick = {},
+            uiEvent = MutableSharedFlow()
         )
     }
 }

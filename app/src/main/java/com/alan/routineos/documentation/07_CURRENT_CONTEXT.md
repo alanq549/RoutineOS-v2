@@ -5,11 +5,11 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `develop` |
+| **Current Branch** | `feature/ec-010-interaction-cleanup` |
 | **Current Phase** | Fase 4: Routine Management |
 | **Current Goal** | Definir próxima prioridad estratégica |
 | **Current EC** | Ninguna |
-| **Next EC** | [EC-010_INTERACTION_INVARIANTS](./EC/EC-010_INTERACTION_INVARIANTS.md), [EC-011_SCHEDULING_MODEL](./EC/EC-011_SCHEDULING_MODEL.md), [EC-012_TODAY_REAL_INTEGRATION](./EC/EC-012_TODAY_REAL_INTEGRATION.md), [EC-013_PLANNING_CONSOLIDATION](./EC/EC-013_PLANNING_CONSOLIDATION.md) |
+| **Next EC** | [EC-011_SCHEDULING_MODEL](./EC/EC-011_SCHEDULING_MODEL.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- EC-009 (Activity Execution Engine) aprobada y cerrada formalmente.
-- Motor de ejecución agnóstico basado en JSON verificado y persistente.
-- Lista para iniciar Fase 4 - Refinamiento de interacción y scheduling.
+- EC-010 (Interaction Cleanup) aprobada y cerrada formalmente.
+- Placeholders muertos eliminados y feedback de "Deshacer" funcional en ejecución de nodos.
+- Lista para iniciar Fase 4 - Agendamiento (EC-011).
