@@ -25,6 +25,7 @@ interface ActivityRepository {
 
     // Scheduling
     fun getRulesForNode(nodeId: String): Flow<List<ScheduleRule>>
+    fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRule>>
     suspend fun upsertRule(rule: ScheduleRule)
     suspend fun deleteRule(rule: ScheduleRule)
 

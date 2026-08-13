@@ -6,8 +6,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScheduleRuleDao {
-    @Query("SELECT * FROM schedule_rules WHERE nodeId = :nodeId")
+    @Query("SELECT * FROM schedule_rules WHERE activityNodeId = :nodeId")
     fun getRulesForNode(nodeId: String): Flow<List<ScheduleRuleEntity>>
+
+    @Query("SELECT * FROM schedule_rules WHERE activityDefinitionId = :definitionId")
+    fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRuleEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRule(rule: ScheduleRuleEntity)

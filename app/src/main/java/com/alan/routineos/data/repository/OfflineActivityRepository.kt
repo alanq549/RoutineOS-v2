@@ -105,6 +105,12 @@ class OfflineActivityRepository @Inject constructor(
         }
     }
 
+    override fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRule>> {
+        return scheduleRuleDao.getRulesForDefinition(definitionId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override suspend fun upsertRule(rule: ScheduleRule) {
         scheduleRuleDao.insertRule(rule.toEntity())
     }

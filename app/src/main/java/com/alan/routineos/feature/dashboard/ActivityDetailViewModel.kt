@@ -126,6 +126,8 @@ class ActivityDetailViewModel @Inject constructor(
             val newNode = ActivityNode(
                 id = UUID.randomUUID().toString(),
                 activityDefinitionId = activityId,
+                parentId = null,
+                position = _uiState.value.nodes.size,
                 title = title
             )
             repository.upsertNode(newNode)
