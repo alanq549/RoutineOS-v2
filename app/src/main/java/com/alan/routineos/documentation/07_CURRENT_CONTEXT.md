@@ -7,8 +7,8 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `feature/ec-re-004-scheduling-editor` |
 | **Current Phase** | Fase 2: Scheduling & Planning (Baseline v2) |
-| **Current Goal** | Finalizar cierre de EC-RE-004 |
-| **Current EC** | [EC-RE-004_SCHEDULING_EDITOR](./EC/EC-RE-004_SCHEDULING_EDITOR.md) |
+| **Current Goal** | Definir contrato técnico para Fase 3 (Metadata) |
+| **Current EC** | Ninguna |
 | **Next EC** | [EC-RE-005_METADATA_SCHEMAS](./EC/EC-RE-005_METADATA_SCHEMAS.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-004 Auditada**: Verificación técnica exitosa. El editor de horarios es funcional y respeta las invariantes.
-- **Estado**: APPROVED. Listo para merge.
-- Siguiente paso: Fase 3 - Metadata Schemas.
+- **EC-RE-004 Cerrada**: Editor de horarios funcionales integrado en `develop`.
+- **Siguiente paso**: Definir el contrato para **Fase 3: Metadata Schemas & Execution Tracking**.
+- Se mantiene el enfoque agnóstico en el seguimiento de métricas personalizadas.
