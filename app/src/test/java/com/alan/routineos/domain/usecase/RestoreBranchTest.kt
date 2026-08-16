@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class RestoreBranchTest {
@@ -55,7 +54,10 @@ class RestoreBranchTest {
         override fun getAllRules(): Flow<List<ScheduleRule>> = flowOf(emptyList())
         override fun getAllExceptions(): Flow<List<ScheduleException>> = flowOf(emptyList())
         override fun getRulesForNode(nodeId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
+        override suspend fun getRulesListForNode(nodeId: String): List<ScheduleRule> = emptyList()
         override fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
+        override suspend fun getRulesListForDefinition(definitionId: String): List<ScheduleRule> = emptyList()
+        override fun getRulesForActivityTree(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
         override suspend fun upsertRule(rule: ScheduleRule) {}
         override suspend fun deleteRule(rule: ScheduleRule) {}
         override fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleException>> = flowOf(emptyList())

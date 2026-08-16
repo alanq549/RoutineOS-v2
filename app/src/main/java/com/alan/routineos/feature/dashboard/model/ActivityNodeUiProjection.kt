@@ -2,6 +2,7 @@ package com.alan.routineos.feature.dashboard.model
 
 import com.alan.routineos.domain.model.ActivityNodeTree
 import com.alan.routineos.domain.model.NodeStatus
+import com.alan.routineos.domain.model.ScheduleRule
 
 data class ActivityNodeUiProjection(
     val id: String,
@@ -10,6 +11,7 @@ data class ActivityNodeUiProjection(
     val depth: Int,
     val isExpanded: Boolean,
     val isLeaf: Boolean,
+    val rules: List<ScheduleRule> = emptyList(),
     val lastCompletionTimestamp: Long? = null
 )
 
@@ -20,7 +22,7 @@ fun List<ActivityNodeTree>.toUiProjection(
     val result = mutableListOf<ActivityNodeUiProjection>()
     
     this.forEach { treeNode ->
-        val isExpanded = expandedNodes.contains(treeNode.node.id) || depth == 0 // Example: auto-expand root level
+        val isExpanded = expandedNodes.contains(treeNode.node.id) || depth == 0 
         
         result.add(
             ActivityNodeUiProjection(
@@ -29,7 +31,8 @@ fun List<ActivityNodeTree>.toUiProjection(
                 status = treeNode.status,
                 depth = depth,
                 isExpanded = isExpanded,
-                isLeaf = treeNode.children.isEmpty()
+                isLeaf = treeNode.children.isEmpty(),
+                rules = treeNode.rules
             )
         )
         

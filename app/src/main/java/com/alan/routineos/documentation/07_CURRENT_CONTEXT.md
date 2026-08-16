@@ -5,11 +5,11 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-re-003-scheduling-engine` |
+| **Current Branch** | `feature/ec-re-004-scheduling-editor` |
 | **Current Phase** | Fase 2: Scheduling & Planning (Baseline v2) |
-| **Current Goal** | Definir contrato técnico para Fase 2 (Cont.) |
-| **Current EC** | Ninguna |
-| **Next EC** | [EC-RE-004_PLANNING_PROJECTION](./EC/EC-RE-004_PLANNING_PROJECTION.md) |
+| **Current Goal** | Finalizar cierre de EC-RE-004 |
+| **Current EC** | [EC-RE-004_SCHEDULING_EDITOR](./EC/EC-RE-004_SCHEDULING_EDITOR.md) |
+| **Next EC** | [EC-RE-005_METADATA_SCHEMAS](./EC/EC-RE-005_METADATA_SCHEMAS.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -18,7 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-003 Cerrada**: Motor de agendamiento flexible e infraestructura de instancias integrados en `develop`.
-- **Calidad**: 36 tests unitarios pasan. Detección de conflictos jerárquicos y snapshots de integridad validados.
-- Listo para iniciar Fase 2: Visual Planning.
-- Listo para iniciar **EC-RE-004** (Editor Visual de Horarios).
+- **EC-RE-004 Auditada**: Verificación técnica exitosa. El editor de horarios es funcional y respeta las invariantes.
+- **Estado**: APPROVED. Listo para merge.
+- Siguiente paso: Fase 3 - Metadata Schemas.

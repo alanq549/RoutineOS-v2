@@ -71,4 +71,10 @@ object UseCaseModule {
     fun provideConflictDetectorUseCase(): ConflictDetectorUseCase {
         return ConflictDetectorUseCase()
     }
+
+    @Provides
+    @Singleton
+    fun provideValidateScheduleRuleUseCase(): ValidateScheduleRuleUseCase {
+        return ValidateScheduleRuleUseCase()
+    }
 }

@@ -31,7 +31,10 @@ interface ActivityRepository {
     fun getAllRules(): Flow<List<ScheduleRule>>
     fun getAllExceptions(): Flow<List<ScheduleException>>
     fun getRulesForNode(nodeId: String): Flow<List<ScheduleRule>>
+    suspend fun getRulesListForNode(nodeId: String): List<ScheduleRule>
     fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRule>>
+    suspend fun getRulesListForDefinition(definitionId: String): List<ScheduleRule>
+    fun getRulesForActivityTree(definitionId: String): Flow<List<ScheduleRule>>
     suspend fun upsertRule(rule: ScheduleRule)
     suspend fun deleteRule(rule: ScheduleRule)
 
