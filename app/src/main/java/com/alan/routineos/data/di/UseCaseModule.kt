@@ -4,6 +4,8 @@ import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.AddChildUseCase
 import com.alan.routineos.domain.usecase.DeleteBranchUseCase
 import com.alan.routineos.domain.usecase.GetActivityTreeUseCase
+import com.alan.routineos.domain.usecase.MaterializeInstanceUseCase
+import com.alan.routineos.domain.usecase.ResolveTimelineUseCase
 import com.alan.routineos.domain.usecase.RestoreBranchUseCase
 import com.alan.routineos.domain.usecase.UpdateNodeUseCase
 import com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase
@@ -54,5 +56,17 @@ object UseCaseModule {
     @Singleton
     fun provideRestoreBranchUseCase(repository: ActivityRepository): RestoreBranchUseCase {
         return RestoreBranchUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideResolveTimelineUseCase(repository: ActivityRepository): ResolveTimelineUseCase {
+        return ResolveTimelineUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMaterializeInstanceUseCase(repository: ActivityRepository): MaterializeInstanceUseCase {
+        return MaterializeInstanceUseCase(repository)
     }
 }

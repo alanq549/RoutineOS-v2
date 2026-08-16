@@ -5,11 +5,11 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-re-002-progressive-activity-editor` |
-| **Current Phase** | Fase 1: Activity Core (Baseline v2) |
-| **Current Goal** | Generar contrato técnico para Fase 2 |
-| **Current EC** | Ninguna |
-| **Next EC** | [EC-RE-003_FLEXIBLE_SCHEDULING_ENGINE](./EC/EC-RE-003_FLEXIBLE_SCHEDULING_ENGINE.md) |
+| **Current Branch** | `feature/ec-re-003-scheduling-engine` |
+| **Current Phase** | Fase 2: Scheduling & Planning (Baseline v2) |
+| **Current Goal** | Implementar Scheduling Engine & Daily Instances (EC-RE-003) |
+| **Current EC** | [EC-RE-003_SCHEDULING_ENGINE](./EC/EC-RE-003_SCHEDULING_ENGINE.md) |
+| **Next EC** | [EC-RE-004_PLANNING_PROJECTION](./EC/EC-RE-004_PLANNING_PROJECTION.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |

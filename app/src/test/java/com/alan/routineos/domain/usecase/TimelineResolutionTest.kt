@@ -3,36 +3,77 @@ package com.alan.routineos.domain.usecase
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Test
+import java.time.LocalDate
 
-class RestoreBranchTest {
+class TimelineResolutionTest {
 
     @Test
-    fun `RestoreBranch marks specified nodes as active`() = runTest {
-        val defId = "act1"
-        val nodes = listOf(
-            ActivityNode("1", defId, null, 0, "Parent", isDeleted = true),
-            ActivityNode("1.1", defId, "1", 0, "Child 1", isDeleted = true)
+    fun `resolves virtual fixed days rule correctly`() = runTest {
+        val date = LocalDate.of(2023, 10, 23) // Monday
+        val rule = ScheduleRule(
+            id = "r1",
+            target = ScheduleTarget.Node("node1"),
+            type = ScheduleRuleType.FIXED_DAYS,
+            daysOfWeek = setOf(1) // Monday
         )
         
-        val restoredIds = mutableSetOf<String>()
+        val node = ActivityNode("node1", "act1", null, 0, "Node 1")
+        
         val repository = object : FakeActivityRepository() {
-            override suspend fun getNodeById(id: String) = nodes.find { it.id == id }
-            override suspend fun upsertNode(node: ActivityNode) {
-                if (!node.isDeleted) restoredIds.add(node.id)
-            }
+            override fun getAllRules() = flowOf(listOf(rule))
+            override fun getAllNodes() = flowOf(listOf(node))
+            override fun getDailyInstancesForDate(date: Long) = flowOf(emptyList<DailyInstance>())
+            override fun getActivityDefinitions() = flowOf(emptyList<ActivityDefinition>())
+            override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
         }
         
-        val useCase = RestoreBranchUseCase(repository)
-        useCase(listOf("1", "1.1"))
+        val useCase = ResolveTimelineUseCase(repository)
+        val result = useCase(date).first()
 
-        assertEquals(2, restoredIds.size)
-        restoredIds.contains("1")
-        restoredIds.contains("1.1")
+        assertEquals(1, result.size)
+        assertEquals("Node 1", result[0].instance.titleSnapshot)
+        assertEquals(false, result[0].isMaterialized)
+    }
+
+    @Test
+    fun `materialized instance has precedence over rule`() = runTest {
+        val date = LocalDate.of(2023, 10, 23) // Monday
+        val rule = ScheduleRule(
+            id = "r1",
+            target = ScheduleTarget.Node("node1"),
+            type = ScheduleRuleType.FIXED_DAYS,
+            daysOfWeek = setOf(1)
+        )
+        
+        val materialized = DailyInstance(
+            id = "m1",
+            target = ScheduleTarget.Node("node1"),
+            scheduledDate = date.toEpochDay(),
+            titleSnapshot = "Overridden Title",
+            descriptionSnapshot = "",
+            status = DailyInstanceStatus.MODIFIED
+        )
+        
+        val repository = object : FakeActivityRepository() {
+            override fun getAllRules() = flowOf(listOf(rule))
+            override fun getDailyInstancesForDate(date: Long) = flowOf(listOf(materialized))
+            override fun getAllNodes() = flowOf(emptyList<ActivityNode>())
+            override fun getActivityDefinitions() = flowOf(emptyList<ActivityDefinition>())
+            override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
+        }
+        
+        val useCase = ResolveTimelineUseCase(repository)
+        val result = useCase(date).first()
+
+        // Should only have the materialized one, not the virtual one
+        assertEquals(1, result.size)
+        assertEquals("Overridden Title", result[0].instance.titleSnapshot)
+        assertEquals(true, result[0].isMaterialized)
     }
 
     private open class FakeActivityRepository : ActivityRepository {

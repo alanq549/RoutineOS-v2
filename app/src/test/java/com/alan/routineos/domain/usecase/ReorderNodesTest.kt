@@ -45,6 +45,7 @@ class ReorderNodesTest {
             activityExecutionDao = FakeActivityExecutionDao(),
             scheduleRuleDao = FakeScheduleRuleDao(),
             scheduleExceptionDao = FakeScheduleExceptionDao(),
+            dailyInstanceDao = FakeDailyInstanceDao(),
             validateActivityNodeUseCase = ValidateActivityNodeUseCase()
         )
 
@@ -59,6 +60,7 @@ class ReorderNodesTest {
     }
 
     private open class FakeActivityNodeDao : ActivityNodeDao {
+        override fun getAllNodes(): Flow<List<ActivityNodeEntity>> = TODO()
         override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNodeEntity>> = TODO()
         override suspend fun insertNode(node: ActivityNodeEntity) {}
         override suspend fun deleteNode(node: ActivityNodeEntity) {}
@@ -84,15 +86,24 @@ class ReorderNodesTest {
     }
     
     private class FakeScheduleRuleDao : ScheduleRuleDao {
+        override fun getAllRules(): Flow<List<com.alan.routineos.data.local.entities.ScheduleRuleEntity>> = TODO()
         override fun getRulesForNode(nodeId: String): Flow<List<com.alan.routineos.data.local.entities.ScheduleRuleEntity>> = TODO()
         override fun getRulesForDefinition(definitionId: String): Flow<List<com.alan.routineos.data.local.entities.ScheduleRuleEntity>> = TODO()
-        override suspend fun insertRule(rule: com.alan.routineos.data.local.entities.ScheduleRuleEntity) = TODO()
-        override suspend fun deleteRule(rule: com.alan.routineos.data.local.entities.ScheduleRuleEntity) = TODO()
+        override suspend fun insertRule(rule: com.alan.routineos.data.local.entities.ScheduleRuleEntity) {}
+        override suspend fun deleteRule(rule: com.alan.routineos.data.local.entities.ScheduleRuleEntity) {}
     }
     
     private class FakeScheduleExceptionDao : ScheduleExceptionDao {
+        override fun getAllExceptions(): Flow<List<com.alan.routineos.data.local.entities.ScheduleExceptionEntity>> = TODO()
         override fun getExceptionsForRule(ruleId: String): Flow<List<com.alan.routineos.data.local.entities.ScheduleExceptionEntity>> = TODO()
-        override suspend fun insertException(exception: com.alan.routineos.data.local.entities.ScheduleExceptionEntity) = TODO()
-        override suspend fun deleteException(exception: com.alan.routineos.data.local.entities.ScheduleExceptionEntity) = TODO()
+        override suspend fun insertException(exception: com.alan.routineos.data.local.entities.ScheduleExceptionEntity) {}
+        override suspend fun deleteException(exception: com.alan.routineos.data.local.entities.ScheduleExceptionEntity) {}
+    }
+
+    private class FakeDailyInstanceDao : com.alan.routineos.data.local.dao.DailyInstanceDao {
+        override fun getInstancesForDate(date: Long): Flow<List<com.alan.routineos.data.local.entities.DailyInstanceEntity>> = TODO()
+        override suspend fun getInstanceByTarget(targetId: String, date: Long): com.alan.routineos.data.local.entities.DailyInstanceEntity? = null
+        override suspend fun insertInstance(instance: com.alan.routineos.data.local.entities.DailyInstanceEntity) {}
+        override suspend fun deleteInstance(instance: com.alan.routineos.data.local.entities.DailyInstanceEntity) {}
     }
 }

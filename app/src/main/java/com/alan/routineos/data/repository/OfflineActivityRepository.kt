@@ -3,6 +3,7 @@ package com.alan.routineos.data.repository
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
+import com.alan.routineos.data.local.dao.DailyInstanceDao
 import com.alan.routineos.data.local.dao.ScheduleExceptionDao
 import com.alan.routineos.data.local.dao.ScheduleRuleDao
 import com.alan.routineos.data.local.entities.ActivityExecutionEntity
@@ -11,6 +12,7 @@ import com.alan.routineos.data.mapper.toEntity
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
+import com.alan.routineos.domain.model.DailyInstance
 import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleRule
 import com.alan.routineos.domain.repository.ActivityRepository
@@ -26,11 +28,18 @@ class OfflineActivityRepository @Inject constructor(
     private val activityExecutionDao: ActivityExecutionDao,
     private val scheduleRuleDao: ScheduleRuleDao,
     private val scheduleExceptionDao: ScheduleExceptionDao,
+    private val dailyInstanceDao: DailyInstanceDao,
     private val validateActivityNodeUseCase: ValidateActivityNodeUseCase
 ) : ActivityRepository {
 
     override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> {
         return activityDefinitionDao.getAllActivityDefinitions().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override fun getAllNodes(): Flow<List<ActivityNode>> {
+        return activityNodeDao.getAllNodes().map { entities ->
             entities.map { it.toDomain() }
         }
     }
@@ -111,10 +120,11 @@ class OfflineActivityRepository @Inject constructor(
         activityNodeDao.insertNode(node.toEntity())
     }
 
-    override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String) {
+    override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {
         val execution = ActivityExecutionEntity(
             id = UUID.randomUUID().toString(),
             nodeId = nodeId,
+            dailyInstanceId = dailyInstanceId,
             scheduledDate = scheduledDate,
             completedAt = System.currentTimeMillis(),
             metadataJson = metadataJson
@@ -138,6 +148,12 @@ class OfflineActivityRepository @Inject constructor(
         activityExecutionDao.deleteExecutionsForNodeOnDate(nodeId, scheduledDate)
     }
 
+    override fun getAllRules(): Flow<List<ScheduleRule>> {
+        return scheduleRuleDao.getAllRules().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override fun getRulesForNode(nodeId: String): Flow<List<ScheduleRule>> {
         return scheduleRuleDao.getRulesForNode(nodeId).map { entities ->
             entities.map { it.toDomain() }
@@ -158,6 +174,12 @@ class OfflineActivityRepository @Inject constructor(
         scheduleRuleDao.deleteRule(rule.toEntity())
     }
 
+    override fun getAllExceptions(): Flow<List<ScheduleException>> {
+        return scheduleExceptionDao.getAllExceptions().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleException>> {
         return scheduleExceptionDao.getExceptionsForRule(ruleId).map { entities ->
             entities.map { it.toDomain() }
@@ -170,5 +192,19 @@ class OfflineActivityRepository @Inject constructor(
 
     override suspend fun deleteException(exception: ScheduleException) {
         scheduleExceptionDao.deleteException(exception.toEntity())
+    }
+
+    override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> {
+        return dailyInstanceDao.getInstancesForDate(date).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun upsertDailyInstance(instance: DailyInstance) {
+        dailyInstanceDao.insertInstance(instance.toEntity())
+    }
+
+    override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? {
+        return dailyInstanceDao.getInstanceByTarget(targetId, date)?.toDomain()
     }
 }
