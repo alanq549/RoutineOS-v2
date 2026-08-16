@@ -1,8 +1,5 @@
 package com.alan.routineos.feature.dashboard.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.domain.model.MetadataField
 import com.alan.routineos.domain.model.MetadataFieldType
@@ -45,11 +43,24 @@ fun MetadataEditorSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 48.dp)
         ) {
-            Text(
-                text = "Métricas",
-                style = RoutineTheme.typography.headlineMedium,
-                color = RoutineTheme.colors.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Métricas",
+                    style = RoutineTheme.typography.headlineMedium,
+                    color = RoutineTheme.colors.onSurface
+                )
+                if (currentSchema != null) {
+                    Text(
+                        text = "v${currentSchema.schemaVersion}",
+                        style = RoutineTheme.typography.labelCaps,
+                        color = RoutineTheme.colors.onSurfaceVariant
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -68,41 +79,88 @@ fun MetadataEditorSheet(
             Spacer(modifier = Modifier.height(24.dp))
             
             Column {
-                Text("Nueva Métrica", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.primary)
+                Text("Añadir Campo de Captura", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.primary)
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 var newFieldName by remember { mutableStateOf("") }
                 var newFieldType by remember { mutableStateOf(MetadataFieldType.NUMBER) }
+                var isRequired by remember { mutableStateOf(false) }
+                var unit by remember { mutableStateOf("") }
+                var defaultValue by remember { mutableStateOf("") }
+
+                OutlinedTextField(
+                    value = newFieldName,
+                    onValueChange = { newFieldName = it },
+                    label = { Text("Nombre del campo (ej: Peso, Instructor)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
-                        value = newFieldName,
-                        onValueChange = { newFieldName = it },
-                        placeholder = { Text("Nombre...") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    
                     FieldTypeSelector(
                         selected = newFieldType,
-                        onSelected = { newFieldType = it }
+                        onSelected = { newFieldType = it },
+                        modifier = Modifier.weight(1f)
                     )
-
-                    IconButton(
-                        onClick = {
-                            if (newFieldName.isNotBlank()) {
-                                localFields = localFields + MetadataField(newFieldName, newFieldType)
-                                newFieldName = ""
-                            }
-                        },
-                        enabled = newFieldName.isNotBlank() && localFields.none { it.name == newFieldName }
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = isRequired, onCheckedChange = { isRequired = it })
+                        Text("Obligatorio", style = RoutineTheme.typography.labelCaps)
                     }
+                }
+
+                if (newFieldType == MetadataFieldType.NUMBER || newFieldType == MetadataFieldType.TEXT) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = unit,
+                            onValueChange = { unit = it },
+                            label = { Text("Unidad (ej: kg)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = defaultValue,
+                            onValueChange = { defaultValue = it },
+                            label = { Text("Valor inicial") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        if (newFieldName.isNotBlank()) {
+                            localFields = localFields + MetadataField(
+                                id = UUID.randomUUID().toString(),
+                                name = newFieldName,
+                                type = newFieldType,
+                                required = isRequired,
+                                unit = unit.ifBlank { null },
+                                defaultValue = defaultValue.ifBlank { null }
+                            )
+                            // Reset local add form
+                            newFieldName = ""
+                            unit = ""
+                            defaultValue = ""
+                            isRequired = false
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = newFieldName.isNotBlank() && localFields.none { it.name.lowercase() == newFieldName.lowercase() }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Añadir Campo")
                 }
             }
 
@@ -123,14 +181,15 @@ fun MetadataEditorSheet(
                         MetadataSchema(
                             id = currentSchema?.id ?: UUID.randomUUID().toString(),
                             target = target,
-                            fields = localFields
+                            fields = localFields,
+                            schemaVersion = currentSchema?.schemaVersion ?: 1
                         )
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = RoutineTheme.colors.primary)
             ) {
-                Text("Guardar Métricas")
+                Text("Guardar Plantilla")
             }
         }
     }
@@ -151,7 +210,15 @@ private fun MetadataFieldItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = field.name, style = RoutineTheme.typography.bodyBase, color = RoutineTheme.colors.onSurface)
-                Text(text = field.type.name, style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = field.type.name, style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.primary)
+                    if (field.required) {
+                        Text(text = "OBLIGATORIO", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.error)
+                    }
+                    field.unit?.let {
+                        Text(text = "UNIDAD: $it", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant)
+                    }
+                }
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = RoutineTheme.colors.error)
@@ -163,16 +230,17 @@ private fun MetadataFieldItem(
 @Composable
 private fun FieldTypeSelector(
     selected: MetadataFieldType,
-    onSelected: (MetadataFieldType) -> Unit
+    onSelected: (MetadataFieldType) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box {
-        OutlinedButton(onClick = { expanded = true }) {
+    Box(modifier = modifier) {
+        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
             Text(selected.name)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            MetadataFieldType.values().forEach { type ->
+            MetadataFieldType.entries.forEach { type ->
                 DropdownMenuItem(
                     text = { Text(type.name) },
                     onClick = {

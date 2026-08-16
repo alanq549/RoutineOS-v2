@@ -2,6 +2,10 @@ package com.alan.routineos.data.mapper
 
 import com.alan.routineos.data.local.entities.*
 import com.alan.routineos.domain.model.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+private val json = Json { ignoreUnknownKeys = true }
 
 fun ActivityDefinitionEntity.toDomain(): ActivityDefinition {
     return ActivityDefinition(
@@ -178,7 +182,8 @@ fun MetadataSchemaEntity.toDomain(): MetadataSchema {
     return MetadataSchema(
         id = id,
         target = target,
-        fields = deserializeMetadataFields(fieldsJson)
+        fields = json.decodeFromString(fieldsJson),
+        schemaVersion = schemaVersion
     )
 }
 
@@ -191,26 +196,7 @@ fun MetadataSchema.toEntity(): MetadataSchemaEntity {
         id = id,
         targetId = targetId,
         targetType = targetType,
-        fieldsJson = serializeMetadataFields(fields)
+        fieldsJson = json.encodeToString(fields),
+        schemaVersion = schemaVersion
     )
-}
-
-private fun serializeMetadataFields(fields: List<MetadataField>): String {
-    return fields.joinToString(";") { field ->
-        "${field.name}:${field.type.name}:${field.options?.joinToString(",") ?: ""}"
-    }
-}
-
-private fun deserializeMetadataFields(json: String): List<MetadataField> {
-    if (json.isBlank()) return emptyList()
-    return json.split(";").mapNotNull { part ->
-        val pieces = part.split(":")
-        if (pieces.size < 2) return@mapNotNull null
-        
-        val name = pieces[0]
-        val type = try { MetadataFieldType.valueOf(pieces[1]) } catch (e: Exception) { MetadataFieldType.TEXT }
-        val options = if (pieces.size > 2 && pieces[2].isNotBlank()) pieces[2].split(",") else null
-        
-        MetadataField(name, type, options)
-    }
 }

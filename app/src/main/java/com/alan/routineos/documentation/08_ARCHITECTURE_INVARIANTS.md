@@ -13,6 +13,13 @@ PERMITIDO: el usuario define tipos, categorías y campos de metadata en runtime,
 persistidos como datos (JSON column / tablas de esquema), nunca como enums de Kotlin
 ligados a un dominio específico.
 
+## Política de Metadatos: Definición vs. Ejecución
+Se establece una separación estricta entre la estructura de datos y los valores capturados:
+1.  **MetadataSchema**: Define la "plantilla" de captura (nombres, tipos y reglas). Es una entidad de configuración vinculada al Nodo o Definición.
+2.  **ActivityExecution.metadataJson**: Contiene los valores reales capturados mapeados por `field.id` (ej: `{"schemaVersion": 1, "values": {"f1": 80}}`). Es inmutable frente a cambios posteriores en el `MetadataSchema`.
+3.  **Identidad Persistente**: Los valores se vinculan por ID, permitiendo renombrar campos en el esquema sin perder el vínculo histórico con los datos.
+4.  **Agnosticismo**: El motor de metadatos solo conoce tipos base (NUMBER, TEXT, etc.), nunca conceptos de dominio (Peso, Reps).
+
 ## Entidades núcleo válidas
 ActivityDefinition, ActivityNode, MetadataSchema, ScheduleRule, ScheduleException,
 TimelineInstance (compute-only, no persistida), ActivityExecution.

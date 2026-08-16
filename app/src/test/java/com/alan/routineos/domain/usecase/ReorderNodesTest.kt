@@ -54,7 +54,8 @@ class ReorderNodesTest {
             dailyInstanceDao = FakeDailyInstanceDao(),
             metadataSchemaDao = FakeMetadataSchemaDao(),
             validateActivityNodeUseCase = ValidateActivityNodeUseCase(),
-            validateScheduleRuleUseCase = ValidateScheduleRuleUseCase()
+            validateScheduleRuleUseCase = ValidateScheduleRuleUseCase(),
+            validateMetadataSchemaUseCase = ValidateMetadataSchemaUseCase()
         )
 
         // Try to reorder 1, 2, and 3. 3 should be ignored because it belongs to another definition.

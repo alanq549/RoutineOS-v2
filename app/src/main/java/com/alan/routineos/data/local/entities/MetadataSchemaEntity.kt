@@ -18,5 +18,6 @@ data class MetadataSchemaEntity(
     val id: String,
     val targetId: String,
     val targetType: String, // DEFINITION, NODE
-    val fieldsJson: String // Serialized List<MetadataField>
+    val fieldsJson: String, // Serialized List<MetadataField>
+    val schemaVersion: Int
 )

@@ -2,15 +2,16 @@ package com.alan.routineos.data.repository
 
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.*
-import com.alan.routineos.data.local.entities.ActivityExecutionEntity
 import com.alan.routineos.data.mapper.toDomain
 import com.alan.routineos.data.mapper.toEntity
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase
+import com.alan.routineos.domain.usecase.ValidateMetadataSchemaUseCase
 import com.alan.routineos.domain.usecase.ValidateScheduleRuleUseCase
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.util.UUID
 import javax.inject.Inject
 
@@ -23,7 +24,8 @@ class OfflineActivityRepository @Inject constructor(
     private val dailyInstanceDao: DailyInstanceDao,
     private val metadataSchemaDao: MetadataSchemaDao,
     private val validateActivityNodeUseCase: ValidateActivityNodeUseCase,
-    private val validateScheduleRuleUseCase: ValidateScheduleRuleUseCase
+    private val validateScheduleRuleUseCase: ValidateScheduleRuleUseCase,
+    private val validateMetadataSchemaUseCase: ValidateMetadataSchemaUseCase
 ) : ActivityRepository {
 
     override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> {
@@ -115,7 +117,7 @@ class OfflineActivityRepository @Inject constructor(
     }
 
     override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {
-        val execution = ActivityExecutionEntity(
+        val execution = ActivityExecution(
             id = UUID.randomUUID().toString(),
             nodeId = nodeId,
             dailyInstanceId = dailyInstanceId,
@@ -123,7 +125,7 @@ class OfflineActivityRepository @Inject constructor(
             completedAt = System.currentTimeMillis(),
             metadataJson = metadataJson
         )
-        activityExecutionDao.insertExecution(execution)
+        activityExecutionDao.insertExecution(execution.toEntity())
     }
 
     override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> {
@@ -231,6 +233,28 @@ class OfflineActivityRepository @Inject constructor(
     }
 
     override suspend fun upsertMetadataSchema(schema: MetadataSchema) {
-        metadataSchemaDao.insertSchema(schema.toEntity())
+        val error = validateMetadataSchemaUseCase(schema)
+        if (error != null) {
+            throw IllegalArgumentException(error.userMessage)
+        }
+
+        val currentEntity = metadataSchemaDao.getSchema(
+            when (val target = schema.target) {
+                is ScheduleTarget.Definition -> target.id
+                is ScheduleTarget.Node -> target.id
+            },
+            when (schema.target) {
+                is ScheduleTarget.Definition -> "DEFINITION"
+                is ScheduleTarget.Node -> "NODE"
+            }
+        ).firstOrNull()
+
+        val nextVersion = if (currentEntity != null && currentEntity.fieldsJson != Json.encodeToString(schema.fields)) {
+            currentEntity.schemaVersion + 1
+        } else {
+            currentEntity?.schemaVersion ?: 1
+        }
+
+        metadataSchemaDao.insertSchema(schema.copy(schemaVersion = nextVersion).toEntity())
     }
 }
