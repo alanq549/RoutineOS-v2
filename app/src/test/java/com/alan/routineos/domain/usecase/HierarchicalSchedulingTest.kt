@@ -8,62 +8,82 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.LocalDate
 
-class ParentCompletionRuleTest {
+class HierarchicalSchedulingTest {
+
+    private val date = LocalDate.of(2023, 10, 23) // Monday
 
     @Test
-    fun `parent is COMPLETED only if all children are COMPLETED`() = runTest {
-        val defId = "act1"
-        val nodes = listOf(
-            ActivityNode("1", defId, null, 0, "Parent"),
-            ActivityNode("1.1", defId, "1", 0, "Child 1"),
-            ActivityNode("1.2", defId, "1", 1, "Child 2")
+    fun `Case 1 Parent has rule, Children don't - Only Parent appears`() = runTest {
+        val def = ActivityDefinition("d1", "Uni", "Desc")
+        val node1 = ActivityNode("n1", "d1", null, 0, "Root")
+        val child1 = ActivityNode("c1", "d1", "n1", 0, "Sub")
+        
+        val rule = ScheduleRule(
+            id = "r1",
+            target = ScheduleTarget.Node("n1"),
+            type = ScheduleRuleType.FIXED_DAYS,
+            daysOfWeek = setOf(1),
+            startTime = 480
         )
-        
-        val repository = object : FakeActivityRepository() {
-            override fun getNodesForActivityDefinition(activityDefinitionId: String) = flowOf(nodes)
-            override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String) = nodes
-            override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> {
-                // Return execution only for Child 1
-                return if (nodeId == "1.1") flowOf(listOf(ActivityExecution("e1", "1.1", null, scheduledDate, 0L, "{}"))) 
-                       else flowOf(emptyList())
-            }
-        }
-        
-        val useCase = GetActivityTreeUseCase(repository)
-        val result = useCase(defId, 0).first()
 
-        assertEquals(NodeStatus.IN_PROGRESS, result[0].status)
+        val repository = object : FakeActivityRepository() {
+            override fun getActivityDefinitions() = flowOf(listOf(def))
+            override fun getAllNodes() = flowOf(listOf(node1, child1))
+            override fun getAllRules() = flowOf(listOf(rule))
+        }
+
+        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val timeline = useCase(date).first()
+
+        assertEquals(1, timeline.size)
+        assertEquals("Root", timeline[0].instance.titleSnapshot)
     }
 
     @Test
-    fun `parent is COMPLETED if all children are COMPLETED`() = runTest {
-        val defId = "act1"
-        val nodes = listOf(
-            ActivityNode("1", defId, null, 0, "Parent"),
-            ActivityNode("1.1", defId, "1", 0, "Child 1")
+    fun `Case 3 Both have independent rules - Both appear`() = runTest {
+        val def = ActivityDefinition("d1", "Uni", "Desc")
+        val node1 = ActivityNode("n1", "d1", null, 0, "Root")
+        val child1 = ActivityNode("c1", "d1", "n1", 0, "Sub")
+        
+        val ruleParent = ScheduleRule(
+            id = "rp",
+            target = ScheduleTarget.Node("n1"),
+            type = ScheduleRuleType.FIXED_DAYS,
+            daysOfWeek = setOf(1),
+            startTime = 480
         )
         
-        val repository = object : FakeActivityRepository() {
-            override fun getNodesForActivityDefinition(activityDefinitionId: String) = flowOf(nodes)
-            override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String) = nodes
-            override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) = 
-                flowOf(listOf(ActivityExecution("e1", nodeId, null, scheduledDate, 0L, "{}")))
-        }
-        
-        val useCase = GetActivityTreeUseCase(repository)
-        val result = useCase(defId, 0).first()
+        val ruleChild = ScheduleRule(
+            id = "rc",
+            target = ScheduleTarget.Node("c1"),
+            type = ScheduleRuleType.FIXED_DAYS,
+            daysOfWeek = setOf(1),
+            startTime = 600
+        )
 
-        assertEquals(NodeStatus.COMPLETED, result[0].status)
+        val repository = object : FakeActivityRepository() {
+            override fun getActivityDefinitions() = flowOf(listOf(def))
+            override fun getAllNodes() = flowOf(listOf(node1, child1))
+            override fun getAllRules() = flowOf(listOf(ruleParent, ruleChild))
+        }
+
+        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val timeline = useCase(date).first()
+
+        assertEquals(2, timeline.size)
+        assertEquals("Root", timeline[0].instance.titleSnapshot)
+        assertEquals("Sub", timeline[1].instance.titleSnapshot)
     }
 
     private open class FakeActivityRepository : ActivityRepository {
-        override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> = TODO()
-        override fun getAllNodes(): Flow<List<ActivityNode>> = TODO()
+        override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> = flowOf(emptyList())
+        override fun getAllNodes(): Flow<List<ActivityNode>> = flowOf(emptyList())
         override suspend fun getActivityDefinitionById(id: String): ActivityDefinition? = null
         override suspend fun upsertActivityDefinition(activityDefinition: ActivityDefinition) {}
         override suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition) {}
-        override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = TODO()
+        override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = flowOf(emptyList())
         override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> = emptyList()
         override suspend fun getNodeById(id: String): ActivityNode? = null
         override suspend fun upsertNode(node: ActivityNode) {}
@@ -71,7 +91,7 @@ class ParentCompletionRuleTest {
         override suspend fun reorderNodes(nodeIds: List<String>) {}
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
         override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {}
-        override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = TODO()
+        override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) {}
         override fun getAllRules(): Flow<List<ScheduleRule>> = flowOf(emptyList())

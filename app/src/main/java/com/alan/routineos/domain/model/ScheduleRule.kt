@@ -15,5 +15,9 @@ data class ScheduleRule(
     val target: ScheduleTarget,
     val type: ScheduleRuleType,
     val daysOfWeek: Set<Int> = emptySet(), // 1 (Mon) to 7 (Sun)
-    val frequencyPerPeriod: Int = 0
+    val frequencyPerPeriod: Int = 0,
+    val startTime: Int? = null,
+    val endTime: Int? = null,
+    val durationMinutes: Int? = null,
+    val metadataJson: String = "{}"
 )

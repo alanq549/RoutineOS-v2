@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScheduleRuleDao {
+    @Query("SELECT * FROM schedule_rules")
+    fun getAllRules(): Flow<List<ScheduleRuleEntity>>
+
     @Query("""
         SELECT sr.* FROM schedule_rules sr
         JOIN activity_nodes an ON sr.activityNodeId = an.id

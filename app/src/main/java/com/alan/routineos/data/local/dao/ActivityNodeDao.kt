@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ActivityNodeDao {
+    @Query("SELECT * FROM activity_nodes WHERE isDeleted = 0")
+    fun getAllNodes(): Flow<List<ActivityNodeEntity>>
+
     @Query("SELECT * FROM activity_nodes WHERE activityDefinitionId = :activityDefinitionId AND isDeleted = 0")
     fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNodeEntity>>
 

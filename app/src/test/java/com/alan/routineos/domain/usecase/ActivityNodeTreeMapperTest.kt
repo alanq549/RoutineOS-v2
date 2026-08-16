@@ -1,8 +1,6 @@
 package com.alan.routineos.domain.usecase
 
-import com.alan.routineos.domain.model.ActivityNode
-import com.alan.routineos.domain.model.ActivityNodeTree
-import com.alan.routineos.domain.model.NodeStatus
+import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -47,6 +45,7 @@ class ActivityNodeTreeMapperTest {
 
     private open class FakeActivityRepository : ActivityRepository {
         override fun getActivityDefinitions(): Flow<List<com.alan.routineos.domain.model.ActivityDefinition>> = TODO()
+        override fun getAllNodes(): Flow<List<ActivityNode>> = TODO()
         override suspend fun getActivityDefinitionById(id: String): com.alan.routineos.domain.model.ActivityDefinition? = TODO()
         override suspend fun upsertActivityDefinition(activityDefinition: com.alan.routineos.domain.model.ActivityDefinition) = TODO()
         override suspend fun deleteActivityDefinition(activityDefinition: com.alan.routineos.domain.model.ActivityDefinition) = TODO()
@@ -57,10 +56,12 @@ class ActivityNodeTreeMapperTest {
         override suspend fun deleteNode(node: ActivityNode) = TODO()
         override suspend fun reorderNodes(nodeIds: List<String>) = TODO()
         override suspend fun moveNode(nodeId: String, newParentId: String?) = TODO()
-        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String) = TODO()
+        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) = TODO()
         override fun getExecutionsForNode(nodeId: String): Flow<List<com.alan.routineos.domain.model.ActivityExecution>> = TODO()
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<com.alan.routineos.domain.model.ActivityExecution>> = flowOf(emptyList())
         override suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) = TODO()
+        override fun getAllRules(): Flow<List<ScheduleRule>> = TODO()
+        override fun getAllExceptions(): Flow<List<ScheduleException>> = TODO()
         override fun getRulesForNode(nodeId: String): Flow<List<com.alan.routineos.domain.model.ScheduleRule>> = TODO()
         override fun getRulesForDefinition(definitionId: String): Flow<List<com.alan.routineos.domain.model.ScheduleRule>> = TODO()
         override suspend fun upsertRule(rule: com.alan.routineos.domain.model.ScheduleRule) = TODO()
@@ -68,5 +69,8 @@ class ActivityNodeTreeMapperTest {
         override fun getExceptionsForRule(ruleId: String): Flow<List<com.alan.routineos.domain.model.ScheduleException>> = TODO()
         override suspend fun upsertException(exception: com.alan.routineos.domain.model.ScheduleException) = TODO()
         override suspend fun deleteException(exception: com.alan.routineos.domain.model.ScheduleException) = TODO()
+        override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = TODO()
+        override suspend fun upsertDailyInstance(instance: DailyInstance) = TODO()
+        override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = TODO()
     }
 }

@@ -13,15 +13,25 @@ import androidx.room.PrimaryKey
             parentColumns = ["id"],
             childColumns = ["nodeId"],
             onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = DailyInstanceEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["dailyInstanceId"],
+            onDelete = ForeignKey.SET_NULL,
         )
     ],
-    indices = [Index("nodeId")]
+    indices = [
+        Index("nodeId"),
+        Index("dailyInstanceId")
+    ]
 )
 data class ActivityExecutionEntity(
     @PrimaryKey
     val id: String,
     val nodeId: String,
-    val scheduledDate: Long, // Epoch Day
+    val dailyInstanceId: String? = null,
+    val scheduledDate: Long, // Epoch Day (preserved for V6 compatibility)
     val completedAt: Long,
     val metadataJson: String = "{}"
 )

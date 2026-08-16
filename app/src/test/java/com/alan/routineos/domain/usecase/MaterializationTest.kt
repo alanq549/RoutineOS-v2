@@ -6,33 +6,36 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
-class RestoreBranchTest {
+class MaterializationTest {
 
     @Test
-    fun `RestoreBranch marks specified nodes as active`() = runTest {
-        val defId = "act1"
-        val nodes = listOf(
-            ActivityNode("1", defId, null, 0, "Parent", isDeleted = true),
-            ActivityNode("1.1", defId, "1", 0, "Child 1", isDeleted = true)
+    fun `MaterializeInstanceUseCase creates persistent instance with new ID`() = runTest {
+        val virtual = DailyInstance(
+            id = "virtual_1",
+            target = ScheduleTarget.Node("node1"),
+            scheduledDate = 100L,
+            titleSnapshot = "Virtual Title",
+            descriptionSnapshot = "Desc"
         )
         
-        val restoredIds = mutableSetOf<String>()
+        var saved: DailyInstance? = null
         val repository = object : FakeActivityRepository() {
-            override suspend fun getNodeById(id: String) = nodes.find { it.id == id }
-            override suspend fun upsertNode(node: ActivityNode) {
-                if (!node.isDeleted) restoredIds.add(node.id)
+            override suspend fun getDailyInstanceByTarget(targetId: String, date: Long) = null
+            override suspend fun upsertDailyInstance(instance: DailyInstance) {
+                saved = instance
             }
         }
         
-        val useCase = RestoreBranchUseCase(repository)
-        useCase(listOf("1", "1.1"))
+        val useCase = MaterializeInstanceUseCase(repository)
+        val result = useCase(virtual, DailyInstanceStatus.MODIFIED)
 
-        assertEquals(2, restoredIds.size)
-        restoredIds.contains("1")
-        restoredIds.contains("1.1")
+        assertEquals("Virtual Title", saved?.titleSnapshot)
+        assertEquals(DailyInstanceStatus.MODIFIED, saved?.status)
+        assertNotEquals("virtual_1", saved?.id) // ID must be generated
+        assertEquals(saved?.id, result.id)
     }
 
     private open class FakeActivityRepository : ActivityRepository {

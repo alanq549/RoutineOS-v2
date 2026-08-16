@@ -2,10 +2,13 @@ package com.alan.routineos.data.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.alan.routineos.data.local.RoutineOSDatabase
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
+import com.alan.routineos.data.local.dao.DailyInstanceDao
 import com.alan.routineos.data.local.dao.ScheduleExceptionDao
 import com.alan.routineos.data.local.dao.ScheduleRuleDao
 import dagger.Module
@@ -50,4 +53,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideScheduleExceptionDao(db: RoutineOSDatabase): ScheduleExceptionDao = db.scheduleExceptionDao()
+
+    @Provides
+    @Singleton
+    fun provideDailyInstanceDao(db: RoutineOSDatabase): DailyInstanceDao = db.dailyInstanceDao()
 }

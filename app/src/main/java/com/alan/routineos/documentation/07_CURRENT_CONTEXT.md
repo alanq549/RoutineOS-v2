@@ -5,11 +5,11 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-re-002-progressive-activity-editor` |
-| **Current Phase** | Fase 1: Activity Core (Baseline v2) |
-| **Current Goal** | Generar contrato técnico para Fase 2 |
+| **Current Branch** | `feature/ec-re-003-scheduling-engine` |
+| **Current Phase** | Fase 2: Scheduling & Planning (Baseline v2) |
+| **Current Goal** | Definir contrato técnico para Fase 2 (Cont.) |
 | **Current EC** | Ninguna |
-| **Next EC** | [EC-RE-003_FLEXIBLE_SCHEDULING_ENGINE](./EC/EC-RE-003_FLEXIBLE_SCHEDULING_ENGINE.md) |
+| **Next EC** | [EC-RE-004_PLANNING_PROJECTION](./EC/EC-RE-004_PLANNING_PROJECTION.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -18,6 +18,7 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-002 Cerrada**: Editor Progresivo validado satisfactoriamente. Se corrigió el bug de integridad (REPLACE -> @Upsert).
-- **Estado**: Lista para definir Fase 2: Scheduling & Planning.
-- Se mantiene la observación UX sobre la nomenclatura de Scheduling/Metadata.
+- **EC-RE-003 Cerrada**: Motor de agendamiento flexible e infraestructura de instancias integrados en `develop`.
+- **Calidad**: 36 tests unitarios pasan. Detección de conflictos jerárquicos y snapshots de integridad validados.
+- Listo para iniciar Fase 2: Visual Planning.
+- Listo para iniciar **EC-RE-004** (Editor Visual de Horarios).

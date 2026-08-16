@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScheduleExceptionDao {
+    @Query("SELECT * FROM schedule_exceptions")
+    fun getAllExceptions(): Flow<List<ScheduleExceptionEntity>>
+
     @Query("SELECT * FROM schedule_exceptions WHERE scheduleRuleId = :ruleId")
     fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleExceptionEntity>>
 
