@@ -18,7 +18,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-011 | Scheduling Model | Critical | Large | AI Agent | EC-009 | CLOSED | ScheduleRule, ScheduleException & TimelineInstance. |
 | EC-RE-001 | Hierarchical Activity Nodes | Critical | Large | AI Agent | EC-011 | CLOSED | Hierarchical tree refactor and validation implemented. |
 | EC-RE-002 | Progressive Activity Editor | Critical | Large | AI Agent | EC-RE-001 | CLOSED | Inline hierarchical editing with persistent Undo support. |
-| EC-RE-003 | Scheduling Engine & Daily Instances | Critical | Large | AI Agent | EC-RE-002 | APPROVED | Refined flexible logic with snapshot integrity. |
+| EC-RE-003 | Scheduling Engine & Daily Instances | Critical | Large | AI Agent | EC-RE-002 | CLOSED | Refined flexible logic with snapshot integrity. |
 
 ---
 
