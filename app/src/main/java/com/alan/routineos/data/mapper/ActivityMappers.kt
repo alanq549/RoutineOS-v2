@@ -144,6 +144,8 @@ fun DailyInstanceEntity.toDomain(): DailyInstance {
         titleSnapshot = titleSnapshot,
         descriptionSnapshot = descriptionSnapshot,
         plannedStartTime = plannedStartTime,
+        plannedEndTime = plannedEndTime,
+        plannedDurationMinutes = plannedDurationMinutes,
         status = DailyInstanceStatus.valueOf(status),
         isAdHoc = targetType == "AD_HOC"
     )
@@ -168,6 +170,8 @@ fun DailyInstance.toEntity(): DailyInstanceEntity {
         titleSnapshot = titleSnapshot,
         descriptionSnapshot = descriptionSnapshot,
         plannedStartTime = plannedStartTime,
+        plannedEndTime = plannedEndTime,
+        plannedDurationMinutes = plannedDurationMinutes,
         status = status.name,
         sourceRuleId = sourceRuleId
     )

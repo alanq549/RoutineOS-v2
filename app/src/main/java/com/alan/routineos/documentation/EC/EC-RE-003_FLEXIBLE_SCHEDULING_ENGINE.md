@@ -5,10 +5,10 @@ phase: 2
 priority: Critical
 effort: Large
 owner: AI Agent
-status: CHANGES_REQUESTED
+status: APPROVED
 depends_on: EC-RE-002
 branch: feature/ec-re-003-scheduling-engine
-audit: AUDIT_EC-RE-003
+audit: APPROVED
 created: 2026-08-13
 updated: 2026-08-13
 ---

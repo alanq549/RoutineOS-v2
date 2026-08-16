@@ -18,14 +18,16 @@ class ConflictDetectorUseCase @Inject constructor() {
         
         instances.forEach { current ->
             val startTime = current.plannedStartTime ?: return@forEach
-            val duration = 30 // Default duration if not specified, should come from rule ideally
-            // TODO: Use actual duration from instance when available
-            val endTime = startTime + duration
+            val endTime = current.plannedEndTime 
+                ?: current.plannedDurationMinutes?.let { startTime + it }
+                ?: (startTime + 30) // Fallback to 30 mins
             
             val conflicts = instances.filter { other ->
                 if (other.id == current.id) return@filter false
                 val otherStart = other.plannedStartTime ?: return@filter false
-                val otherEnd = otherStart + 30 // Default duration
+                val otherEnd = other.plannedEndTime
+                    ?: other.plannedDurationMinutes?.let { otherStart + it }
+                    ?: (otherStart + 30)
                 
                 // Overlap check: (StartA < EndB) and (EndA > StartB)
                 startTime < otherEnd && endTime > otherStart

@@ -13,6 +13,8 @@ data class DailyInstance(
     val titleSnapshot: String,
     val descriptionSnapshot: String,
     val plannedStartTime: Int? = null,
+    val plannedEndTime: Int? = null,
+    val plannedDurationMinutes: Int? = null,
     val status: DailyInstanceStatus = DailyInstanceStatus.PLANNED,
     val sourceRuleId: String? = null,
     val isAdHoc: Boolean = false

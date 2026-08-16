@@ -80,6 +80,8 @@ class ResolveTimelineUseCase @Inject constructor(
                                 titleSnapshot = title,
                                 descriptionSnapshot = desc,
                                 plannedStartTime = rule.startTime,
+                                plannedEndTime = rule.endTime,
+                                plannedDurationMinutes = rule.durationMinutes,
                                 status = DailyInstanceStatus.PLANNED,
                                 sourceRuleId = rule.id
                             ),

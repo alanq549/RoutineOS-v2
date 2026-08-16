@@ -22,6 +22,8 @@ data class DailyInstanceEntity(
     val titleSnapshot: String,
     val descriptionSnapshot: String,
     val plannedStartTime: Int? = null, // Minutes from midnight
+    val plannedEndTime: Int? = null,
+    val plannedDurationMinutes: Int? = null,
     val status: String, // PLANNED, MODIFIED, OMITTED
     val sourceRuleId: String? = null
 )
