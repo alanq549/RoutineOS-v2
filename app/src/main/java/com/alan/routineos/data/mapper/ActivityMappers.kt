@@ -78,10 +78,10 @@ fun ActivityExecution.toEntity(): ActivityExecutionEntity {
 }
 
 fun ScheduleRuleEntity.toDomain(): ScheduleRule {
-    val target = when {
-        activityDefinitionId != null -> ScheduleTarget.Definition(activityDefinitionId)
-        activityNodeId != null -> ScheduleTarget.Node(activityNodeId)
-        else -> throw IllegalStateException("ScheduleRuleEntity must have a target")
+    val target = when (targetType) {
+        "DEFINITION" -> ScheduleTarget.Definition(targetId)
+        "NODE" -> ScheduleTarget.Node(targetId)
+        else -> throw IllegalStateException("Unknown targetType: $targetType")
     }
     return ScheduleRule(
         id = id,
@@ -97,12 +97,16 @@ fun ScheduleRuleEntity.toDomain(): ScheduleRule {
 }
 
 fun ScheduleRule.toEntity(): ScheduleRuleEntity {
+    val (targetId, targetType) = when (target) {
+        is ScheduleTarget.Definition -> target.id to "DEFINITION"
+        is ScheduleTarget.Node -> target.id to "NODE"
+    }
     return ScheduleRuleEntity(
         id = id,
-        activityDefinitionId = (target as? ScheduleTarget.Definition)?.id,
-        activityNodeId = (target as? ScheduleTarget.Node)?.id,
+        targetId = targetId,
+        targetType = targetType,
         type = type.name,
-        daysOfWeek = daysOfWeek.joinToString(","),
+        daysOfWeek = daysOfWeek.sorted().joinToString(","),
         frequencyPerPeriod = frequencyPerPeriod,
         startTime = startTime,
         endTime = endTime,

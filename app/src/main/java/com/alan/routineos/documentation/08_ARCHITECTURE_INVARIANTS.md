@@ -17,6 +17,15 @@ ligados a un dominio específico.
 ActivityDefinition, ActivityNode, MetadataSchema, ScheduleRule, ScheduleException,
 TimelineInstance (compute-only, no persistida), ActivityExecution.
 
+## Política Temporal y Timezones
+RoutineOS opera bajo la política de **Local Wall Clock Time**. Todas las reglas de
+horario (`ScheduleRule.startTime`) se guardan como minutos desde medianoche en el
+tiempo local del dispositivo.
+*   **Razón**: El usuario ageda "Despertar a las 07:00 AM". Si viaja a otro país,
+    la intención sigue siendo despertar a las 07:00 AM en ese país.
+*   **UTC**: Solo se utiliza para marcas de tiempo de ejecución real (`completedAt`),
+    pero nunca para definir la intención de agendamiento recurrente.
+
 ## Checklist obligatorio antes de cerrar cualquier EC
 - [ ] ¿Alguna clase, enum o campo nuevo codifica un concepto de dominio específico
       (gym, universidad, hábito, etc.) en vez de ser genérico?

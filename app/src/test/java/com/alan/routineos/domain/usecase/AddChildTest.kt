@@ -56,16 +56,19 @@ class AddChildTest {
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = TODO()
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) {}
-        override fun getAllRules(): Flow<List<ScheduleRule>> = TODO()
-        override fun getAllExceptions(): Flow<List<ScheduleException>> = TODO()
+        override fun getAllRules(): Flow<List<ScheduleRule>> = flowOf(emptyList())
+        override fun getAllExceptions(): Flow<List<ScheduleException>> = flowOf(emptyList())
         override fun getRulesForNode(nodeId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
+        override suspend fun getRulesListForNode(nodeId: String): List<ScheduleRule> = emptyList()
         override fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
+        override suspend fun getRulesListForDefinition(definitionId: String): List<ScheduleRule> = emptyList()
+        override fun getRulesForActivityTree(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
         override suspend fun upsertRule(rule: ScheduleRule) {}
         override suspend fun deleteRule(rule: ScheduleRule) {}
         override fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleException>> = flowOf(emptyList())
         override suspend fun upsertException(exception: ScheduleException) {}
         override suspend fun deleteException(exception: ScheduleException) {}
-        override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = TODO()
+        override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
     }

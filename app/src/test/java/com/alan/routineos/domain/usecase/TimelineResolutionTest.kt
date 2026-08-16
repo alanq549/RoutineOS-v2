@@ -19,7 +19,8 @@ class TimelineResolutionTest {
             id = "r1",
             target = ScheduleTarget.Node("node1"),
             type = ScheduleRuleType.FIXED_DAYS,
-            daysOfWeek = setOf(1) // Monday
+            daysOfWeek = setOf(1), // Monday
+            startTime = 480
         )
         
         val node = ActivityNode("node1", "act1", null, 0, "Node 1")
@@ -47,7 +48,8 @@ class TimelineResolutionTest {
             id = "r1",
             target = ScheduleTarget.Node("node1"),
             type = ScheduleRuleType.FIXED_DAYS,
-            daysOfWeek = setOf(1)
+            daysOfWeek = setOf(1),
+            startTime = 480
         )
         
         val materialized = DailyInstance(
@@ -96,7 +98,10 @@ class TimelineResolutionTest {
         override fun getAllRules(): Flow<List<ScheduleRule>> = flowOf(emptyList())
         override fun getAllExceptions(): Flow<List<ScheduleException>> = flowOf(emptyList())
         override fun getRulesForNode(nodeId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
+        override suspend fun getRulesListForNode(nodeId: String): List<ScheduleRule> = emptyList()
         override fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
+        override suspend fun getRulesListForDefinition(definitionId: String): List<ScheduleRule> = emptyList()
+        override fun getRulesForActivityTree(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
         override suspend fun upsertRule(rule: ScheduleRule) {}
         override suspend fun deleteRule(rule: ScheduleRule) {}
         override fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleException>> = flowOf(emptyList())

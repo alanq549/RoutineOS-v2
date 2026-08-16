@@ -5,11 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityNode
+import com.alan.routineos.domain.model.ScheduleRule
+import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.*
 import com.alan.routineos.feature.dashboard.model.ActivityNodeUiProjection
 import com.alan.routineos.feature.dashboard.model.toUiProjection
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -21,8 +24,10 @@ sealed class ActivityDetailUiEvent {
         val message: String,
         val actionLabel: String? = null,
         val nodeId: String? = null,
-        val deletedBatch: List<String>? = null
+        val deletedBatch: List<String>? = null,
+        val ruleToRestore: ScheduleRule? = null
     ) : ActivityDetailUiEvent()
+    data class SchedulingUpsertSuccess(val message: String) : ActivityDetailUiEvent()
 }
 
 data class ActivityDetailUiState(
@@ -30,7 +35,11 @@ data class ActivityDetailUiState(
     val nodes: List<ActivityNodeUiProjection> = emptyList(),
     val isLoading: Boolean = true,
     val newNodeTitle: String = "",
-    val editingNodeId: String? = null
+    val editingNodeId: String? = null,
+    val isSchedulingSheetOpen: Boolean = false,
+    val schedulingTarget: ScheduleTarget? = null,
+    val targetRules: List<ScheduleRule> = emptyList(),
+    val schedulingErrorMessage: String? = null
 )
 
 @HiltViewModel
@@ -55,9 +64,11 @@ class ActivityDetailViewModel @Inject constructor(
 
     private val processingNodeIds = MutableStateFlow<Set<String>>(emptySet())
     private val expandedNodes = MutableStateFlow<Set<String>>(emptySet())
+    private val _schedulingTarget = MutableStateFlow<ScheduleTarget?>(null)
 
     init {
         loadActivity()
+        observeSchedulingRules()
     }
 
     private fun loadActivity() {
@@ -65,16 +76,34 @@ class ActivityDetailViewModel @Inject constructor(
             val activityFlow = flow { emit(repository.getActivityDefinitionById(activityId)) }
             val treeFlow = getActivityTreeUseCase(activityId, referenceDate)
 
-            combine(activityFlow, treeFlow, expandedNodes) { activity, tree, expanded ->
+            combine(activityFlow, treeFlow, expandedNodes, _schedulingTarget) { activity, tree, expanded, schTarget ->
                 ActivityDetailUiState(
                     activity = activity,
                     nodes = tree.toUiProjection(expandedNodes = expanded),
-                    isLoading = false
+                    isLoading = false,
+                    isSchedulingSheetOpen = schTarget != null,
+                    schedulingTarget = schTarget
                 )
             }.collect { newState ->
                 _uiState.value = newState
             }
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeSchedulingRules() {
+        _schedulingTarget
+            .filterNotNull()
+            .flatMapLatest { target ->
+                when (target) {
+                    is ScheduleTarget.Definition -> repository.getRulesForDefinition(target.id)
+                    is ScheduleTarget.Node -> repository.getRulesForNode(target.id)
+                }
+            }
+            .onEach { rules ->
+                _uiState.update { it.copy(targetRules = rules) }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun onNewNodeTitleChanged(title: String) {
@@ -184,5 +213,50 @@ class ActivityDetailViewModel @Inject constructor(
 
     fun setEditingNode(nodeId: String?) {
         _uiState.update { it.copy(editingNodeId = nodeId) }
+    }
+
+    fun onOpenScheduling(target: ScheduleTarget) {
+        _schedulingTarget.value = target
+    }
+
+    fun onCloseScheduling() {
+        _schedulingTarget.value = null
+        _uiState.update { it.copy(targetRules = emptyList()) }
+    }
+
+    fun onUpsertRule(rule: ScheduleRule) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(schedulingErrorMessage = null) }
+                val isEditing = _uiState.value.targetRules.any { it.id == rule.id }
+                repository.upsertRule(rule)
+                _uiEvent.emit(
+                    ActivityDetailUiEvent.SchedulingUpsertSuccess(
+                        if (isEditing) "Horario actualizado" else "Horario añadido"
+                    )
+                )
+            } catch (e: IllegalArgumentException) {
+                _uiState.update { it.copy(schedulingErrorMessage = e.message ?: "Error de validación") }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(schedulingErrorMessage = "Error al guardar horario") }
+            }
+        }
+    }
+
+    fun onDeleteRule(rule: ScheduleRule) {
+        viewModelScope.launch {
+            try {
+                repository.deleteRule(rule)
+                _uiEvent.emit(
+                    ActivityDetailUiEvent.ShowSnackbar(
+                        message = "Horario eliminado",
+                        actionLabel = "Deshacer",
+                        ruleToRestore = rule
+                    )
+                )
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al eliminar horario"))
+            }
+        }
     }
 }

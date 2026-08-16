@@ -1,8 +1,6 @@
 package com.alan.routineos.domain.usecase
 
-import com.alan.routineos.domain.model.ActivityNode
-import com.alan.routineos.domain.model.ActivityNodeTree
-import com.alan.routineos.domain.model.NodeStatus
+import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -17,8 +15,11 @@ class GetActivityTreeUseCase @Inject constructor(
         referenceDate: Long
     ): Flow<List<ActivityNodeTree>> {
         val nodesFlow = repository.getNodesForActivityDefinition(activityDefinitionId)
+        val rulesFlow = repository.getRulesForActivityTree(activityDefinitionId)
 
-        return nodesFlow.flatMapLatest { nodes ->
+        return combine(nodesFlow, rulesFlow) { nodes, rules ->
+            nodes to rules
+        }.flatMapLatest { (nodes, rules) ->
             if (nodes.isEmpty()) return@flatMapLatest flowOf(emptyList())
 
             val executionFlows = nodes.map { node ->
@@ -29,7 +30,7 @@ class GetActivityTreeUseCase @Inject constructor(
 
             combine(executionFlows) { executionPairs ->
                 val completedIds = executionPairs.filter { it.second }.map { it.first }.toSet()
-                buildTree(nodes, null, completedIds)
+                buildTree(nodes, null, completedIds, rules)
             }
         }
     }
@@ -37,18 +38,24 @@ class GetActivityTreeUseCase @Inject constructor(
     private fun buildTree(
         allNodes: List<ActivityNode>,
         parentId: String?,
-        completedIds: Set<String>
+        completedIds: Set<String>,
+        allRules: List<ScheduleRule>
     ): List<ActivityNodeTree> {
         return allNodes
             .filter { it.parentId == parentId && !it.isDeleted }
             .sortedBy { it.position }
             .map { node ->
-                val children = buildTree(allNodes, node.id, completedIds)
+                val children = buildTree(allNodes, node.id, completedIds, allRules)
                 val status = calculateStatus(node, children, completedIds)
+                val nodeRules = allRules.filter { 
+                    val target = it.target
+                    target is ScheduleTarget.Node && target.id == node.id
+                }
                 ActivityNodeTree(
                     node = node,
                     children = children,
-                    status = status
+                    status = status,
+                    rules = nodeRules
                 )
             }
     }

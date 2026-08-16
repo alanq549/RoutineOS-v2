@@ -15,8 +15,10 @@ import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.model.DailyInstance
 import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleRule
+import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase
+import com.alan.routineos.domain.usecase.ValidateScheduleRuleUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
@@ -29,7 +31,8 @@ class OfflineActivityRepository @Inject constructor(
     private val scheduleRuleDao: ScheduleRuleDao,
     private val scheduleExceptionDao: ScheduleExceptionDao,
     private val dailyInstanceDao: DailyInstanceDao,
-    private val validateActivityNodeUseCase: ValidateActivityNodeUseCase
+    private val validateActivityNodeUseCase: ValidateActivityNodeUseCase,
+    private val validateScheduleRuleUseCase: ValidateScheduleRuleUseCase
 ) : ActivityRepository {
 
     override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> {
@@ -160,13 +163,37 @@ class OfflineActivityRepository @Inject constructor(
         }
     }
 
+    override suspend fun getRulesListForNode(nodeId: String): List<ScheduleRule> {
+        return scheduleRuleDao.getRulesListForNode(nodeId).map { it.toDomain() }
+    }
+
     override fun getRulesForDefinition(definitionId: String): Flow<List<ScheduleRule>> {
         return scheduleRuleDao.getRulesForDefinition(definitionId).map { entities ->
             entities.map { it.toDomain() }
         }
     }
 
+    override suspend fun getRulesListForDefinition(definitionId: String): List<ScheduleRule> {
+        return scheduleRuleDao.getRulesListForDefinition(definitionId).map { it.toDomain() }
+    }
+
+    override fun getRulesForActivityTree(definitionId: String): Flow<List<ScheduleRule>> {
+        return scheduleRuleDao.getRulesForActivityTree(definitionId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override suspend fun upsertRule(rule: ScheduleRule) {
+        val existingRules = when (val target = rule.target) {
+            is ScheduleTarget.Definition -> getRulesListForDefinition(target.id)
+            is ScheduleTarget.Node -> getRulesListForNode(target.id)
+        }
+        
+        val error = validateScheduleRuleUseCase(rule, existingRules)
+        if (error != null) {
+            throw IllegalArgumentException(error.userMessage)
+        }
+        
         scheduleRuleDao.insertRule(rule.toEntity())
     }
 
