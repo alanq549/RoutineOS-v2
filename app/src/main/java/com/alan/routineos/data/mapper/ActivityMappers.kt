@@ -88,7 +88,11 @@ fun ScheduleRuleEntity.toDomain(): ScheduleRule {
         target = target,
         type = ScheduleRuleType.valueOf(type),
         daysOfWeek = if (daysOfWeek.isBlank()) emptySet() else daysOfWeek.split(",").map { it.toInt() }.toSet(),
-        frequencyPerPeriod = frequencyPerPeriod
+        frequencyPerPeriod = frequencyPerPeriod,
+        startTime = startTime,
+        endTime = endTime,
+        durationMinutes = durationMinutes,
+        metadataJson = metadataJson
     )
 }
 
@@ -99,7 +103,11 @@ fun ScheduleRule.toEntity(): ScheduleRuleEntity {
         activityNodeId = (target as? ScheduleTarget.Node)?.id,
         type = type.name,
         daysOfWeek = daysOfWeek.joinToString(","),
-        frequencyPerPeriod = frequencyPerPeriod
+        frequencyPerPeriod = frequencyPerPeriod,
+        startTime = startTime,
+        endTime = endTime,
+        durationMinutes = durationMinutes,
+        metadataJson = metadataJson
     )
 }
 

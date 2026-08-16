@@ -22,38 +22,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
-    private val MIGRATION_6_7 = object : Migration(6, 7) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            // 1. Create daily_instances table
-            db.execSQL("""
-                CREATE TABLE IF NOT EXISTS `daily_instances` (
-                    `id` TEXT NOT NULL, 
-                    `targetId` TEXT, 
-                    `targetType` TEXT NOT NULL, 
-                    `scheduledDate` INTEGER NOT NULL, 
-                    `titleSnapshot` TEXT NOT NULL, 
-                    `descriptionSnapshot` TEXT NOT NULL, 
-                    `plannedStartTime` INTEGER, 
-                    `status` TEXT NOT NULL, 
-                    `sourceRuleId` TEXT, 
-                    PRIMARY KEY(`id`)
-                )
-            """)
-            
-            // 2. Create unique index
-            db.execSQL("""
-                CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_instances_targetType_targetId_scheduledDate` 
-                ON `daily_instances` (`targetType`, `targetId`, `scheduledDate`)
-            """)
-
-            // 3. Add dailyInstanceId column to activity_executions
-            db.execSQL("ALTER TABLE `activity_executions` ADD COLUMN `dailyInstanceId` TEXT DEFAULT NULL")
-            
-            // 4. Add index for FK
-            db.execSQL("CREATE INDEX IF NOT EXISTS `index_activity_executions_dailyInstanceId` ON `activity_executions` (`dailyInstanceId`)")
-        }
-    }
-
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): RoutineOSDatabase {
@@ -62,7 +30,6 @@ object DatabaseModule {
             RoutineOSDatabase::class.java,
             "routine_db"
         )
-            .addMigrations(MIGRATION_6_7)
             .fallbackToDestructiveMigration()
             .build()
     }

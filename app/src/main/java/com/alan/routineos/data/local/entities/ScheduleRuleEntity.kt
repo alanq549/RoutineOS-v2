@@ -33,5 +33,9 @@ data class ScheduleRuleEntity(
     val activityNodeId: String? = null,
     val type: String, // FIXED_DAYS, FLEXIBLE_FREQUENCY
     val daysOfWeek: String = "", // Comma-separated ints: "1,3,5"
-    val frequencyPerPeriod: Int = 0
+    val frequencyPerPeriod: Int = 0,
+    val startTime: Int? = null, // Minutes from midnight
+    val endTime: Int? = null,
+    val durationMinutes: Int? = null,
+    val metadataJson: String = "{}"
 )

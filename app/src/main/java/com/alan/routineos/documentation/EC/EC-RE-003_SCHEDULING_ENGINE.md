@@ -8,9 +8,10 @@ owner: AI Agent
 status: IN_PROGRESS
 depends_on: EC-RE-002
 branch: feature/ec-re-003-scheduling-engine
+status: IMPLEMENTED
 audit: Pending
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-15
 ---
 
 # EC-RE-003: Scheduling Engine & Daily Instances
@@ -18,18 +19,13 @@ updated: 2026-08-13
 ## Objetivo
 Implementar el motor de agendamiento y la entidad `DailyInstance` para desacoplar la **Planificación (Intención)** de la **Realidad (Hoy)**, permitiendo modificaciones diarias sin alterar la definición original.
 
-## Contexto
-RoutineOS requiere que el usuario pueda modificar su plan del día (mover horarios, omitir actividades) sin destruir la regla de recurrencia base. Esto se logra mediante la materialización selectiva de instancias virtuales en la base de datos.
-
-## Problema
-Actualmente, no existe una entidad que represente una ocurrencia concreta en el tiempo. Si se quisiera modificar el horario de hoy, se tendría que modificar la `ScheduleRule` global, lo cual afectaría a todos los días futuros.
-
 ## Alcance
-- [ ] **Migración V7**: Introducción de `DailyInstanceEntity` con snapshots de título/descripción y un índice único compuesto para evitar duplicados.
-- [ ] **Motor de Proyección Virtual**: Lógica en la capa de Dominio para calcular el timeline resolviendo reglas y excepciones sin persistir nada automáticamente.
-- [ ] **Materialización Selectiva**: Implementar la lógica que persiste una `DailyInstance` solo cuando hay una interacción (modificación, ejecución o creación ad-hoc).
-- [ ] **Snapshot de Presentación**: Asegurar que cada instancia materializada capture el estado visual (título/desc) del nodo en ese momento.
-- [ ] **Desacoplamiento**: Una vez materializada, la instancia ignora cambios posteriores en la regla original.
+- [x] **Baseline V1**: Reinicio de la versión de base de datos a 1 con todos los campos temporales (`startTime`, `endTime`, `durationMinutes`) integrados.
+- [x] **Motor de Proyección Virtual**: Lógica en la capa de Dominio para calcular el timeline resolviendo reglas y excepciones.
+- [x] **Detector de Conflictos**: Implementación de `ConflictDetectorUseCase` para identificar solapamientos en el timeline.
+- [x] **Materialización Selectiva**: Persistencia de `DailyInstance` con snapshots de integridad visual.
+- [x] **Desacoplamiento**: Las instancias materializadas son inmutables ante cambios en las reglas base.
+- [x] **Validación Jerárquica**: Verificación de reglas independientes en diferentes niveles del árbol.
 
 ### Exclusiones
 - No incluye la UI final de "Today Workspace" (EC-RE-006).

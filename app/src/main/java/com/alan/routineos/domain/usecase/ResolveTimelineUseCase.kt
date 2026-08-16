@@ -8,11 +8,13 @@ import javax.inject.Inject
 
 data class TimelineEntry(
     val instance: DailyInstance,
-    val isMaterialized: Boolean
+    val isMaterialized: Boolean,
+    val conflict: ConflictResult? = null
 )
 
 class ResolveTimelineUseCase @Inject constructor(
-    private val repository: ActivityRepository
+    private val repository: ActivityRepository,
+    private val conflictDetector: ConflictDetectorUseCase
 ) {
     operator fun invoke(date: LocalDate): Flow<List<TimelineEntry>> {
         val epochDay = date.toEpochDay()
@@ -50,13 +52,10 @@ class ResolveTimelineUseCase @Inject constructor(
                     is ScheduleTarget.Node -> target.id
                 }
 
-                // If already materialized for this day, skip rule resolution (Precedence)
                 if (materializedTargets.contains(targetId)) return@forEach
 
-                // Resolve rule for this date
-                // For now: only FIXED_DAYS and check exceptions
                 val hasException = exceptions.any { it.scheduleRuleId == rule.id && it.originalDate == epochDay }
-                if (hasException) return@forEach // Simplified: assume exception means skip for now
+                if (hasException) return@forEach 
 
                 if (rule.type == ScheduleRuleType.FIXED_DAYS && rule.daysOfWeek.contains(date.dayOfWeek.value)) {
                     val title: String
@@ -80,6 +79,7 @@ class ResolveTimelineUseCase @Inject constructor(
                                 scheduledDate = epochDay,
                                 titleSnapshot = title,
                                 descriptionSnapshot = desc,
+                                plannedStartTime = rule.startTime,
                                 status = DailyInstanceStatus.PLANNED,
                                 sourceRuleId = rule.id
                             ),
@@ -89,7 +89,13 @@ class ResolveTimelineUseCase @Inject constructor(
                 }
             }
 
-            entries.sortedBy { it.instance.plannedStartTime }
+            // 3. Detect Conflicts
+            val instances = entries.map { it.instance }
+            val conflicts = conflictDetector.detectConflicts(instances)
+            
+            entries.map { entry ->
+                entry.copy(conflict = conflicts[entry.instance.id])
+            }.sortedBy { it.instance.plannedStartTime ?: Int.MAX_VALUE }
         }
     }
 }

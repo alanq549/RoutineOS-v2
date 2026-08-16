@@ -1,14 +1,7 @@
 package com.alan.routineos.data.di
 
 import com.alan.routineos.domain.repository.ActivityRepository
-import com.alan.routineos.domain.usecase.AddChildUseCase
-import com.alan.routineos.domain.usecase.DeleteBranchUseCase
-import com.alan.routineos.domain.usecase.GetActivityTreeUseCase
-import com.alan.routineos.domain.usecase.MaterializeInstanceUseCase
-import com.alan.routineos.domain.usecase.ResolveTimelineUseCase
-import com.alan.routineos.domain.usecase.RestoreBranchUseCase
-import com.alan.routineos.domain.usecase.UpdateNodeUseCase
-import com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase
+import com.alan.routineos.domain.usecase.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -60,13 +53,22 @@ object UseCaseModule {
 
     @Provides
     @Singleton
-    fun provideResolveTimelineUseCase(repository: ActivityRepository): ResolveTimelineUseCase {
-        return ResolveTimelineUseCase(repository)
+    fun provideResolveTimelineUseCase(
+        repository: ActivityRepository,
+        conflictDetector: ConflictDetectorUseCase
+    ): ResolveTimelineUseCase {
+        return ResolveTimelineUseCase(repository, conflictDetector)
     }
 
     @Provides
     @Singleton
     fun provideMaterializeInstanceUseCase(repository: ActivityRepository): MaterializeInstanceUseCase {
         return MaterializeInstanceUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideConflictDetectorUseCase(): ConflictDetectorUseCase {
+        return ConflictDetectorUseCase()
     }
 }

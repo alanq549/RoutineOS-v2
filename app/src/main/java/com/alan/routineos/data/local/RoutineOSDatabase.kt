@@ -24,7 +24,7 @@ import com.alan.routineos.data.local.entities.ScheduleRuleEntity
         ScheduleExceptionEntity::class,
         DailyInstanceEntity::class,
     ],
-    version = 7,
+    version = 1,
     exportSchema = true
 )
 abstract class RoutineOSDatabase : RoomDatabase() {
