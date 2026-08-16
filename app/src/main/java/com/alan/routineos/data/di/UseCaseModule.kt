@@ -77,4 +77,10 @@ object UseCaseModule {
     fun provideValidateScheduleRuleUseCase(): ValidateScheduleRuleUseCase {
         return ValidateScheduleRuleUseCase()
     }
+
+    @Provides
+    @Singleton
+    fun provideValidateMetadataSchemaUseCase(): ValidateMetadataSchemaUseCase {
+        return ValidateMetadataSchemaUseCase()
+    }
 }

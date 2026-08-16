@@ -9,6 +9,7 @@ import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
 import com.alan.routineos.data.local.dao.DailyInstanceDao
+import com.alan.routineos.data.local.dao.MetadataSchemaDao
 import com.alan.routineos.data.local.dao.ScheduleExceptionDao
 import com.alan.routineos.data.local.dao.ScheduleRuleDao
 import dagger.Module
@@ -57,4 +58,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDailyInstanceDao(db: RoutineOSDatabase): DailyInstanceDao = db.dailyInstanceDao()
+
+    @Provides
+    @Singleton
+    fun provideMetadataSchemaDao(db: RoutineOSDatabase): MetadataSchemaDao = db.metadataSchemaDao()
 }

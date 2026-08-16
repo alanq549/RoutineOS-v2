@@ -1,21 +1,11 @@
 package com.alan.routineos.data.repository
 
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
-import com.alan.routineos.data.local.dao.ActivityExecutionDao
-import com.alan.routineos.data.local.dao.ActivityNodeDao
-import com.alan.routineos.data.local.dao.DailyInstanceDao
-import com.alan.routineos.data.local.dao.ScheduleExceptionDao
-import com.alan.routineos.data.local.dao.ScheduleRuleDao
+import com.alan.routineos.data.local.dao.*
 import com.alan.routineos.data.local.entities.ActivityExecutionEntity
 import com.alan.routineos.data.mapper.toDomain
 import com.alan.routineos.data.mapper.toEntity
-import com.alan.routineos.domain.model.ActivityDefinition
-import com.alan.routineos.domain.model.ActivityExecution
-import com.alan.routineos.domain.model.ActivityNode
-import com.alan.routineos.domain.model.DailyInstance
-import com.alan.routineos.domain.model.ScheduleException
-import com.alan.routineos.domain.model.ScheduleRule
-import com.alan.routineos.domain.model.ScheduleTarget
+import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase
 import com.alan.routineos.domain.usecase.ValidateScheduleRuleUseCase
@@ -31,6 +21,7 @@ class OfflineActivityRepository @Inject constructor(
     private val scheduleRuleDao: ScheduleRuleDao,
     private val scheduleExceptionDao: ScheduleExceptionDao,
     private val dailyInstanceDao: DailyInstanceDao,
+    private val metadataSchemaDao: MetadataSchemaDao,
     private val validateActivityNodeUseCase: ValidateActivityNodeUseCase,
     private val validateScheduleRuleUseCase: ValidateScheduleRuleUseCase
 ) : ActivityRepository {
@@ -233,5 +224,13 @@ class OfflineActivityRepository @Inject constructor(
 
     override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? {
         return dailyInstanceDao.getInstanceByTarget(targetId, date)?.toDomain()
+    }
+
+    override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> {
+        return metadataSchemaDao.getSchema(targetId, targetType).map { it?.toDomain() }
+    }
+
+    override suspend fun upsertMetadataSchema(schema: MetadataSchema) {
+        metadataSchemaDao.insertSchema(schema.toEntity())
     }
 }

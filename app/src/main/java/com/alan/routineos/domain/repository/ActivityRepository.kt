@@ -4,6 +4,7 @@ import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.model.DailyInstance
+import com.alan.routineos.domain.model.MetadataSchema
 import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleRule
 import kotlinx.coroutines.flow.Flow
@@ -46,4 +47,8 @@ interface ActivityRepository {
     fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>>
     suspend fun upsertDailyInstance(instance: DailyInstance)
     suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance?
+
+    // Metadata Schemas
+    fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?>
+    suspend fun upsertMetadataSchema(schema: MetadataSchema)
 }

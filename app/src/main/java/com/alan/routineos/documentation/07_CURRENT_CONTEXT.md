@@ -5,10 +5,10 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-re-004-scheduling-editor` |
-| **Current Phase** | Fase 2: Scheduling & Planning (Baseline v2) |
-| **Current Goal** | Definir contrato técnico para Fase 3 (Metadata) |
-| **Current EC** | Ninguna |
+| **Current Branch** | `feature/ec-re-005-metadata-schemas` |
+| **Current Phase** | Fase 3: Capture & Reality (Metadata Workspace) |
+| **Current Goal** | Implementar Metadata Schemas (EC-RE-005) |
+| **Current EC** | [EC-RE-005_METADATA_SCHEMAS](./EC/EC-RE-005_METADATA_SCHEMAS.md) |
 | **Next EC** | [EC-RE-005_METADATA_SCHEMAS](./EC/EC-RE-005_METADATA_SCHEMAS.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
