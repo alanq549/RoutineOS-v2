@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityNode
+import com.alan.routineos.domain.model.MetadataSchema
 import com.alan.routineos.domain.model.ScheduleRule
 import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.domain.repository.ActivityRepository
@@ -39,7 +40,11 @@ data class ActivityDetailUiState(
     val isSchedulingSheetOpen: Boolean = false,
     val schedulingTarget: ScheduleTarget? = null,
     val targetRules: List<ScheduleRule> = emptyList(),
-    val schedulingErrorMessage: String? = null
+    val schedulingErrorMessage: String? = null,
+    val isMetadataSheetOpen: Boolean = false,
+    val metadataTarget: ScheduleTarget? = null,
+    val targetMetadataSchema: MetadataSchema? = null,
+    val metadataErrorMessage: String? = null
 )
 
 @HiltViewModel
@@ -65,10 +70,12 @@ class ActivityDetailViewModel @Inject constructor(
     private val processingNodeIds = MutableStateFlow<Set<String>>(emptySet())
     private val expandedNodes = MutableStateFlow<Set<String>>(emptySet())
     private val _schedulingTarget = MutableStateFlow<ScheduleTarget?>(null)
+    private val _metadataTarget = MutableStateFlow<ScheduleTarget?>(null)
 
     init {
         loadActivity()
         observeSchedulingRules()
+        observeMetadataSchema()
     }
 
     private fun loadActivity() {
@@ -76,13 +83,21 @@ class ActivityDetailViewModel @Inject constructor(
             val activityFlow = flow { emit(repository.getActivityDefinitionById(activityId)) }
             val treeFlow = getActivityTreeUseCase(activityId, referenceDate)
 
-            combine(activityFlow, treeFlow, expandedNodes, _schedulingTarget) { activity, tree, expanded, schTarget ->
+            combine(
+                activityFlow, 
+                treeFlow, 
+                expandedNodes, 
+                _schedulingTarget,
+                _metadataTarget
+            ) { activity, tree, expanded, schTarget, metaTarget ->
                 ActivityDetailUiState(
                     activity = activity,
                     nodes = tree.toUiProjection(expandedNodes = expanded),
                     isLoading = false,
                     isSchedulingSheetOpen = schTarget != null,
-                    schedulingTarget = schTarget
+                    schedulingTarget = schTarget,
+                    isMetadataSheetOpen = metaTarget != null,
+                    metadataTarget = metaTarget
                 )
             }.collect { newState ->
                 _uiState.value = newState
@@ -102,6 +117,23 @@ class ActivityDetailViewModel @Inject constructor(
             }
             .onEach { rules ->
                 _uiState.update { it.copy(targetRules = rules) }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeMetadataSchema() {
+        _metadataTarget
+            .filterNotNull()
+            .flatMapLatest { target ->
+                val (id, type) = when (target) {
+                    is ScheduleTarget.Definition -> target.id to "DEFINITION"
+                    is ScheduleTarget.Node -> target.id to "NODE"
+                }
+                repository.getMetadataSchema(id, type)
+            }
+            .onEach { schema ->
+                _uiState.update { it.copy(targetMetadataSchema = schema) }
             }
             .launchIn(viewModelScope)
     }
@@ -222,6 +254,40 @@ class ActivityDetailViewModel @Inject constructor(
     fun onCloseScheduling() {
         _schedulingTarget.value = null
         _uiState.update { it.copy(targetRules = emptyList()) }
+    }
+
+    fun onOpenMetadata(target: ScheduleTarget) {
+        _metadataTarget.value = target
+    }
+
+    fun onCloseMetadata() {
+        _metadataTarget.value = null
+        _uiState.update { it.copy(targetMetadataSchema = null, metadataErrorMessage = null) }
+    }
+
+    fun onUpsertMetadataSchema(schema: MetadataSchema) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(metadataErrorMessage = null) }
+                repository.upsertMetadataSchema(schema)
+                _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Plantilla guardada"))
+            } catch (e: IllegalArgumentException) {
+                _uiState.update { it.copy(metadataErrorMessage = e.message ?: "Error de validación") }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(metadataErrorMessage = "Error al guardar métricas") }
+            }
+        }
+    }
+
+    fun onDeleteMetadataSchema(targetId: String, targetType: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteMetadataSchema(targetId, targetType)
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Plantilla eliminada"))
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al eliminar plantilla"))
+            }
+        }
     }
 
     fun onUpsertRule(rule: ScheduleRule) {

@@ -5,10 +5,10 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | Key | Value |
 | :--- | :--- |
-| **Current Branch** | `feature/ec-re-004-scheduling-editor` |
-| **Current Phase** | Fase 2: Scheduling & Planning (Baseline v2) |
-| **Current Goal** | Definir contrato técnico para Fase 3 (Metadata) |
-| **Current EC** | Ninguna |
+| **Current Branch** | `feature/ec-re-005-metadata-schemas` |
+| **Current Phase** | Fase 3: Capture & Reality (Metadata Workspace) |
+| **Current Goal** | Finalizar auditoría de EC-RE-005 |
+| **Current EC** | [EC-RE-005_METADATA_SCHEMAS](./EC/EC-RE-005_METADATA_SCHEMAS.md) |
 | **Next EC** | [EC-RE-005_METADATA_SCHEMAS](./EC/EC-RE-005_METADATA_SCHEMAS.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-004 Cerrada**: Editor de horarios funcionales integrado en `develop`.
-- **Siguiente paso**: Definir el contrato para **Fase 3: Metadata Schemas & Execution Tracking**.
+- **EC-RE-005 Auditada**: Verificación técnica exitosa. La infraestructura de esquemas de metadatos es robusta y soporta evolución de versiones.
+- **Estado**: APPROVED. Listo para la siguiente fase.
 - Se mantiene el enfoque agnóstico en el seguimiento de métricas personalizadas.

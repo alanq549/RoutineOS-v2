@@ -20,7 +20,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-002 | Progressive Activity Editor | Critical | Large | AI Agent | EC-RE-001 | CLOSED | Inline hierarchical editing with persistent Undo support. |
 | EC-RE-003 | Scheduling Engine & Daily Instances | Critical | Large | AI Agent | EC-RE-002 | CLOSED | Refined flexible logic with snapshot integrity. |
 | EC-RE-004 | Flexible Rules & Scheduling Editor | High | Medium | AI Agent | EC-RE-003 | CLOSED | Visual time/day editors in Node Inspector. |
-| EC-RE-005 | Metadata Schemas & Context | High | Medium | AI Agent | EC-RE-004 | READY | Defining structured tracking schemas. |
+| EC-RE-005 | Metadata Schemas & Context | High | Medium | AI Agent | EC-RE-004 | APPROVED | Defining structured tracking schemas. |
 
 ---
 

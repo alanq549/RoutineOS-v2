@@ -103,6 +103,9 @@ class HierarchicalSchedulingTest {
         override fun getRulesForActivityTree(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
         override suspend fun upsertRule(rule: ScheduleRule) {}
         override suspend fun deleteRule(rule: ScheduleRule) {}
+        override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
+        override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
+        override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}
         override fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleException>> = flowOf(emptyList())
         override suspend fun upsertException(exception: ScheduleException) {}
         override suspend fun deleteException(exception: ScheduleException) {}

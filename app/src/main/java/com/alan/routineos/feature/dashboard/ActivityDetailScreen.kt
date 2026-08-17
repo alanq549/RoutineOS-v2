@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.alan.routineos.core.designsystem.component.RoutineScaffold
 import com.alan.routineos.core.designsystem.component.RoutineTopBar
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.feature.dashboard.components.MetadataEditorSheet
 import com.alan.routineos.feature.dashboard.components.SchedulingEditorSheet
 import com.alan.routineos.feature.dashboard.model.ActivityNodeUiProjection
 import kotlinx.coroutines.flow.SharedFlow
@@ -53,6 +54,10 @@ fun ActivityDetailRoute(
         onCloseScheduling = viewModel::onCloseScheduling,
         onUpsertRule = viewModel::onUpsertRule,
         onDeleteRule = viewModel::onDeleteRule,
+        onOpenMetadata = viewModel::onOpenMetadata,
+        onCloseMetadata = viewModel::onCloseMetadata,
+        onUpsertMetadataSchema = viewModel::onUpsertMetadataSchema,
+        onDeleteMetadataSchema = viewModel::onDeleteMetadataSchema,
         uiEvent = viewModel.uiEvent
     )
 }
@@ -74,6 +79,10 @@ fun ActivityDetailScreen(
     onCloseScheduling: () -> Unit,
     onUpsertRule: (com.alan.routineos.domain.model.ScheduleRule) -> Unit,
     onDeleteRule: (com.alan.routineos.domain.model.ScheduleRule) -> Unit,
+    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
+    onCloseMetadata: () -> Unit,
+    onUpsertMetadataSchema: (com.alan.routineos.domain.model.MetadataSchema) -> Unit,
+    onDeleteMetadataSchema: (String, String) -> Unit,
     uiEvent: SharedFlow<ActivityDetailUiEvent>
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -118,7 +127,8 @@ fun ActivityDetailScreen(
             onDeleteBranch = onDeleteBranch,
             onUpdateNode = onUpdateNode,
             onNodeClick = onNodeClick,
-            onOpenScheduling = onOpenScheduling
+            onOpenScheduling = onOpenScheduling,
+            onOpenMetadata = onOpenMetadata
         )
 
         if (uiState.isSchedulingSheetOpen && uiState.schedulingTarget != null) {
@@ -130,6 +140,27 @@ fun ActivityDetailScreen(
                 onUpsertRule = onUpsertRule,
                 onDeleteRule = onDeleteRule,
                 onDismiss = onCloseScheduling
+            )
+        }
+
+        if (uiState.isMetadataSheetOpen && uiState.metadataTarget != null) {
+            MetadataEditorSheet(
+                target = uiState.metadataTarget,
+                currentSchema = uiState.targetMetadataSchema,
+                errorMessage = uiState.metadataErrorMessage,
+                onUpsertSchema = onUpsertMetadataSchema,
+                onDeleteSchema = {
+                    val target = uiState.metadataTarget
+                    if (target != null) {
+                        val (id, type) = when (target) {
+                            is com.alan.routineos.domain.model.ScheduleTarget.Definition -> target.id to "DEFINITION"
+                            is com.alan.routineos.domain.model.ScheduleTarget.Node -> target.id to "NODE"
+                        }
+                        onDeleteMetadataSchema(id, type)
+                        onCloseMetadata()
+                    }
+                },
+                onDismiss = onCloseMetadata
             )
         }
     }
@@ -166,7 +197,8 @@ private fun ActivityDetailContent(
     onDeleteBranch: (String) -> Unit,
     onUpdateNode: (String, String) -> Unit,
     onNodeClick: (String?) -> Unit,
-    onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
+    onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
+    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
 ) {
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -184,7 +216,8 @@ private fun ActivityDetailContent(
             onDeleteBranch,
             onUpdateNode,
             onNodeClick,
-            onOpenScheduling
+            onOpenScheduling,
+            onOpenMetadata
         )
     }
 }
@@ -201,7 +234,8 @@ private fun NodesList(
     onDeleteBranch: (String) -> Unit,
     onUpdateNode: (String, String) -> Unit,
     onNodeClick: (String?) -> Unit,
-    onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
+    onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
+    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -228,7 +262,8 @@ private fun NodesList(
             onDeleteBranch,
             onUpdateNode,
             onNodeClick,
-            onOpenScheduling
+            onOpenScheduling,
+            onOpenMetadata
         )
         item { ListBottomSpacer() }
     }
@@ -258,7 +293,8 @@ private fun LazyListScope.nodesContent(
     onDeleteBranch: (String) -> Unit,
     onUpdateNode: (String, String) -> Unit,
     onNodeClick: (String?) -> Unit,
-    onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
+    onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
+    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
 ) {
     if (nodes.isEmpty()) {
         item { EmptyNodesMessage() }
@@ -274,7 +310,8 @@ private fun LazyListScope.nodesContent(
                 onAddSubStep = { title -> onAddSubStep(nodeProjection.id, title) },
                 onDeleteClick = { onDeleteBranch(nodeProjection.id) },
                 onTitleChange = { newTitle -> onUpdateNode(nodeProjection.id, newTitle) },
-                onOpenScheduling = { onOpenScheduling(com.alan.routineos.domain.model.ScheduleTarget.Node(nodeProjection.id)) }
+                onOpenScheduling = { onOpenScheduling(com.alan.routineos.domain.model.ScheduleTarget.Node(nodeProjection.id)) },
+                onOpenMetadata = { onOpenMetadata(com.alan.routineos.domain.model.ScheduleTarget.Node(nodeProjection.id)) }
             )
         }
     }
@@ -356,7 +393,8 @@ private fun NodeItem(
     onAddSubStep: (String) -> Unit,
     onDeleteClick: () -> Unit,
     onTitleChange: (String) -> Unit,
-    onOpenScheduling: () -> Unit
+    onOpenScheduling: () -> Unit,
+    onOpenMetadata: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -431,7 +469,7 @@ private fun NodeItem(
         }
 
         if (isEditing) {
-            NodeInspectorShell(onAddSubStep, onDeleteClick, onOpenScheduling)
+            NodeInspectorShell(onAddSubStep, onDeleteClick, onOpenScheduling, onOpenMetadata)
         }
     }
 }
@@ -440,7 +478,8 @@ private fun NodeItem(
 private fun NodeInspectorShell(
     onAddSubStep: (String) -> Unit,
     onDeleteClick: () -> Unit,
-    onOpenScheduling: () -> Unit
+    onOpenScheduling: () -> Unit,
+    onOpenMetadata: () -> Unit
 ) {
     var newSubStepTitle by remember { mutableStateOf("") }
 
@@ -454,7 +493,7 @@ private fun NodeInspectorShell(
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             InspectorActionChip(Icons.Outlined.Schedule, "Scheduling", onOpenScheduling)
-            InspectorActionChip(Icons.Outlined.Info, "Metadata", {})
+            InspectorActionChip(Icons.Outlined.Info, "Metadata", onOpenMetadata)
             Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = onDeleteClick) {
                 Icon(Icons.Outlined.Delete, contentDescription = "Delete", tint = RoutineTheme.colors.error)
@@ -574,6 +613,10 @@ fun ActivityDetailScreenPreview() {
             onCloseScheduling = {},
             onUpsertRule = {},
             onDeleteRule = {},
+            onOpenMetadata = {},
+            onCloseMetadata = {},
+            onUpsertMetadataSchema = {},
+            onDeleteMetadataSchema = { _, _ -> },
             uiEvent = kotlinx.coroutines.flow.MutableSharedFlow<ActivityDetailUiEvent>()
         )
     }

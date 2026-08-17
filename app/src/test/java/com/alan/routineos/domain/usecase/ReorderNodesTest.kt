@@ -13,6 +13,7 @@ import com.alan.routineos.data.local.entities.ScheduleRuleEntity
 import com.alan.routineos.data.repository.OfflineActivityRepository
 import com.alan.routineos.domain.model.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -51,8 +52,10 @@ class ReorderNodesTest {
             scheduleRuleDao = FakeScheduleRuleDao(),
             scheduleExceptionDao = FakeScheduleExceptionDao(),
             dailyInstanceDao = FakeDailyInstanceDao(),
+            metadataSchemaDao = FakeMetadataSchemaDao(),
             validateActivityNodeUseCase = ValidateActivityNodeUseCase(),
-            validateScheduleRuleUseCase = ValidateScheduleRuleUseCase()
+            validateScheduleRuleUseCase = ValidateScheduleRuleUseCase(),
+            validateMetadataSchemaUseCase = ValidateMetadataSchemaUseCase()
         )
 
         // Try to reorder 1, 2, and 3. 3 should be ignored because it belongs to another definition.
@@ -114,5 +117,11 @@ class ReorderNodesTest {
         override suspend fun getInstanceByTarget(targetId: String, date: Long): DailyInstanceEntity? = null
         override suspend fun insertInstance(instance: DailyInstanceEntity) {}
         override suspend fun deleteInstance(instance: DailyInstanceEntity) {}
+    }
+
+    private class FakeMetadataSchemaDao : com.alan.routineos.data.local.dao.MetadataSchemaDao {
+        override fun getSchema(targetId: String, targetType: String): Flow<com.alan.routineos.data.local.entities.MetadataSchemaEntity?> = flowOf(null)
+        override suspend fun insertSchema(schema: com.alan.routineos.data.local.entities.MetadataSchemaEntity) {}
+        override suspend fun deleteSchema(schema: com.alan.routineos.data.local.entities.MetadataSchemaEntity) {}
     }
 }

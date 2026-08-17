@@ -1,21 +1,11 @@
 package com.alan.routineos.data.mapper
 
-import com.alan.routineos.data.local.entities.ActivityDefinitionEntity
-import com.alan.routineos.data.local.entities.ActivityExecutionEntity
-import com.alan.routineos.data.local.entities.ActivityNodeEntity
-import com.alan.routineos.data.local.entities.DailyInstanceEntity
-import com.alan.routineos.data.local.entities.ScheduleExceptionEntity
-import com.alan.routineos.data.local.entities.ScheduleRuleEntity
-import com.alan.routineos.domain.model.ActivityDefinition
-import com.alan.routineos.domain.model.ActivityExecution
-import com.alan.routineos.domain.model.ActivityNode
-import com.alan.routineos.domain.model.DailyInstance
-import com.alan.routineos.domain.model.DailyInstanceStatus
-import com.alan.routineos.domain.model.ScheduleException
-import com.alan.routineos.domain.model.ScheduleExceptionType
-import com.alan.routineos.domain.model.ScheduleRule
-import com.alan.routineos.domain.model.ScheduleRuleType
-import com.alan.routineos.domain.model.ScheduleTarget
+import com.alan.routineos.data.local.entities.*
+import com.alan.routineos.domain.model.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+private val json = Json { ignoreUnknownKeys = true }
 
 fun ActivityDefinitionEntity.toDomain(): ActivityDefinition {
     return ActivityDefinition(
@@ -61,6 +51,7 @@ fun ActivityExecutionEntity.toDomain(): ActivityExecution {
     return ActivityExecution(
         id = id,
         nodeId = nodeId,
+        dailyInstanceId = dailyInstanceId,
         scheduledDate = scheduledDate,
         completedAt = completedAt,
         metadataJson = metadataJson
@@ -71,6 +62,7 @@ fun ActivityExecution.toEntity(): ActivityExecutionEntity {
     return ActivityExecutionEntity(
         id = id,
         nodeId = nodeId,
+        dailyInstanceId = dailyInstanceId,
         scheduledDate = scheduledDate,
         completedAt = completedAt,
         metadataJson = metadataJson
@@ -178,5 +170,33 @@ fun DailyInstance.toEntity(): DailyInstanceEntity {
         plannedDurationMinutes = plannedDurationMinutes,
         status = status.name,
         sourceRuleId = sourceRuleId
+    )
+}
+
+fun MetadataSchemaEntity.toDomain(): MetadataSchema {
+    val target = when (targetType) {
+        "DEFINITION" -> ScheduleTarget.Definition(targetId)
+        "NODE" -> ScheduleTarget.Node(targetId)
+        else -> throw IllegalStateException("Unknown targetType: $targetType")
+    }
+    return MetadataSchema(
+        id = id,
+        target = target,
+        fields = json.decodeFromString(fieldsJson),
+        schemaVersion = schemaVersion
+    )
+}
+
+fun MetadataSchema.toEntity(): MetadataSchemaEntity {
+    val (targetId, targetType) = when (target) {
+        is ScheduleTarget.Definition -> target.id to "DEFINITION"
+        is ScheduleTarget.Node -> target.id to "NODE"
+    }
+    return MetadataSchemaEntity(
+        id = id,
+        targetId = targetId,
+        targetType = targetType,
+        fieldsJson = json.encodeToString(fields),
+        schemaVersion = schemaVersion
     )
 }
