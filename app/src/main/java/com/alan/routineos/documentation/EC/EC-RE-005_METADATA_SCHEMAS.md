@@ -5,10 +5,10 @@ phase: 3
 priority: High
 effort: Medium
 owner: AI Agent
-status: IN_PROGRESS
+status: APPROVED
 depends_on: EC-RE-004
 branch: feature/ec-re-005-metadata-schemas
-audit: Pending
+audit: AUDIT_EC-RE-005
 created: 2026-08-16
 updated: 2026-08-16
 ---
@@ -25,15 +25,15 @@ En la Fase 2 establecimos el **Cuándo** (Scheduling). En esta Fase 3 establecem
 Actualmente, las ejecuciones guardan un JSON opaco. No hay forma de que la interfaz de usuario sepa qué campos mostrar para que el usuario rellene durante la ejecución en "Today". Sin esquemas, no podemos habilitar el seguimiento de progreso cuantitativo.
 
 ## Alcance
-- [ ] **Modelo de Dominio `MetadataSchema`**: Estructura que contiene una lista de campos (`MetadataField`).
-- [ ] **Tipos de Campo Soportados**:
+- [x] **Modelo de Dominio `MetadataSchema`**: Estructura que contiene una lista de campos (`MetadataField`).
+- [x] **Tipos de Campo Soportados**:
     - `NUMBER`: Para métricas cuantitativas (kg, reps, min).
     - `TEXT`: Para notas rápidas o descripciones.
     - `BOOLEAN`: Para verificaciones de sí/no (¿Tomaste agua?).
     - `SELECT`: Para opciones predefinidas.
-- [ ] **Persistencia**: Entidad `MetadataSchemaEntity` vinculada polimórficamente a `ActivityDefinition` o `ActivityNode`.
-- [ ] **Integración en Node Inspector**: Habilitar el chip "Metadata" para abrir un editor de esquema.
-- [ ] **Validación**: Asegurar que los nombres de campos sean únicos dentro de un esquema y no estén vacíos.
+- [x] **Persistencia**: Entidad `MetadataSchemaEntity` vinculada polimórficamente a `ActivityDefinition` o `ActivityNode`.
+- [x] **Integración en Node Inspector**: Habilitar el chip "Metadata" para abrir un editor de esquema.
+- [x] **Validación**: Asegurar que los nombres de campos sean únicos dentro de un esquema y no estén vacíos.
 
 ### Exclusiones
 - No incluye la captura de datos en "Today" (EC-RE-006).

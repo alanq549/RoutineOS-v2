@@ -57,6 +57,7 @@ fun ActivityDetailRoute(
         onOpenMetadata = viewModel::onOpenMetadata,
         onCloseMetadata = viewModel::onCloseMetadata,
         onUpsertMetadataSchema = viewModel::onUpsertMetadataSchema,
+        onDeleteMetadataSchema = viewModel::onDeleteMetadataSchema,
         uiEvent = viewModel.uiEvent
     )
 }
@@ -81,6 +82,7 @@ fun ActivityDetailScreen(
     onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
     onCloseMetadata: () -> Unit,
     onUpsertMetadataSchema: (com.alan.routineos.domain.model.MetadataSchema) -> Unit,
+    onDeleteMetadataSchema: (String, String) -> Unit,
     uiEvent: SharedFlow<ActivityDetailUiEvent>
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -147,6 +149,17 @@ fun ActivityDetailScreen(
                 currentSchema = uiState.targetMetadataSchema,
                 errorMessage = uiState.metadataErrorMessage,
                 onUpsertSchema = onUpsertMetadataSchema,
+                onDeleteSchema = {
+                    val target = uiState.metadataTarget
+                    if (target != null) {
+                        val (id, type) = when (target) {
+                            is com.alan.routineos.domain.model.ScheduleTarget.Definition -> target.id to "DEFINITION"
+                            is com.alan.routineos.domain.model.ScheduleTarget.Node -> target.id to "NODE"
+                        }
+                        onDeleteMetadataSchema(id, type)
+                        onCloseMetadata()
+                    }
+                },
                 onDismiss = onCloseMetadata
             )
         }
@@ -603,6 +616,7 @@ fun ActivityDetailScreenPreview() {
             onOpenMetadata = {},
             onCloseMetadata = {},
             onUpsertMetadataSchema = {},
+            onDeleteMetadataSchema = { _, _ -> },
             uiEvent = kotlinx.coroutines.flow.MutableSharedFlow<ActivityDetailUiEvent>()
         )
     }

@@ -16,6 +16,7 @@ data class MetadataField(
     val name: String,
     val type: MetadataFieldType,
     val required: Boolean = false,
+    val isReadOnly: Boolean = false,
     val options: List<String>? = null,
     val defaultValue: String? = null,
     val unit: String? = null

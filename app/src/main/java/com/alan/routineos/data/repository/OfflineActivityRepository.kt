@@ -257,4 +257,10 @@ class OfflineActivityRepository @Inject constructor(
 
         metadataSchemaDao.insertSchema(schema.copy(schemaVersion = nextVersion).toEntity())
     }
+
+    override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {
+        metadataSchemaDao.getSchema(targetId, targetType).firstOrNull()?.let {
+            metadataSchemaDao.deleteSchema(it)
+        }
+    }
 }

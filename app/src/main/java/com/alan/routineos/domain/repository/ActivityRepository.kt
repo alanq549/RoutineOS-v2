@@ -51,4 +51,5 @@ interface ActivityRepository {
     // Metadata Schemas
     fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?>
     suspend fun upsertMetadataSchema(schema: MetadataSchema)
+    suspend fun deleteMetadataSchema(targetId: String, targetType: String)
 }

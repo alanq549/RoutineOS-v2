@@ -270,11 +270,22 @@ class ActivityDetailViewModel @Inject constructor(
             try {
                 _uiState.update { it.copy(metadataErrorMessage = null) }
                 repository.upsertMetadataSchema(schema)
-                _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Métricas actualizadas"))
+                _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Plantilla guardada"))
             } catch (e: IllegalArgumentException) {
                 _uiState.update { it.copy(metadataErrorMessage = e.message ?: "Error de validación") }
             } catch (e: Exception) {
                 _uiState.update { it.copy(metadataErrorMessage = "Error al guardar métricas") }
+            }
+        }
+    }
+
+    fun onDeleteMetadataSchema(targetId: String, targetType: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteMetadataSchema(targetId, targetType)
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Plantilla eliminada"))
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al eliminar plantilla"))
             }
         }
     }
