@@ -7,10 +7,12 @@ data class ActivityCardModel(
     val frequency: String,
     val durationText: String,
     val subtitle: String,
+    val statsLine: String = "",
     val summaryItems: List<ActivitySummaryDay> = emptyList()
 )
 
 data class ActivitySummaryDay(
     val dayName: String,
-    val activities: List<String>
+    val activities: List<String>,
+    val detailText: String? = null
 )

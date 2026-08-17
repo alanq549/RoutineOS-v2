@@ -10,19 +10,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.today.model.TimelineItemStatus
+import com.alan.routineos.domain.model.DailyInstanceStatus
 
 @Composable
 fun TimelineNode(
-    status: TimelineItemStatus,
+    status: DailyInstanceStatus,
     modifier: Modifier = Modifier
 ) {
     val color = when (status) {
-        TimelineItemStatus.COMPLETED -> RoutineTheme.colors.primary
-        TimelineItemStatus.ACTIVE -> RoutineTheme.colors.primary
-        TimelineItemStatus.PENDING -> RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
-        TimelineItemStatus.SKIPPED -> RoutineTheme.colors.surface2
+        DailyInstanceStatus.PLANNED -> RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
+        DailyInstanceStatus.MODIFIED -> RoutineTheme.colors.secondary
+        DailyInstanceStatus.OMITTED -> RoutineTheme.colors.surface2
     }
+    
+    // Note: We don't have "COMPLETED" in DailyInstanceStatus yet, 
+    // it's derived from execution. This will be refined in Phase 3.
 
     Box(
         modifier = modifier

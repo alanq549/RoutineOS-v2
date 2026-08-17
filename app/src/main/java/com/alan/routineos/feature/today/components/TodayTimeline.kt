@@ -14,18 +14,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.today.model.TodayTimelineItem
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
 @Composable
 fun TodayTimeline(
-    items: List<TodayTimelineItem>,
+    items: List<TodayTimelineUiModel>,
+    onAction: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         items.forEachIndexed { index, item ->
             TimelineRow(
                 item = item,
-                isLast = index == items.lastIndex
+                isLast = index == items.lastIndex,
+                onAction = onAction
             )
             if (index != items.lastIndex) {
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
@@ -36,8 +38,9 @@ fun TodayTimeline(
 
 @Composable
 private fun TimelineRow(
-    item: TodayTimelineItem,
-    isLast: Boolean
+    item: TodayTimelineUiModel,
+    isLast: Boolean,
+    onAction: (String, String) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -51,7 +54,10 @@ private fun TimelineRow(
                 .fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TimelineNode(status = item.status, modifier = Modifier.padding(top = RoutineTheme.spacing.md))
+            TimelineNode(
+                status = item.status, 
+                modifier = Modifier.padding(top = RoutineTheme.spacing.md)
+            )
             if (!isLast) {
                 TimelineConnector(modifier = Modifier.weight(1f))
             }
@@ -59,7 +65,7 @@ private fun TimelineRow(
 
         // Card Column
         Box(modifier = Modifier.weight(1f).padding(bottom = RoutineTheme.spacing.sm)) {
-            TimelineItemCard(item = item)
+            TimelineItemCard(item = item, onAction = onAction)
         }
     }
 }

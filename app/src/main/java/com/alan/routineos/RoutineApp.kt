@@ -2,8 +2,7 @@ package com.alan.routineos
 
 import android.app.Application
 import com.alan.routineos.data.local.DatabaseSeed
-import com.alan.routineos.data.local.dao.ActivityDefinitionDao
-import com.alan.routineos.data.local.dao.ActivityNodeDao
+import com.alan.routineos.data.local.dao.*
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import javax.inject.Provider
@@ -12,14 +11,20 @@ import javax.inject.Provider
 class RoutineApp : Application() {
 
     @Inject
-    lateinit var definitionDaoProvider: Provider<ActivityDefinitionDao>
+    lateinit var definitionDao: ActivityDefinitionDao
 
     @Inject
-    lateinit var nodeDaoProvider: Provider<ActivityNodeDao>
+    lateinit var nodeDao: ActivityNodeDao
+
+    @Inject
+    lateinit var ruleDao: ScheduleRuleDao
+
+    @Inject
+    lateinit var metaDao: MetadataSchemaDao
 
     override fun onCreate() {
         super.onCreate()
-        // Trigger dev seed
-        DatabaseSeed.seedHierarchy(definitionDaoProvider, nodeDaoProvider)
+        // Trigger dev seed with all core DAOs
+        DatabaseSeed.seedAll(definitionDao, nodeDao, ruleDao, metaDao)
     }
 }

@@ -3,17 +3,22 @@ package com.alan.routineos.feature.today
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun TodayRoute(
-    viewModel: TodayViewModel = viewModel(),
+    viewModel: TodayViewModel = hiltViewModel(),
     bottomBar: @Composable () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     TodayScreen(
         uiState = uiState,
+        onAction = viewModel::onActionTriggered,
+        onMetadataCaptured = viewModel::onMetadataCaptured,
+        onCloseCapture = viewModel::onCloseCapture,
+        onAddAdHoc = viewModel::onAddAdHoc,
+        uiEvent = viewModel.uiEvent,
         bottomBar = bottomBar
     )
 }

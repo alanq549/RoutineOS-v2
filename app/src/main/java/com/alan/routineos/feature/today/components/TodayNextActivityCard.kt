@@ -1,37 +1,24 @@
 package com.alan.routineos.feature.today.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.today.model.TodayTimelineItem
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
 @Composable
 fun TodayNextActivityCard(
-    activity: TodayTimelineItem?,
+    activity: TodayTimelineUiModel?,
     modifier: Modifier = Modifier
 ) {
     if (activity == null) return
@@ -46,83 +33,69 @@ fun TodayNextActivityCard(
 
         RoutineCard(
             modifier = Modifier.fillMaxWidth(),
-            containerColor = RoutineTheme.colors.surface3 // Translucent glass effect
+            containerColor = RoutineTheme.colors.surface3
         ) {
-            Box {
-                // Background decoration (gradient)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(120.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    RoutineTheme.colors.primary.copy(alpha = 0.15f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                )
-
-                Row(
-                    modifier = Modifier
-                        .padding(RoutineTheme.spacing.md)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier
+                    .padding(RoutineTheme.spacing.md)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    // Countdown Badge
+                    Surface(
+                        color = RoutineTheme.colors.primary.copy(alpha = 0.15f),
+                        shape = RoutineTheme.shapes.small
+                    ) {
                         Text(
-                            text = "EN 15 MIN",
+                            text = "EN 15 MIN", // TODO: Real calculation
                             style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
                             color = RoutineTheme.colors.primary,
-                            modifier = Modifier
-                                .background(RoutineTheme.colors.primary.copy(alpha = 0.1f), RoutineTheme.shapes.small)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
-                        Spacer(modifier = Modifier.height(RoutineTheme.spacing.xs))
-                        
-                        val title = when(activity) {
-                            is TodayTimelineItem.Activity -> activity.title
-                            is TodayTimelineItem.Flexible -> activity.activity
-                            is TodayTimelineItem.Spontaneous -> activity.title
-                        }
-                        
-                        Text(
-                            text = title,
-                            style = RoutineTheme.typography.headlineMedium,
-                            color = RoutineTheme.colors.onSurface
-                        )
-                        
+                    }
+                    
+                    Spacer(modifier = Modifier.height(RoutineTheme.spacing.sm))
+                    
+                    Text(
+                        text = activity.title,
+                        style = RoutineTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        color = RoutineTheme.colors.onSurface
+                    )
+                    
+                    if (activity.subNodes.isNotEmpty()) {
+                        val firstChild = activity.subNodes.first()
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.School,
+                                imageVector = Icons.Default.Sync,
                                 contentDescription = null,
-                                modifier = Modifier.size(14.dp),
+                                modifier = Modifier.size(12.dp),
                                 tint = RoutineTheme.colors.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.size(4.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${activity.startTime} - ${activity.endTime ?: ""}",
-                                style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp),
+                                text = "${firstChild.title} • ${firstChild.timeText}",
+                                style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp),
                                 color = RoutineTheme.colors.onSurfaceVariant
                             )
                         }
                     }
+                }
 
-                    IconButton(
-                        onClick = { /* Pending EC-012 */ },
-                        enabled = false,
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoutineTheme.shapes.small),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = RoutineTheme.colors.primary,
-                            contentColor = RoutineTheme.colors.onPrimary,
-                            disabledContainerColor = RoutineTheme.colors.onSurface.copy(alpha = 0.12f),
-                            disabledContentColor = RoutineTheme.colors.onSurface.copy(alpha = 0.38f)
+                // Play Button
+                Surface(
+                    onClick = { /* TODO: Start execution */ },
+                    modifier = Modifier.size(48.dp),
+                    shape = RoutineTheme.shapes.medium,
+                    color = RoutineTheme.colors.primary,
+                    contentColor = RoutineTheme.colors.onPrimary
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Start",
+                            modifier = Modifier.size(24.dp)
                         )
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
                     }
                 }
             }

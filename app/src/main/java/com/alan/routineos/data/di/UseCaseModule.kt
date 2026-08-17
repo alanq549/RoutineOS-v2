@@ -68,8 +68,26 @@ object UseCaseModule {
 
     @Provides
     @Singleton
+    fun provideRegisterDailyActionUseCase(
+        repository: ActivityRepository,
+        materializeInstanceUseCase: MaterializeInstanceUseCase
+    ): RegisterDailyActionUseCase {
+        return RegisterDailyActionUseCase(repository, materializeInstanceUseCase)
+    }
+
+    @Provides
+    @Singleton
     fun provideConflictDetectorUseCase(): ConflictDetectorUseCase {
         return ConflictDetectorUseCase()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetHierarchicalTimelineUseCase(
+        repository: ActivityRepository,
+        resolveTimelineUseCase: ResolveTimelineUseCase
+    ): GetHierarchicalTimelineUseCase {
+        return GetHierarchicalTimelineUseCase(repository, resolveTimelineUseCase)
     }
 
     @Provides

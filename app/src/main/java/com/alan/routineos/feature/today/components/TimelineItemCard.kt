@@ -14,8 +14,7 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,96 +26,75 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.today.model.ActivityNodeSnapshot
-import com.alan.routineos.feature.today.model.TimelineItemStatus
-import com.alan.routineos.feature.today.model.TodayTimelineItem
+import com.alan.routineos.domain.model.DailyInstanceStatus
+import com.alan.routineos.feature.today.model.TodaySubNodeUiModel
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
 @Composable
 fun TimelineItemCard(
-    item: TodayTimelineItem,
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardAlpha = if (item.status == TimelineItemStatus.SKIPPED) 0.4f else 1f
+    val cardAlpha = if (item.status == DailyInstanceStatus.OMITTED) 0.4f else 1f
+    val isModified = item.status == DailyInstanceStatus.MODIFIED
     
     RoutineCard(
         modifier = modifier
             .fillMaxWidth()
             .alpha(cardAlpha),
-        containerColor = if (item.status == TimelineItemStatus.ACTIVE) {
-            RoutineTheme.colors.surface2
-        } else {
-            RoutineTheme.colors.surface1
-        },
-        border = if (item.status == TimelineItemStatus.ACTIVE) {
-            androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.primary)
+        containerColor = if (isModified) RoutineTheme.colors.surface2 else RoutineTheme.colors.surface1,
+        border = if (isModified) {
+            androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.secondary)
         } else {
             androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border)
         }
     ) {
         Column(modifier = Modifier.padding(RoutineTheme.spacing.md)) {
+            // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.startTime + if (item.endTime != null) " – ${item.endTime}" else "",
-                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
-                        color = if (item.status == TimelineItemStatus.ACTIVE) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
-                    )
-                    
-                    val title = when (item) {
-                        is TodayTimelineItem.Activity -> item.title
-                        is TodayTimelineItem.Flexible -> item.title
-                        is TodayTimelineItem.Spontaneous -> item.title
+                    if (item.timeRangeText.isNotBlank()) {
+                        Text(
+                            text = item.timeRangeText,
+                            style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
+                            color = if (isModified) RoutineTheme.colors.secondary else RoutineTheme.colors.onSurfaceVariant
+                        )
                     }
                     
                     Text(
-                        text = title,
+                        text = item.title,
                         style = RoutineTheme.typography.bodyBase.copy(
-                            fontWeight = if (item.status == TimelineItemStatus.ACTIVE) FontWeight.Bold else FontWeight.SemiBold,
-                            textDecoration = if (item.status == TimelineItemStatus.COMPLETED) TextDecoration.LineThrough else null
+                            fontWeight = if (isModified) FontWeight.Bold else FontWeight.SemiBold
                         ),
-                        color = RoutineTheme.colors.onSurface
+                        color = RoutineTheme.colors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    
-                    if (item is TodayTimelineItem.Flexible) {
-                       Text(
-                           text = item.activity,
-                           style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp),
-                           color = RoutineTheme.colors.primary
-                       )
-                       item.description?.let {
-                           Text(
-                               text = it,
-                               style = RoutineTheme.typography.bodyBase.copy(fontSize = 11.sp),
-                               color = RoutineTheme.colors.onSurfaceVariant
-                           )
-                       }
-                    }
                 }
 
-                if (item is TodayTimelineItem.Flexible && item.progress != null) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = item.progress,
-                            style = RoutineTheme.typography.dataLarge.copy(fontSize = 12.sp),
-                            color = RoutineTheme.colors.primary
-                        )
-                        Text(
-                            text = "GRUPOS",
-                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
-                            color = RoutineTheme.colors.onSurfaceVariant
-                        )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (item.status == DailyInstanceStatus.PLANNED) {
+                        IconButton(onClick = { onAction(item.id, "SKIP") }) {
+                            Icon(Icons.Default.Block, contentDescription = "Skip", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        }
+                        IconButton(onClick = { onAction(item.id, "COMPLETE") }) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = "Complete", tint = RoutineTheme.colors.primary)
+                        }
+                    } else {
+                        StatusIcon(status = item.status)
                     }
-                } else {
-                    StatusIcon(status = item.status)
                 }
             }
 
-            if (item is TodayTimelineItem.Activity && item.nodes.isNotEmpty() && item.status == TimelineItemStatus.ACTIVE) {
+            // Sub-nodes Section
+            if (item.subNodes.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
                 Column(
                     modifier = Modifier
@@ -124,59 +102,69 @@ fun TimelineItemCard(
                         .drawThreadLine(RoutineTheme.colors.border)
                         .padding(start = RoutineTheme.spacing.md)
                 ) {
-                    item.nodes.forEach { node ->
-                        NodeRow(node)
-                        Spacer(modifier = Modifier.height(RoutineTheme.spacing.sm))
+                    item.subNodes.forEachIndexed { index, subNode ->
+                        SubNodeRow(subNode, onAction)
+                        if (index != item.subNodes.lastIndex) {
+                            Spacer(modifier = Modifier.height(RoutineTheme.spacing.sm))
+                        }
                     }
                 }
-            }
-            
-            if (item is TodayTimelineItem.Spontaneous) {
-                 item.interruptionInfo?.let {
-                     Text(
-                         text = it,
-                         style = RoutineTheme.typography.bodyBase.copy(fontSize = 10.sp),
-                         color = RoutineTheme.colors.onSurfaceVariant
-                     )
-                 }
             }
         }
     }
 }
 
 @Composable
-private fun NodeRow(node: ActivityNodeSnapshot) {
+private fun SubNodeRow(
+    subNode: TodaySubNodeUiModel,
+    onAction: (String, String) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
+            if (subNode.timeText.isNotBlank()) {
+                Text(
+                    text = subNode.timeText,
+                    style = RoutineTheme.typography.dataLarge.copy(fontSize = 10.sp),
+                    color = RoutineTheme.colors.onSurfaceVariant
+                )
+            }
             Text(
-                text = "${node.startTime} – ${node.endTime}",
-                style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
-                color = if (node.status == TimelineItemStatus.ACTIVE) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
-            )
-            Text(
-                text = node.title,
+                text = subNode.title,
                 style = RoutineTheme.typography.bodyBase.copy(
                     fontSize = 14.sp,
-                    textDecoration = if (node.status == TimelineItemStatus.COMPLETED) TextDecoration.LineThrough else null
+                    textDecoration = if (subNode.status == DailyInstanceStatus.OMITTED) TextDecoration.LineThrough else null
                 ),
-                color = if (node.status == TimelineItemStatus.ACTIVE) RoutineTheme.colors.onSurface else RoutineTheme.colors.onSurfaceVariant
+                color = if (subNode.status == DailyInstanceStatus.OMITTED) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
-        StatusIcon(status = node.status, size = 16.dp)
+        
+        if (subNode.status == DailyInstanceStatus.PLANNED) {
+            Row {
+                IconButton(onClick = { onAction(subNode.id, "SKIP") }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Block, contentDescription = "Skip", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                }
+                IconButton(onClick = { onAction(subNode.id, "COMPLETE") }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = "Complete", tint = RoutineTheme.colors.primary, modifier = Modifier.size(20.dp))
+                }
+            }
+        } else {
+            StatusIcon(status = subNode.status, size = 16.dp)
+        }
     }
 }
 
 @Composable
-private fun StatusIcon(status: TimelineItemStatus, size: androidx.compose.ui.unit.Dp = 24.dp) {
+private fun StatusIcon(status: DailyInstanceStatus, size: androidx.compose.ui.unit.Dp = 24.dp) {
     val (icon, color) = when (status) {
-        TimelineItemStatus.COMPLETED -> Icons.Default.CheckCircle to RoutineTheme.colors.primary
-        TimelineItemStatus.ACTIVE -> Icons.Default.Sync to RoutineTheme.colors.primary
-        TimelineItemStatus.PENDING -> Icons.Default.Schedule to RoutineTheme.colors.onSurfaceVariant
-        TimelineItemStatus.SKIPPED -> Icons.Default.Block to RoutineTheme.colors.onSurfaceVariant
+        DailyInstanceStatus.PLANNED -> Icons.Default.Schedule to RoutineTheme.colors.onSurfaceVariant
+        DailyInstanceStatus.MODIFIED -> Icons.Default.Sync to RoutineTheme.colors.secondary
+        DailyInstanceStatus.OMITTED -> Icons.Default.Block to RoutineTheme.colors.onSurfaceVariant
     }
     
     Icon(
