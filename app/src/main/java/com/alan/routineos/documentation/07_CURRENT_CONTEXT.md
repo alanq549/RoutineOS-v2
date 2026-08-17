@@ -7,9 +7,9 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 | :--- | :--- |
 | **Current Branch** | `develop` |
 | **Current Phase** | Fase 3: Capture & Reality (Metadata Workspace) |
-| **Current Goal** | Iniciar integración de Today Workspace (EC-RE-006) |
+| **Current Goal** | Definir contrato técnico para Fase 4 |
 | **Current EC** | Ninguna |
-| **Next EC** | [EC-RE-006_TODAY_WORKSPACE](./EC/EC-RE-006_TODAY_WORKSPACE.md) |
+| **Next EC** | [EC-RE-007_CONTEXTUAL_ORGANIZATION](./EC/EC-RE-007_CONTEXTUAL_ORGANIZATION.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -18,6 +18,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-005 Cerrada**: Infraestructura de esquemas de metadatos integrada en `develop`.
-- **Siguiente paso**: Implementar el espacio de trabajo dinámico en **Today** (EC-RE-006).
+- **EC-RE-006 Cerrada**: Today Workspace integrado con éxito. Se habilitó la captura de metadatos y acciones reales.
+- **Siguiente paso**: Definir el contrato para **Fase 4: Insights & Progress Tracking** (o continuar con Contextual Organization si se decide).
 - Se mantiene el enfoque agnóstico en el seguimiento de métricas personalizadas.

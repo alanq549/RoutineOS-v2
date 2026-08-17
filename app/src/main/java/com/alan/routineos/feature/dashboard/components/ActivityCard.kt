@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -22,10 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.component.RoutinePrimaryButton
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
@@ -88,6 +89,14 @@ fun ActivityCard(
                 color = RoutineTheme.colors.onSurfaceVariant
             )
             
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = activity.statsLine,
+                style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp),
+                color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+            
             Spacer(modifier = Modifier.height(24.dp))
             
             Column(
@@ -96,23 +105,52 @@ fun ActivityCard(
                     .background(RoutineTheme.colors.surface1.copy(alpha = 0.5f), RoutineTheme.shapes.small)
                     .border(1.dp, RoutineTheme.colors.border, RoutineTheme.shapes.small)
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                activity.summaryItems.forEach { summary ->
-                   if (summary.dayName.isNotEmpty()) {
-                       Text(
-                           text = summary.dayName,
-                           style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
-                           color = RoutineTheme.colors.primary
-                       )
-                   }
-                   summary.activities.forEach { activityName ->
-                       Text(
-                           text = "├ $activityName",
-                           style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
-                           color = RoutineTheme.colors.onSurface,
-                           modifier = Modifier.alpha(0.8f)
-                       )
+                   Column {
+                       Row(
+                           modifier = Modifier.fillMaxWidth(),
+                           horizontalArrangement = Arrangement.SpaceBetween,
+                           verticalAlignment = Alignment.CenterVertically
+                       ) {
+                           Text(
+                               text = summary.dayName,
+                               style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
+                               color = RoutineTheme.colors.primary
+                           )
+                           summary.detailText?.let {
+                               Text(
+                                   text = it,
+                                   style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
+                                   color = RoutineTheme.colors.onSurfaceVariant
+                               )
+                           }
+                       }
+                       
+                       if (summary.detailText == null) {
+                           summary.activities.forEachIndexed { index, activityName ->
+                               Row(
+                                   modifier = Modifier.padding(start = 12.dp, top = 4.dp),
+                                   verticalAlignment = Alignment.CenterVertically
+                               ) {
+                                   Text(
+                                       text = if (index == summary.activities.lastIndex) "└─" else "├─",
+                                       style = RoutineTheme.typography.labelCaps.copy(fontSize = 13.sp),
+                                       color = RoutineTheme.colors.border,
+                                       modifier = Modifier.padding(top = 2.dp)
+                                   )
+                                   Spacer(modifier = Modifier.width(8.dp))
+                                   Text(
+                                       text = activityName,
+                                       style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
+                                       color = RoutineTheme.colors.onSurface.copy(alpha = 0.8f),
+                                       maxLines = 1,
+                                       overflow = TextOverflow.Ellipsis
+                                   )
+                               }
+                           }
+                       }
                    }
                }
             }

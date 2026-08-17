@@ -21,7 +21,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-003 | Scheduling Engine & Daily Instances | Critical | Large | AI Agent | EC-RE-002 | CLOSED | Refined flexible logic with snapshot integrity. |
 | EC-RE-004 | Flexible Rules & Scheduling Editor | High | Medium | AI Agent | EC-RE-003 | CLOSED | Visual time/day editors in Node Inspector. |
 | EC-RE-005 | Metadata Schemas & Context | High | Medium | AI Agent | EC-RE-004 | CLOSED | CRUD and Context logic implemented. |
-| EC-RE-006 | Today Workspace (Actions & Capture) | Critical | Large | AI Agent | EC-RE-005 | READY | Integrated daily actions and data capture. |
+| EC-RE-006 | Today Workspace (Actions & Capture) | Critical | Large | AI Agent | EC-RE-005 | CLOSED | Refactored domain hierarchy and dynamic capture. |
 
 ---
 
