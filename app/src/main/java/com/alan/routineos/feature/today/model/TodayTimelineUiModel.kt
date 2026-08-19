@@ -6,7 +6,9 @@ data class TodaySubNodeUiModel(
     val id: String,
     val title: String,
     val timeText: String,
-    val status: DailyInstanceStatus
+    val status: DailyInstanceStatus,
+    val contextMetadata: List<Pair<String, String>> = emptyList(),
+    val operationalMetadata: List<Pair<String, String>> = emptyList()
 )
 
 data class TodayTimelineUiModel(
@@ -16,5 +18,9 @@ data class TodayTimelineUiModel(
     val status: DailyInstanceStatus,
     val isMaterialized: Boolean,
     val hasConflict: Boolean = false,
-    val subNodes: List<TodaySubNodeUiModel> = emptyList()
+    val subNodes: List<TodaySubNodeUiModel> = emptyList(),
+    val contextMetadata: List<Pair<String, String>> = emptyList(),
+    val operationalMetadata: List<Pair<String, String>> = emptyList(),
+    val isExpandable: Boolean = false,
+    val isExpanded: Boolean = false
 )

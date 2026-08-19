@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ActivityExecutionDao {
+    @Query("SELECT * FROM activity_executions")
+    fun getAllExecutions(): Flow<List<ActivityExecutionEntity>>
+
     @Upsert
     suspend fun insertExecution(execution: ActivityExecutionEntity)
 

@@ -14,8 +14,9 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -26,10 +27,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextOverflow
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.domain.model.DailyInstanceStatus
+import com.alan.routineos.domain.model.MetadataField
 import com.alan.routineos.feature.today.model.TodaySubNodeUiModel
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
@@ -37,6 +43,7 @@ import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 fun TimelineItemCard(
     item: TodayTimelineUiModel,
     onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val cardAlpha = if (item.status == DailyInstanceStatus.OMITTED) 0.4f else 1f
@@ -77,9 +84,36 @@ fun TimelineItemCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    
+                    // Display Metadata
+                    if (item.contextMetadata.isNotEmpty() || item.operationalMetadata.isNotEmpty()) {
+                        FlowRow(
+                            modifier = Modifier.padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            item.contextMetadata.forEach { (name, value) ->
+                                MetadataLabel(name = name, value = value, isContext = true)
+                            }
+                            item.operationalMetadata.forEach { (name, value) ->
+                                MetadataLabel(name = name, value = value, isContext = false)
+                            }
+                        }
+                    }
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (item.isExpandable) {
+                        val rotation by animateFloatAsState(if (item.isExpanded) 180f else 0f)
+                        IconButton(onClick = { onExpandClick(item.id) }) {
+                            Icon(
+                                imageVector = Icons.Default.ExpandMore,
+                                contentDescription = "Expand",
+                                modifier = Modifier.rotate(rotation),
+                                tint = RoutineTheme.colors.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
                     if (item.status == DailyInstanceStatus.PLANNED) {
                         IconButton(onClick = { onAction(item.id, "SKIP") }) {
                             Icon(Icons.Default.Block, contentDescription = "Skip", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
@@ -93,19 +127,21 @@ fun TimelineItemCard(
                 }
             }
 
-            // Sub-nodes Section
-            if (item.subNodes.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
-                Column(
-                    modifier = Modifier
-                        .padding(start = RoutineTheme.spacing.sm)
-                        .drawThreadLine(RoutineTheme.colors.border)
-                        .padding(start = RoutineTheme.spacing.md)
-                ) {
-                    item.subNodes.forEachIndexed { index, subNode ->
-                        SubNodeRow(subNode, onAction)
-                        if (index != item.subNodes.lastIndex) {
-                            Spacer(modifier = Modifier.height(RoutineTheme.spacing.sm))
+            // Sub-nodes Section (with expansion support)
+            AnimatedVisibility(visible = item.isExpanded || !item.isExpandable) {
+                if (item.subNodes.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
+                    Column(
+                        modifier = Modifier
+                            .padding(start = RoutineTheme.spacing.sm)
+                            .drawThreadLine(RoutineTheme.colors.border)
+                            .padding(start = RoutineTheme.spacing.md)
+                    ) {
+                        item.subNodes.forEachIndexed { index, subNode ->
+                            SubNodeRow(subNode, onAction)
+                            if (index != item.subNodes.lastIndex) {
+                                Spacer(modifier = Modifier.height(RoutineTheme.spacing.sm))
+                            }
                         }
                     }
                 }
@@ -142,6 +178,20 @@ private fun SubNodeRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+
+            if (subNode.contextMetadata.isNotEmpty() || subNode.operationalMetadata.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.padding(top = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    subNode.contextMetadata.forEach { (name, value) ->
+                        MetadataLabel(name = name, value = value, isContext = true)
+                    }
+                    subNode.operationalMetadata.forEach { (name, value) ->
+                        MetadataLabel(name = name, value = value, isContext = false)
+                    }
+                }
+            }
         }
         
         if (subNode.status == DailyInstanceStatus.PLANNED) {
@@ -172,6 +222,16 @@ private fun StatusIcon(status: DailyInstanceStatus, size: androidx.compose.ui.un
         contentDescription = null,
         tint = color,
         modifier = Modifier.size(size)
+    )
+}
+
+@Composable
+private fun MetadataLabel(name: String, value: String, isContext: Boolean) {
+    Text(
+        text = if (isContext) "$name: $value" else "$name ($value)",
+        style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
+        color = if (isContext) RoutineTheme.colors.primary.copy(alpha = 0.8f) 
+                else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
     )
 }
 

@@ -101,4 +101,22 @@ object UseCaseModule {
     fun provideValidateMetadataSchemaUseCase(): ValidateMetadataSchemaUseCase {
         return ValidateMetadataSchemaUseCase()
     }
+
+    @Provides
+    @Singleton
+    fun provideGetSystemsWithStatsUseCase(repository: ActivityRepository): GetSystemsWithStatsUseCase {
+        return GetSystemsWithStatsUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAssignActivityToSystemUseCase(repository: ActivityRepository): AssignActivityToSystemUseCase {
+        return AssignActivityToSystemUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUnassignActivityFromSystemUseCase(repository: ActivityRepository): UnassignActivityFromSystemUseCase {
+        return UnassignActivityFromSystemUseCase(repository)
+    }
 }

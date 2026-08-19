@@ -15,6 +15,7 @@ fun TodayRoute(
     TodayScreen(
         uiState = uiState,
         onAction = viewModel::onActionTriggered,
+        onExpandClick = viewModel::toggleExpand,
         onMetadataCaptured = viewModel::onMetadataCaptured,
         onCloseCapture = viewModel::onCloseCapture,
         onAddAdHoc = viewModel::onAddAdHoc,

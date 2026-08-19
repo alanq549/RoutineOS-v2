@@ -1,9 +1,10 @@
 package com.alan.routineos.domain.model
 
-data class ActivityDefinition(
+data class LifeSystem(
     val id: String,
     val title: String,
     val description: String,
-    val systemId: String? = null,
-    val isDeleted: Boolean = false
+    val iconKey: String,
+    val colorHex: String,
+    val isArchived: Boolean = false
 )

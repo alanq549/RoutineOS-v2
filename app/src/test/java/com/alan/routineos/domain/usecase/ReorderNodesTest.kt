@@ -4,8 +4,10 @@ import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
 import com.alan.routineos.data.local.dao.DailyInstanceDao
+import com.alan.routineos.data.local.dao.MetadataSchemaDao
 import com.alan.routineos.data.local.dao.ScheduleExceptionDao
 import com.alan.routineos.data.local.dao.ScheduleRuleDao
+import com.alan.routineos.data.local.dao.SystemDao
 import com.alan.routineos.data.local.entities.ActivityNodeEntity
 import com.alan.routineos.data.local.entities.DailyInstanceEntity
 import com.alan.routineos.data.local.entities.ScheduleExceptionEntity
@@ -53,6 +55,7 @@ class ReorderNodesTest {
             scheduleExceptionDao = FakeScheduleExceptionDao(),
             dailyInstanceDao = FakeDailyInstanceDao(),
             metadataSchemaDao = FakeMetadataSchemaDao(),
+            systemDao = FakeSystemDao(),
             validateActivityNodeUseCase = ValidateActivityNodeUseCase(),
             validateScheduleRuleUseCase = ValidateScheduleRuleUseCase(),
             validateMetadataSchemaUseCase = ValidateMetadataSchemaUseCase()
@@ -87,6 +90,7 @@ class ReorderNodesTest {
     }
     
     private class FakeActivityExecutionDao : ActivityExecutionDao {
+        override fun getAllExecutions(): Flow<List<com.alan.routineos.data.local.entities.ActivityExecutionEntity>> = flowOf(emptyList())
         override suspend fun insertExecution(execution: com.alan.routineos.data.local.entities.ActivityExecutionEntity) = TODO()
         override fun getExecutionsForNode(nodeId: String): Flow<List<com.alan.routineos.data.local.entities.ActivityExecutionEntity>> = TODO()
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<com.alan.routineos.data.local.entities.ActivityExecutionEntity>> = TODO()
@@ -114,14 +118,23 @@ class ReorderNodesTest {
 
     private class FakeDailyInstanceDao : DailyInstanceDao {
         override fun getInstancesForDate(date: Long): Flow<List<DailyInstanceEntity>> = TODO()
+        override fun getInstancesInRange(start: Long, end: Long): Flow<List<DailyInstanceEntity>> = flowOf(emptyList())
         override suspend fun getInstanceByTarget(targetId: String, date: Long): DailyInstanceEntity? = null
         override suspend fun insertInstance(instance: DailyInstanceEntity) {}
         override suspend fun deleteInstance(instance: DailyInstanceEntity) {}
     }
 
-    private class FakeMetadataSchemaDao : com.alan.routineos.data.local.dao.MetadataSchemaDao {
+    private class FakeMetadataSchemaDao : MetadataSchemaDao {
         override fun getSchema(targetId: String, targetType: String): Flow<com.alan.routineos.data.local.entities.MetadataSchemaEntity?> = flowOf(null)
         override suspend fun insertSchema(schema: com.alan.routineos.data.local.entities.MetadataSchemaEntity) {}
         override suspend fun deleteSchema(schema: com.alan.routineos.data.local.entities.MetadataSchemaEntity) {}
+    }
+
+    private class FakeSystemDao : SystemDao {
+        override fun getAllSystems(): Flow<List<com.alan.routineos.data.local.entities.SystemEntity>> = flowOf(emptyList())
+        override suspend fun getSystemsList(): List<com.alan.routineos.data.local.entities.SystemEntity> = emptyList()
+        override suspend fun getSystemById(id: String): com.alan.routineos.data.local.entities.SystemEntity? = null
+        override suspend fun upsertSystem(system: com.alan.routineos.data.local.entities.SystemEntity) {}
+        override suspend fun deleteSystem(system: com.alan.routineos.data.local.entities.SystemEntity) {}
     }
 }

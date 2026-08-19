@@ -27,6 +27,7 @@ import android.widget.Toast
 fun TodayScreen(
     uiState: TodayUiState,
     onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
     onMetadataCaptured: (String, String) -> Unit,
     onCloseCapture: () -> Unit,
     onAddAdHoc: (String) -> Unit,
@@ -79,7 +80,11 @@ fun TodayScreen(
 
                 TodayNextActivityCard(activity = uiState.nextActivity)
 
-                TodayTimeline(items = uiState.timelineItems, onAction = onAction)
+                TodayTimeline(
+                    items = uiState.timelineItems,
+                    onAction = onAction,
+                    onExpandClick = onExpandClick
+                )
                 
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
             }

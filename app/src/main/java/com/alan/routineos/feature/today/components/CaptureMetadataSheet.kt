@@ -25,6 +25,10 @@ fun CaptureMetadataSheet(
     onCaptured: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val operationalFields = remember(schema) { 
+        schema.fields.filter { !it.isReadOnly }
+    }
+    
     val capturedValues = remember { mutableStateMapOf<String, String>() }
     
     // Initialize with default values
@@ -53,7 +57,7 @@ fun CaptureMetadataSheet(
                 color = RoutineTheme.colors.onSurface
             )
             Text(
-                text = "Carga de ${schema.fields.size} métricas",
+                text = "Carga de ${operationalFields.size} métricas",
                 style = RoutineTheme.typography.labelCaps,
                 color = RoutineTheme.colors.onSurfaceVariant
             )
@@ -64,7 +68,7 @@ fun CaptureMetadataSheet(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f, fill = false)
             ) {
-                items(schema.fields) { field ->
+                items(operationalFields) { field ->
                     DynamicField(
                         field = field,
                         currentValue = capturedValues[field.id] ?: "",
@@ -75,7 +79,7 @@ fun CaptureMetadataSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            val isCompleteEnabled = schema.fields.all { !it.required || capturedValues[it.id]?.isNotBlank() == true }
+            val isCompleteEnabled = operationalFields.all { !it.required || capturedValues[it.id]?.isNotBlank() == true }
 
             Button(
                 onClick = {

@@ -58,6 +58,7 @@ fun ActivityDetailRoute(
         onCloseMetadata = viewModel::onCloseMetadata,
         onUpsertMetadataSchema = viewModel::onUpsertMetadataSchema,
         onDeleteMetadataSchema = viewModel::onDeleteMetadataSchema,
+        onAssignToSystem = viewModel::onAssignToSystem,
         uiEvent = viewModel.uiEvent
     )
 }
@@ -83,6 +84,7 @@ fun ActivityDetailScreen(
     onCloseMetadata: () -> Unit,
     onUpsertMetadataSchema: (com.alan.routineos.domain.model.MetadataSchema) -> Unit,
     onDeleteMetadataSchema: (String, String) -> Unit,
+    onAssignToSystem: (String?) -> Unit,
     uiEvent: SharedFlow<ActivityDetailUiEvent>
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -128,7 +130,8 @@ fun ActivityDetailScreen(
             onUpdateNode = onUpdateNode,
             onNodeClick = onNodeClick,
             onOpenScheduling = onOpenScheduling,
-            onOpenMetadata = onOpenMetadata
+            onOpenMetadata = onOpenMetadata,
+            onAssignToSystem = onAssignToSystem
         )
 
         if (uiState.isSchedulingSheetOpen && uiState.schedulingTarget != null) {
@@ -198,7 +201,8 @@ private fun ActivityDetailContent(
     onUpdateNode: (String, String) -> Unit,
     onNodeClick: (String?) -> Unit,
     onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
-    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
+    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
+    onAssignToSystem: (String?) -> Unit
 ) {
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -217,7 +221,8 @@ private fun ActivityDetailContent(
             onUpdateNode,
             onNodeClick,
             onOpenScheduling,
-            onOpenMetadata
+            onOpenMetadata,
+            onAssignToSystem
         )
     }
 }
@@ -235,7 +240,8 @@ private fun NodesList(
     onUpdateNode: (String, String) -> Unit,
     onNodeClick: (String?) -> Unit,
     onOpenScheduling: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
-    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit
+    onOpenMetadata: (com.alan.routineos.domain.model.ScheduleTarget) -> Unit,
+    onAssignToSystem: (String?) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -244,7 +250,14 @@ private fun NodesList(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { DetailHeader(uiState.activity?.description ?: "") }
+        item { 
+            DetailHeader(
+                description = uiState.activity?.description ?: "",
+                currentSystemId = uiState.activity?.systemId,
+                allSystems = uiState.allSystems,
+                onAssignToSystem = onAssignToSystem
+            ) 
+        }
         item { NodesSectionTitle() }
         item {
             QuickAddNodeForm(
@@ -270,9 +283,72 @@ private fun NodesList(
 }
 
 @Composable
-private fun DetailHeader(description: String) {
-    Spacer(modifier = Modifier.height(16.dp))
-    ActivityHeaderSection(description = description)
+private fun DetailHeader(
+    description: String,
+    currentSystemId: String?,
+    allSystems: List<com.alan.routineos.domain.model.LifeSystem>,
+    onAssignToSystem: (String?) -> Unit
+) {
+    Column {
+        Spacer(modifier = Modifier.height(16.dp))
+        ActivityHeaderSection(description = description)
+        
+        SystemAssignmentRow(
+            currentSystemId = currentSystemId,
+            allSystems = allSystems,
+            onAssign = onAssignToSystem
+        )
+    }
+}
+
+@Composable
+private fun SystemAssignmentRow(
+    currentSystemId: String?,
+    allSystems: List<com.alan.routineos.domain.model.LifeSystem>,
+    onAssign: (String?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val currentSystem = allSystems.find { it.id == currentSystemId }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Category,
+            contentDescription = null,
+            tint = RoutineTheme.colors.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = currentSystem?.title ?: "Organizar en un sistema...",
+            style = RoutineTheme.typography.labelCaps,
+            color = if (currentSystem != null) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
+        )
+        
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text("Ninguno (Sin organizar)") },
+                onClick = {
+                    onAssign(null)
+                    expanded = false
+                }
+            )
+            allSystems.forEach { system ->
+                DropdownMenuItem(
+                    text = { Text(system.title) },
+                    onClick = {
+                        onAssign(system.id)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -617,6 +693,7 @@ fun ActivityDetailScreenPreview() {
             onCloseMetadata = {},
             onUpsertMetadataSchema = {},
             onDeleteMetadataSchema = { _, _ -> },
+            onAssignToSystem = {},
             uiEvent = kotlinx.coroutines.flow.MutableSharedFlow<ActivityDetailUiEvent>()
         )
     }

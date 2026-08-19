@@ -4,6 +4,7 @@ import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.model.DailyInstance
+import com.alan.routineos.domain.model.LifeSystem
 import com.alan.routineos.domain.model.MetadataSchema
 import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleRule
@@ -24,6 +25,7 @@ interface ActivityRepository {
     suspend fun moveNode(nodeId: String, newParentId: String?)
     
     suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String? = null)
+    fun getAllExecutions(): Flow<List<ActivityExecution>>
     fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>>
     fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>>
     suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long)
@@ -45,6 +47,7 @@ interface ActivityRepository {
 
     // Daily Instances
     fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>>
+    fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>>
     suspend fun upsertDailyInstance(instance: DailyInstance)
     suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance?
 
@@ -52,4 +55,11 @@ interface ActivityRepository {
     fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?>
     suspend fun upsertMetadataSchema(schema: MetadataSchema)
     suspend fun deleteMetadataSchema(targetId: String, targetType: String)
+
+    // Systems
+    fun getAllSystems(): Flow<List<LifeSystem>>
+    suspend fun getSystemsList(): List<LifeSystem>
+    suspend fun getSystemById(id: String): LifeSystem?
+    suspend fun upsertSystem(system: LifeSystem)
+    suspend fun deleteSystem(system: LifeSystem)
 }

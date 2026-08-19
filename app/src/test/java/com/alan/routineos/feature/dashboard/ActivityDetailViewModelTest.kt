@@ -1,9 +1,10 @@
-package com.alan.routineos.feature.dashboard
+package com.alan.routineos.feature.today
 
 import androidx.lifecycle.SavedStateHandle
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.*
+import com.alan.routineos.feature.dashboard.ActivityDetailViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,8 @@ class ActivityDetailViewModelTest {
             updateNodeUseCase = UpdateNodeUseCase(repository),
             deleteBranchUseCase = DeleteBranchUseCase(repository),
             restoreBranchUseCase = RestoreBranchUseCase(repository),
+            assignActivityToSystemUseCase = AssignActivityToSystemUseCase(repository),
+            unassignActivityFromSystemUseCase = UnassignActivityFromSystemUseCase(repository),
             savedStateHandle = SavedStateHandle(mapOf("activityId" to "act1"))
         )
     }
@@ -93,6 +96,7 @@ class ActivityDetailViewModelTest {
             registerExecutionCallCount++
         }
         
+        override fun getAllExecutions(): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = MutableStateFlow(emptyList())
 
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = MutableStateFlow(emptyList())
@@ -108,14 +112,20 @@ class ActivityDetailViewModelTest {
         override fun getRulesForActivityTree(definitionId: String): Flow<List<ScheduleRule>> = flowOf(emptyList())
         override suspend fun upsertRule(rule: ScheduleRule) {}
         override suspend fun deleteRule(rule: ScheduleRule) {}
-        override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
-        override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
-        override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}
         override fun getExceptionsForRule(ruleId: String): Flow<List<ScheduleException>> = flowOf(emptyList())
         override suspend fun upsertException(exception: ScheduleException) {}
         override suspend fun deleteException(exception: ScheduleException) {}
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
+        override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
+        override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
+        override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
+        override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}
+        override fun getAllSystems(): Flow<List<LifeSystem>> = flowOf(emptyList())
+        override suspend fun getSystemsList(): List<LifeSystem> = emptyList()
+        override suspend fun getSystemById(id: String): LifeSystem? = null
+        override suspend fun upsertSystem(system: LifeSystem) {}
+        override suspend fun deleteSystem(system: LifeSystem) {}
     }
 }

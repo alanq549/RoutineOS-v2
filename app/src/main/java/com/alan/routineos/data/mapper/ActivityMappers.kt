@@ -11,7 +11,9 @@ fun ActivityDefinitionEntity.toDomain(): ActivityDefinition {
     return ActivityDefinition(
         id = id,
         title = title,
-        description = description
+        description = description,
+        systemId = systemId,
+        isDeleted = isDeleted
     )
 }
 
@@ -19,7 +21,9 @@ fun ActivityDefinition.toEntity(): ActivityDefinitionEntity {
     return ActivityDefinitionEntity(
         id = id,
         title = title,
-        description = description
+        description = description,
+        systemId = systemId,
+        isDeleted = isDeleted
     )
 }
 
@@ -198,5 +202,27 @@ fun MetadataSchema.toEntity(): MetadataSchemaEntity {
         targetType = targetType,
         fieldsJson = json.encodeToString(fields),
         schemaVersion = schemaVersion
+    )
+}
+
+fun SystemEntity.toDomain(): LifeSystem {
+    return LifeSystem(
+        id = id,
+        title = title,
+        description = description,
+        iconKey = iconKey,
+        colorHex = colorHex,
+        isArchived = isArchived
+    )
+}
+
+fun LifeSystem.toEntity(): SystemEntity {
+    return SystemEntity(
+        id = id,
+        title = title,
+        description = description,
+        iconKey = iconKey,
+        colorHex = colorHex,
+        isArchived = isArchived
     )
 }

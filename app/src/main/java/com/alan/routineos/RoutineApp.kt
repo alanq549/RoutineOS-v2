@@ -22,9 +22,12 @@ class RoutineApp : Application() {
     @Inject
     lateinit var metaDao: MetadataSchemaDao
 
+    @Inject
+    lateinit var systemDao: SystemDao
+
     override fun onCreate() {
         super.onCreate()
         // Trigger dev seed with all core DAOs
-        DatabaseSeed.seedAll(definitionDao, nodeDao, ruleDao, metaDao)
+        DatabaseSeed.seedAll(definitionDao, nodeDao, ruleDao, metaDao, systemDao)
     }
 }

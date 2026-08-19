@@ -22,7 +22,7 @@ fun List<ActivityNodeTree>.toUiProjection(
     val result = mutableListOf<ActivityNodeUiProjection>()
     
     this.forEach { treeNode ->
-        val isExpanded = expandedNodes.contains(treeNode.node.id) || depth == 0 
+        val isExpanded = expandedNodes.contains(treeNode.node.id)
         
         result.add(
             ActivityNodeUiProjection(

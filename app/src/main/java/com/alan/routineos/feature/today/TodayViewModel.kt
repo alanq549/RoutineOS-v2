@@ -4,15 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
-import com.alan.routineos.domain.usecase.GetHierarchicalTimelineUseCase
-import com.alan.routineos.domain.usecase.RegisterDailyActionUseCase
-import com.alan.routineos.domain.usecase.DailyAction
-import com.alan.routineos.domain.usecase.TimelineEntry
+import com.alan.routineos.domain.usecase.*
 import com.alan.routineos.feature.dashboard.ActivityDetailUiEvent
-import com.alan.routineos.feature.today.model.TodayProgress
-import com.alan.routineos.feature.today.model.TodaySubNodeUiModel
-import com.alan.routineos.feature.today.model.TodayTimelineUiModel
+import com.alan.routineos.feature.today.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -33,35 +29,122 @@ class TodayViewModel @Inject constructor(
     private val _uiEvent = MutableSharedFlow<ActivityDetailUiEvent>()
     val uiEvent: SharedFlow<ActivityDetailUiEvent> = _uiEvent.asSharedFlow()
 
+    private val expandedIds = MutableStateFlow<Set<String>>(emptySet())
     private var currentEntries = listOf<HierarchicalTimelineEntry>()
 
     init {
         loadData()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadData() {
         val today = LocalDate.now()
         val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale.getDefault())
         
         viewModelScope.launch {
-            getHierarchicalTimelineUseCase(today).collect { entries ->
+            val nodesFlow = repository.getAllNodes()
+            val timelineFlow = getHierarchicalTimelineUseCase(today)
+
+            combine(nodesFlow, timelineFlow, expandedIds) { nodes, entries, expanded ->
                 currentEntries = entries
-                _uiState.update { 
-                    it.copy(
-                        isLoading = false,
-                        dateText = today.format(dateFormatter).uppercase(),
-                        progress = calculateProgress(entries),
-                        timelineItems = entries.map { entry -> entry.toUiModel() },
-                        nextActivity = findNextActivity(entries.map { entry -> entry.toUiModel() })
-                    )
+                resolveMetadataForEntries(entries, nodes).map { metaMap ->
+                    mapToUiState(entries, metaMap, expanded, nodes, today, dateFormatter)
                 }
+            }.flatMapLatest { it }.collect { newState ->
+                _uiState.value = newState
             }
         }
     }
 
+    private fun resolveMetadataForEntries(
+        entries: List<HierarchicalTimelineEntry>,
+        allNodes: List<ActivityNode>
+    ): Flow<Map<String, MetadataSnapshot>> {
+        val allTargetIds = entries.flatMap { entry ->
+            val rootId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
+            val childIds = allNodes.filter { it.parentId == rootId }.map { it.id }
+            listOfNotNull(rootId) + childIds
+        }.distinct()
+
+        val flows = allTargetIds.map { nodeId ->
+            repository.getMetadataSchema(nodeId, "NODE").map { schema ->
+                nodeId to (schema?.toSnapshot() ?: MetadataSnapshot())
+            }
+        }
+        return if (flows.isEmpty()) flowOf(emptyMap()) else combine(flows) { it.toMap() }
+    }
+
+    private data class MetadataSnapshot(
+        val context: List<Pair<String, String>> = emptyList(),
+        val operational: List<Pair<String, String>> = emptyList()
+    )
+
+    private fun MetadataSchema.toSnapshot(): MetadataSnapshot {
+        val context = fields.filter { it.isReadOnly }.map { it.name to (it.defaultValue ?: "") }
+        val operational = fields.filter { !it.isReadOnly }.map { it.name to (it.defaultValue ?: "?") }
+        return MetadataSnapshot(context, operational)
+    }
+
+    private fun mapToUiState(
+        entries: List<HierarchicalTimelineEntry>,
+        metaMap: Map<String, MetadataSnapshot>,
+        expanded: Set<String>,
+        allNodes: List<ActivityNode>,
+        today: LocalDate,
+        dateFormatter: DateTimeFormatter
+    ): TodayUiState {
+        val uiModels = entries.map { entry ->
+            val rootTargetId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
+            val structuralChildren = if (rootTargetId != null) {
+                allNodes.filter { it.parentId == rootTargetId }.map { node ->
+                    val scheduledChild = entry.children.find { (it.instance.target as? ScheduleTarget.Node)?.id == node.id }
+                    val meta = metaMap[node.id] ?: MetadataSnapshot()
+                    TodaySubNodeUiModel(
+                        id = scheduledChild?.instance?.id ?: "structural_${node.id}",
+                        title = node.title,
+                        timeText = scheduledChild?.instance?.plannedStartTime?.let { formatMinutes(it) } ?: "",
+                        status = scheduledChild?.instance?.status ?: DailyInstanceStatus.PLANNED,
+                        contextMetadata = meta.context,
+                        operationalMetadata = meta.operational
+                    )
+                }
+            } else emptyList()
+
+            val rootMeta = metaMap[rootTargetId] ?: MetadataSnapshot()
+            entry.toUiModel(structuralChildren, rootMeta, expanded.contains(entry.root.instance.id))
+        }
+
+        return TodayUiState(
+            isLoading = false,
+            dateText = today.format(dateFormatter).uppercase(),
+            progress = calculateProgress(entries),
+            timelineItems = uiModels,
+            nextActivity = findNextActivity(uiModels)
+        )
+    }
+
+    private fun HierarchicalTimelineEntry.toUiModel(
+        discoveredChildren: List<TodaySubNodeUiModel>,
+        meta: MetadataSnapshot,
+        isExpanded: Boolean
+    ): TodayTimelineUiModel {
+        return TodayTimelineUiModel(
+            id = root.instance.id,
+            title = root.instance.titleSnapshot,
+            timeRangeText = root.instance.plannedStartTime?.let { formatMinutes(it) } ?: "",
+            status = root.instance.status,
+            isMaterialized = root.isMaterialized,
+            hasConflict = root.conflict?.hasConflict ?: false,
+            subNodes = discoveredChildren,
+            contextMetadata = meta.context,
+            operationalMetadata = meta.operational,
+            isExpandable = discoveredChildren.isNotEmpty(),
+            isExpanded = isExpanded
+        )
+    }
+
     fun onActionTriggered(instanceId: String, actionType: String) {
         val entry = findEntry(instanceId) ?: return
-        
         viewModelScope.launch {
             when (actionType) {
                 "SKIP" -> registerDailyActionUseCase(entry, DailyAction.Skip)
@@ -74,12 +157,12 @@ class TodayViewModel @Inject constructor(
         val target = entry.instance.target
         if (target is ScheduleTarget.Node) {
             val schema = repository.getMetadataSchema(target.id, "NODE").firstOrNull()
-            if (schema != null && schema.fields.isNotEmpty()) {
+            val operationalFields = schema?.fields?.filter { !it.isReadOnly } ?: emptyList()
+            if (operationalFields.isNotEmpty()) {
                 _uiState.update { it.copy(captureSchema = schema, captureTargetId = entry.instance.id) }
                 return
             }
         }
-        
         registerDailyActionUseCase(entry, DailyAction.Complete())
         _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Actividad completada"))
     }
@@ -97,6 +180,12 @@ class TodayViewModel @Inject constructor(
         _uiState.update { it.copy(captureSchema = null, captureTargetId = null) }
     }
 
+    fun toggleExpand(instanceId: String) {
+        expandedIds.update {
+            if (it.contains(instanceId)) it - instanceId else it + instanceId
+        }
+    }
+
     private fun findEntry(instanceId: String): TimelineEntry? {
         currentEntries.forEach { hierarchical ->
             if (hierarchical.root.instance.id == instanceId) return hierarchical.root
@@ -105,30 +194,6 @@ class TodayViewModel @Inject constructor(
             }
         }
         return null
-    }
-
-    private fun HierarchicalTimelineEntry.toUiModel(): TodayTimelineUiModel {
-        val children = children.map { it.toSubNodeModel() }
-        val startTime = root.instance.plannedStartTime?.let { formatMinutes(it) } ?: ""
-        
-        return TodayTimelineUiModel(
-            id = root.instance.id,
-            title = root.instance.titleSnapshot,
-            timeRangeText = startTime,
-            status = root.instance.status,
-            isMaterialized = root.isMaterialized,
-            hasConflict = root.conflict?.hasConflict ?: false,
-            subNodes = children
-        )
-    }
-
-    private fun TimelineEntry.toSubNodeModel(): TodaySubNodeUiModel {
-        return TodaySubNodeUiModel(
-            id = instance.id,
-            title = instance.titleSnapshot,
-            timeText = instance.plannedStartTime?.let { formatMinutes(it) } ?: "",
-            status = instance.status
-        )
     }
 
     private fun formatMinutes(minutes: Int): String {
@@ -150,7 +215,6 @@ class TodayViewModel @Inject constructor(
     fun onAddAdHoc(title: String) {
         val today = LocalDate.now()
         val minutes = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) * 60 + Calendar.getInstance().get(Calendar.MINUTE)
-        
         val adHocInstance = DailyInstance(
             id = UUID.randomUUID().toString(),
             target = null,
