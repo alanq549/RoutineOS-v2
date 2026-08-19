@@ -23,6 +23,7 @@ class OfflineActivityRepository @Inject constructor(
     private val scheduleExceptionDao: ScheduleExceptionDao,
     private val dailyInstanceDao: DailyInstanceDao,
     private val metadataSchemaDao: MetadataSchemaDao,
+    private val systemDao: SystemDao,
     private val validateActivityNodeUseCase: ValidateActivityNodeUseCase,
     private val validateScheduleRuleUseCase: ValidateScheduleRuleUseCase,
     private val validateMetadataSchemaUseCase: ValidateMetadataSchemaUseCase
@@ -128,6 +129,12 @@ class OfflineActivityRepository @Inject constructor(
         activityExecutionDao.insertExecution(execution.toEntity())
     }
 
+    override fun getAllExecutions(): Flow<List<ActivityExecution>> {
+        return activityExecutionDao.getAllExecutions().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> {
         return activityExecutionDao.getExecutionsForNode(nodeId).map { entities ->
             entities.map { it.toDomain() }
@@ -220,6 +227,12 @@ class OfflineActivityRepository @Inject constructor(
         }
     }
 
+    override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> {
+        return dailyInstanceDao.getInstancesInRange(start, end).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override suspend fun upsertDailyInstance(instance: DailyInstance) {
         dailyInstanceDao.insertInstance(instance.toEntity())
     }
@@ -262,5 +275,27 @@ class OfflineActivityRepository @Inject constructor(
         metadataSchemaDao.getSchema(targetId, targetType).firstOrNull()?.let {
             metadataSchemaDao.deleteSchema(it)
         }
+    }
+
+    override fun getAllSystems(): Flow<List<LifeSystem>> {
+        return systemDao.getAllSystems().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun getSystemsList(): List<LifeSystem> {
+        return systemDao.getSystemsList().map { it.toDomain() }
+    }
+
+    override suspend fun getSystemById(id: String): LifeSystem? {
+        return systemDao.getSystemById(id)?.toDomain()
+    }
+
+    override suspend fun upsertSystem(system: LifeSystem) {
+        systemDao.upsertSystem(system.toEntity())
+    }
+
+    override suspend fun deleteSystem(system: LifeSystem) {
+        systemDao.deleteSystem(system.toEntity())
     }
 }

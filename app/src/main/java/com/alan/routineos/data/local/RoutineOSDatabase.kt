@@ -9,13 +9,8 @@ import com.alan.routineos.data.local.dao.DailyInstanceDao
 import com.alan.routineos.data.local.dao.MetadataSchemaDao
 import com.alan.routineos.data.local.dao.ScheduleExceptionDao
 import com.alan.routineos.data.local.dao.ScheduleRuleDao
-import com.alan.routineos.data.local.entities.ActivityDefinitionEntity
-import com.alan.routineos.data.local.entities.ActivityExecutionEntity
-import com.alan.routineos.data.local.entities.ActivityNodeEntity
-import com.alan.routineos.data.local.entities.DailyInstanceEntity
-import com.alan.routineos.data.local.entities.MetadataSchemaEntity
-import com.alan.routineos.data.local.entities.ScheduleExceptionEntity
-import com.alan.routineos.data.local.entities.ScheduleRuleEntity
+import com.alan.routineos.data.local.dao.SystemDao
+import com.alan.routineos.data.local.entities.*
 
 @Database(
     entities = [
@@ -26,8 +21,9 @@ import com.alan.routineos.data.local.entities.ScheduleRuleEntity
         ScheduleExceptionEntity::class,
         DailyInstanceEntity::class,
         MetadataSchemaEntity::class,
+        SystemEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class RoutineOSDatabase : RoomDatabase() {
@@ -38,4 +34,5 @@ abstract class RoutineOSDatabase : RoomDatabase() {
     abstract fun scheduleExceptionDao(): ScheduleExceptionDao
     abstract fun dailyInstanceDao(): DailyInstanceDao
     abstract fun metadataSchemaDao(): MetadataSchemaDao
+    abstract fun systemDao(): SystemDao
 }

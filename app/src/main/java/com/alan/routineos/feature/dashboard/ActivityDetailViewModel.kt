@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityNode
+import com.alan.routineos.domain.model.LifeSystem
 import com.alan.routineos.domain.model.MetadataSchema
 import com.alan.routineos.domain.model.ScheduleRule
 import com.alan.routineos.domain.model.ScheduleTarget
@@ -44,7 +45,8 @@ data class ActivityDetailUiState(
     val isMetadataSheetOpen: Boolean = false,
     val metadataTarget: ScheduleTarget? = null,
     val targetMetadataSchema: MetadataSchema? = null,
-    val metadataErrorMessage: String? = null
+    val metadataErrorMessage: String? = null,
+    val allSystems: List<LifeSystem> = emptyList()
 )
 
 @HiltViewModel
@@ -55,6 +57,8 @@ class ActivityDetailViewModel @Inject constructor(
     private val updateNodeUseCase: UpdateNodeUseCase,
     private val deleteBranchUseCase: DeleteBranchUseCase,
     private val restoreBranchUseCase: RestoreBranchUseCase,
+    private val assignActivityToSystemUseCase: AssignActivityToSystemUseCase,
+    private val unassignActivityFromSystemUseCase: UnassignActivityFromSystemUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -68,7 +72,7 @@ class ActivityDetailViewModel @Inject constructor(
     val uiEvent: SharedFlow<ActivityDetailUiEvent> = _uiEvent.asSharedFlow()
 
     private val processingNodeIds = MutableStateFlow<Set<String>>(emptySet())
-    private val expandedNodes = MutableStateFlow<Set<String>>(emptySet())
+    private val expandedNodes = MutableStateFlow<Set<String>?>(null)
     private val _schedulingTarget = MutableStateFlow<ScheduleTarget?>(null)
     private val _metadataTarget = MutableStateFlow<ScheduleTarget?>(null)
 
@@ -82,22 +86,40 @@ class ActivityDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val activityFlow = flow { emit(repository.getActivityDefinitionById(activityId)) }
             val treeFlow = getActivityTreeUseCase(activityId, referenceDate)
+            val systemsFlow = repository.getAllSystems()
 
             combine(
                 activityFlow, 
                 treeFlow, 
                 expandedNodes, 
                 _schedulingTarget,
-                _metadataTarget
-            ) { activity, tree, expanded, schTarget, metaTarget ->
+                _metadataTarget,
+                systemsFlow
+            ) { flows ->
+                val activity = flows[0] as? ActivityDefinition
+                val tree = flows[1] as List<com.alan.routineos.domain.model.ActivityNodeTree>
+                val expanded = flows[2] as? Set<String>
+                
+                // Initialize expansion for root nodes only if never initialized
+                if (expanded == null && tree.isNotEmpty()) {
+                    val rootIds = tree.map { it.node.id }.toSet()
+                    expandedNodes.update { rootIds }
+                    return@combine ActivityDetailUiState(isLoading = true) // Wait for update
+                }
+
+                val schTarget = flows[3] as? ScheduleTarget
+                val metaTarget = flows[4] as? ScheduleTarget
+                val systems = flows[5] as List<LifeSystem>
+
                 ActivityDetailUiState(
                     activity = activity,
-                    nodes = tree.toUiProjection(expandedNodes = expanded),
+                    nodes = tree.toUiProjection(expandedNodes = expanded ?: emptySet()),
                     isLoading = false,
                     isSchedulingSheetOpen = schTarget != null,
                     schedulingTarget = schTarget,
                     isMetadataSheetOpen = metaTarget != null,
-                    metadataTarget = metaTarget
+                    metadataTarget = metaTarget,
+                    allSystems = systems
                 )
             }.collect { newState ->
                 _uiState.value = newState
@@ -165,7 +187,7 @@ class ActivityDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 addChildUseCase(parentId, title)
-                expandedNodes.update { it + parentId }
+                expandedNodes.update { (it ?: emptySet()) + parentId }
             } catch (e: Exception) {
                 _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al añadir sub-paso"))
             }
@@ -238,8 +260,9 @@ class ActivityDetailViewModel @Inject constructor(
     }
 
     fun toggleExpand(nodeId: String) {
-        expandedNodes.update {
-            if (it.contains(nodeId)) it - nodeId else it + nodeId
+        expandedNodes.update { current ->
+            val set = current ?: emptySet()
+            if (set.contains(nodeId)) set - nodeId else set + nodeId
         }
     }
 
@@ -322,6 +345,20 @@ class ActivityDetailViewModel @Inject constructor(
                 )
             } catch (e: Exception) {
                 _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al eliminar horario"))
+            }
+        }
+    }
+
+    fun onAssignToSystem(systemId: String?) {
+        viewModelScope.launch {
+            try {
+                if (systemId == null) {
+                    unassignActivityFromSystemUseCase(activityId)
+                } else {
+                    assignActivityToSystemUseCase(activityId, systemId)
+                }
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al organizar actividad"))
             }
         }
     }

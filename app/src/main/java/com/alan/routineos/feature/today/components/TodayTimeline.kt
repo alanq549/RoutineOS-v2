@@ -20,6 +20,7 @@ import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 fun TodayTimeline(
     items: List<TodayTimelineUiModel>,
     onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -27,7 +28,8 @@ fun TodayTimeline(
             TimelineRow(
                 item = item,
                 isLast = index == items.lastIndex,
-                onAction = onAction
+                onAction = onAction,
+                onExpandClick = onExpandClick
             )
             if (index != items.lastIndex) {
                 Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
@@ -40,7 +42,8 @@ fun TodayTimeline(
 private fun TimelineRow(
     item: TodayTimelineUiModel,
     isLast: Boolean,
-    onAction: (String, String) -> Unit
+    onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -65,7 +68,11 @@ private fun TimelineRow(
 
         // Card Column
         Box(modifier = Modifier.weight(1f).padding(bottom = RoutineTheme.spacing.sm)) {
-            TimelineItemCard(item = item, onAction = onAction)
+            TimelineItemCard(
+                item = item, 
+                onAction = onAction,
+                onExpandClick = onExpandClick
+            )
         }
     }
 }

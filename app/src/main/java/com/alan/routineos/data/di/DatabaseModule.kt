@@ -12,6 +12,7 @@ import com.alan.routineos.data.local.dao.DailyInstanceDao
 import com.alan.routineos.data.local.dao.MetadataSchemaDao
 import com.alan.routineos.data.local.dao.ScheduleExceptionDao
 import com.alan.routineos.data.local.dao.ScheduleRuleDao
+import com.alan.routineos.data.local.dao.SystemDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,4 +63,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideMetadataSchemaDao(db: RoutineOSDatabase): MetadataSchemaDao = db.metadataSchemaDao()
+
+    @Provides
+    @Singleton
+    fun provideSystemDao(db: RoutineOSDatabase): SystemDao = db.systemDao()
 }

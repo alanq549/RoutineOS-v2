@@ -81,6 +81,7 @@ class TodayViewModelTest {
         override suspend fun reorderNodes(nodeIds: List<String>) {}
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
         override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {}
+        override fun getAllExecutions(): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) {}
@@ -97,10 +98,16 @@ class TodayViewModelTest {
         override suspend fun upsertException(exception: ScheduleException) {}
         override suspend fun deleteException(exception: ScheduleException) {}
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
+        override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
         override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}
+        override fun getAllSystems(): Flow<List<LifeSystem>> = flowOf(emptyList())
+        override suspend fun getSystemsList(): List<LifeSystem> = emptyList()
+        override suspend fun getSystemById(id: String): LifeSystem? = null
+        override suspend fun upsertSystem(system: LifeSystem) {}
+        override suspend fun deleteSystem(system: LifeSystem) {}
     }
 }
