@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
     tableName = "daily_instances",
     indices = [
         Index(
-            value = ["targetType", "targetId", "scheduledDate"],
+            value = ["sourceRuleId", "scheduledDate"],
             unique = true
         )
     ]

@@ -68,12 +68,31 @@ fun CaptureMetadataSheet(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f, fill = false)
             ) {
-                items(operationalFields) { field ->
-                    DynamicField(
-                        field = field,
-                        currentValue = capturedValues[field.id] ?: "",
-                        onValueChanged = { capturedValues[field.id] = it }
-                    )
+                // Find numeric fields to potentially group them
+                val fields = operationalFields
+                var i = 0
+                while (i < fields.size) {
+                    val field = fields[i]
+                    if (field.type == MetadataFieldType.NUMBER && i + 1 < fields.size && fields[i + 1].type == MetadataFieldType.NUMBER) {
+                        // Group two numeric fields side-by-side
+                        item {
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    DynamicField(field, capturedValues[field.id] ?: "", { capturedValues[field.id] = it })
+                                }
+                                Box(modifier = Modifier.weight(1f)) {
+                                    val nextField = fields[i + 1]
+                                    DynamicField(nextField, capturedValues[nextField.id] ?: "", { capturedValues[nextField.id] = it })
+                                }
+                            }
+                        }
+                        i += 2
+                    } else {
+                        item {
+                            DynamicField(field, capturedValues[field.id] ?: "", { capturedValues[field.id] = it })
+                        }
+                        i++
+                    }
                 }
             }
 

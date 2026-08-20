@@ -23,15 +23,15 @@ data class RoutineColorScheme(
 val DarkRoutineColorScheme = RoutineColorScheme(
     background = Color(0xFF0A0D12),
     surface1 = Color(0xFF12161D),
-    surface2 = Color(0xFF171C24),
+    surface2 = Color(0xFF181C23),
     surface3 = Color(0x8C12161D),
     border = Color(0xFF232A34),
-    primary = Color(0xFF5AF0B3),
+    primary = Color(0xFF34D399),
     secondary = Color(0xFFA4C8FF),
     tertiary = Color(0xFFDBD1FF),
     error = Color(0xFFFFB4AB),
-    onPrimary = Color(0xFF0A0D12),
-    onSurface = Color(0xFFDEE3EB),
+    onPrimary = Color(0xFF003825),
+    onSurface = Color(0xFFE9EDF2),
     onSurfaceVariant = Color(0xFFBBCAC0)
 )
 

@@ -2,17 +2,26 @@ package com.alan.routineos.feature.planning
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alan.routineos.feature.planning.data.FakePlanningRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import com.alan.routineos.domain.usecase.ResolveTimelineUseCase
+import com.alan.routineos.domain.usecase.TimelineEntry
+import com.alan.routineos.feature.planning.model.PlanningDay
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.*
+import javax.inject.Inject
 
-class PlanningViewModel(
-    private val repository: FakePlanningRepository = FakePlanningRepository()
+@HiltViewModel
+class PlanningViewModel @Inject constructor(
+    private val resolveTimelineUseCase: ResolveTimelineUseCase
 ) : ViewModel() {
 
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    
     private val _uiState = MutableStateFlow(PlanningUiState(isLoading = true))
     val uiState: StateFlow<PlanningUiState> = _uiState.asStateFlow()
 
@@ -20,35 +29,54 @@ class PlanningViewModel(
         loadData()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadData() {
         viewModelScope.launch {
-            combine(
-                repository.getPlanningDays(),
-                repository.getPlanningBlocks(),
-                repository.getExceptions(),
-                repository.getUnscheduled()
-            ) { days, blocks, exceptions, unscheduled ->
-                PlanningUiState(
-                    isLoading = false,
-                    days = days,
-                    blocks = blocks,
-                    exceptions = exceptions,
-                    unscheduledItems = unscheduled
-                )
+            _selectedDate.flatMapLatest { date ->
+                resolveTimelineUseCase(date).map { entries ->
+                    PlanningUiState(
+                        isLoading = false,
+                        selectedDate = date,
+                        weekDays = generateWeekDays(date),
+                        timelineEntries = entries.map { it.toUiModel() }
+                    )
+                }
             }.collect { newState ->
                 _uiState.value = newState
             }
         }
     }
 
-    fun onDaySelected(dayId: String) {
-        // Mock selection update
-        _uiState.value = _uiState.value.copy(
-            days = _uiState.value.days.map { it.copy(isSelected = it.id == dayId) }
+    private fun generateWeekDays(selected: LocalDate): List<PlanningDay> {
+        val startOfWeek = selected.minusDays(selected.dayOfWeek.value.toLong() - 1)
+        return (0..6).map { i ->
+            val date = startOfWeek.plusDays(i.toLong())
+            PlanningDay(
+                id = date.toString(),
+                name = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                dayOfMonth = date.dayOfMonth.toString(),
+                isSelected = date.isEqual(selected)
+            )
+        }
+    }
+
+    private fun TimelineEntry.toUiModel(): TodayTimelineUiModel {
+        val startTime = instance.plannedStartTime?.let { formatMinutes(it) } ?: ""
+        return TodayTimelineUiModel(
+            id = instance.id,
+            title = instance.titleSnapshot,
+            timeRangeText = startTime,
+            status = instance.status,
+            isMaterialized = isMaterialized,
+            hasConflict = conflict?.hasConflict ?: false
         )
     }
 
-    fun onSegmentChanged(segment: PlanningSegment) {
-        _uiState.value = _uiState.value.copy(selectedSegment = segment)
+    private fun formatMinutes(minutes: Int): String {
+        return "%02d:%02d".format(minutes / 60, minutes % 60)
+    }
+
+    fun onDaySelected(dayId: String) {
+        _selectedDate.value = LocalDate.parse(dayId)
     }
 }

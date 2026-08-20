@@ -3,13 +3,11 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| Key | Value |
-| :--- | :--- |
-| **Current Branch** | `feature/ec-re-007-contextual-organization` |
-| **Current Phase** | Fase 4: Analysis & Organization (Systems & Stats) |
-| **Current Goal** | Finalizar cierre de EC-RE-007 |
-| **Current EC** | [EC-RE-007_CONTEXTUAL_ORGANIZATION](./EC/EC-RE-007_CONTEXTUAL_ORGANIZATION.md) |
-| **Next EC** | [EC-RE-008_HISTORICAL_ANALYSIS](./EC/EC-RE-008_HISTORICAL_ANALYSIS.md) |
+| **Current Branch** | `develop` |
+| **Current Phase** | Fase 5: Execution Intelligence & Analytics |
+| **Current Goal** | Finalizar cierre de EC-RE-008 |
+| **Current EC** | [EC-RE-008_PLANNING_TODAY_REFINE](./EC/EC-RE-008_PLANNING_TODAY_REFINE.md) |
+| **Next EC** | [EC-RE-009_HISTORICAL_ANALYSIS](./EC/EC-RE-009_HISTORICAL_ANALYSIS.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |
@@ -18,6 +16,6 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 ---
 
 ## Notas Inmediatas
-- **EC-RE-007 Auditada**: Verificación técnica exitosa. La capa de Sistemas es funcional y reactiva.
-- **Estado**: APPROVED. Listo para merge a `develop`.
-- Siguiente paso: Fase 4 - Historical Analysis (EC-RE-008).
+- **EC-RE-008 Auditada**: Veredicto **PASS**. Se eliminaron los Mocks de Planning y se refinó la UI de Today.
+- **Unificación Temporal**: Planning y Today ahora usan el mismo motor de resolución de reglas reales.
+- El sistema está listo para entrar en la fase de análisis histórico (EC-RE-009).

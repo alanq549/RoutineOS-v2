@@ -23,7 +23,7 @@ import com.alan.routineos.data.local.entities.*
         MetadataSchemaEntity::class,
         SystemEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class RoutineOSDatabase : RoomDatabase() {

@@ -29,58 +29,47 @@ class ResolveTimelineUseCase @Inject constructor(
             repository.getAllExceptions(),
             repository.getDailyInstancesForDate(epochDay)
         ) { definitions, nodes, rules, exceptions, materialized ->
-            
             val entries = mutableListOf<TimelineEntry>()
-            val materializedTargets = resolveMaterialized(materialized, entries)
+            val materializedByRule = materialized.associateBy { it.sourceRuleId }
 
-            resolveVirtual(date, epochDay, rules, exceptions, materializedTargets, definitions, nodes, entries)
+            resolveScheduled(date, epochDay, rules, exceptions, materializedByRule, definitions, nodes, entries)
+            resolveAdHoc(materialized, entries)
 
             detectConflicts(entries)
         }
     }
 
-    private fun resolveMaterialized(
-        materialized: List<DailyInstance>,
-        entries: MutableList<TimelineEntry>
-    ): Set<String> {
-        val materializedTargets = mutableSetOf<String>()
-        materialized.forEach { instance ->
-            entries.add(TimelineEntry(instance, true))
-            instance.target?.let { target ->
-                materializedTargets.add(getTargetId(target))
-            }
-        }
-        return materializedTargets
-    }
-
-    private fun resolveVirtual(
-        date: LocalDate,
-        epochDay: Long,
-        rules: List<ScheduleRule>,
-        exceptions: List<ScheduleException>,
-        materializedTargets: Set<String>,
-        definitions: List<ActivityDefinition>,
-        nodes: List<ActivityNode>,
+    private fun resolveScheduled(
+        date: LocalDate, epochDay: Long,
+        rules: List<ScheduleRule>, exceptions: List<ScheduleException>,
+        materializedByRule: Map<String?, DailyInstance>,
+        definitions: List<ActivityDefinition>, nodes: List<ActivityNode>,
         entries: MutableList<TimelineEntry>
     ) {
         val defMap = definitions.associateBy { it.id }
         val nodeMap = nodes.associateBy { it.id }
 
         rules.forEach { rule ->
-            val targetId = getTargetId(rule.target)
-            if (materializedTargets.contains(targetId)) return@forEach
-
-            if (shouldApplyRule(rule, epochDay, date, exceptions)) {
+            val materialized = materializedByRule[rule.id]
+            if (materialized != null) {
+                entries.add(TimelineEntry(materialized, true))
+            } else if (shouldProjectVirtual(rule, epochDay, date, exceptions)) {
                 entries.add(createVirtualEntry(rule, defMap, nodeMap, epochDay))
             }
         }
     }
 
-    private fun shouldApplyRule(
-        rule: ScheduleRule,
-        epochDay: Long,
-        date: LocalDate,
-        exceptions: List<ScheduleException>
+    private fun resolveAdHoc(materialized: List<DailyInstance>, entries: MutableList<TimelineEntry>) {
+        materialized.filter { it.isAdHoc || it.sourceRuleId == null }.forEach {
+            // Already added in resolveScheduled if it had a sourceRuleId
+            if (!entries.any { existing -> it.id == existing.instance.id }) {
+                entries.add(TimelineEntry(it, true))
+            }
+        }
+    }
+
+    private fun shouldProjectVirtual(
+        rule: ScheduleRule, epochDay: Long, date: LocalDate, exceptions: List<ScheduleException>
     ): Boolean {
         val ruleExceptions = exceptions.filter { it.scheduleRuleId == rule.id }
         if (ruleExceptions.any { it.originalDate == epochDay }) return false
@@ -96,10 +85,8 @@ class ResolveTimelineUseCase @Inject constructor(
     }
 
     private fun createVirtualEntry(
-        rule: ScheduleRule,
-        defMap: Map<String, ActivityDefinition>,
-        nodeMap: Map<String, ActivityNode>,
-        epochDay: Long
+        rule: ScheduleRule, defMap: Map<String, ActivityDefinition>,
+        nodeMap: Map<String, ActivityNode>, epochDay: Long
     ): TimelineEntry {
         val (title, desc) = getSnapshotData(rule.target, defMap, nodeMap)
         return TimelineEntry(
@@ -120,9 +107,7 @@ class ResolveTimelineUseCase @Inject constructor(
     }
 
     private fun getSnapshotData(
-        target: ScheduleTarget,
-        defMap: Map<String, ActivityDefinition>,
-        nodeMap: Map<String, ActivityNode>
+        target: ScheduleTarget, defMap: Map<String, ActivityDefinition>, nodeMap: Map<String, ActivityNode>
     ): Pair<String, String> {
         return when(target) {
             is ScheduleTarget.Definition -> {
@@ -143,10 +128,5 @@ class ResolveTimelineUseCase @Inject constructor(
         return entries.map { entry ->
             entry.copy(conflict = conflicts[entry.instance.id])
         }.sortedBy { it.instance.plannedStartTime ?: Int.MAX_VALUE }
-    }
-
-    private fun getTargetId(target: ScheduleTarget): String = when(target) {
-        is ScheduleTarget.Definition -> target.id
-        is ScheduleTarget.Node -> target.id
     }
 }

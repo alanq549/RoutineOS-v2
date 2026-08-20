@@ -1,14 +1,7 @@
 package com.alan.routineos.feature.today.components
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,24 +43,31 @@ private fun TimelineRow(
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
     ) {
-        // Vertical Axis Column
-        Column(
+        // Vertical Axis Column (Stitch V3 style)
+        Box(
             modifier = Modifier
-                .padding(horizontal = RoutineTheme.spacing.md)
+                .width(48.dp)
                 .fillMaxHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            contentAlignment = Alignment.TopCenter
         ) {
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 24.dp)
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(RoutineTheme.colors.border)
+                )
+            }
+            
             TimelineNode(
                 status = item.status, 
-                modifier = Modifier.padding(top = RoutineTheme.spacing.md)
+                modifier = Modifier.padding(top = 16.dp)
             )
-            if (!isLast) {
-                TimelineConnector(modifier = Modifier.weight(1f))
-            }
         }
 
         // Card Column
-        Box(modifier = Modifier.weight(1f).padding(bottom = RoutineTheme.spacing.sm)) {
+        Box(modifier = Modifier.weight(1f).padding(bottom = 24.dp)) {
             TimelineItemCard(
                 item = item, 
                 onAction = onAction,
