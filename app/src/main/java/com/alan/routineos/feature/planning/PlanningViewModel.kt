@@ -2,6 +2,7 @@ package com.alan.routineos.feature.planning
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alan.routineos.domain.model.DailyInstanceStatus
 import com.alan.routineos.domain.usecase.ResolveTimelineUseCase
 import com.alan.routineos.domain.usecase.TimelineEntry
 import com.alan.routineos.feature.planning.model.PlanningDay
@@ -34,11 +35,17 @@ class PlanningViewModel @Inject constructor(
         viewModelScope.launch {
             _selectedDate.flatMapLatest { date ->
                 resolveTimelineUseCase(date).map { entries ->
+                    val scheduled = entries.filter { it.instance.plannedStartTime != null }
+                    val unscheduled = entries.filter { it.instance.plannedStartTime == null }
+                    val exceptions = entries.filter { it.isMaterialized && it.instance.status != DailyInstanceStatus.PLANNED }
+
                     PlanningUiState(
                         isLoading = false,
                         selectedDate = date,
                         weekDays = generateWeekDays(date),
-                        timelineEntries = entries.map { it.toUiModel() }
+                        timelineEntries = scheduled.map { it.toUiModel() },
+                        unscheduledItems = unscheduled.map { it.toUiModel() },
+                        exceptions = exceptions.map { it.toUiModel() }
                     )
                 }
             }.collect { newState ->
@@ -65,6 +72,7 @@ class PlanningViewModel @Inject constructor(
         return TodayTimelineUiModel(
             id = instance.id,
             title = instance.titleSnapshot,
+            description = instance.descriptionSnapshot,
             timeRangeText = startTime,
             status = instance.status,
             isMaterialized = isMaterialized,

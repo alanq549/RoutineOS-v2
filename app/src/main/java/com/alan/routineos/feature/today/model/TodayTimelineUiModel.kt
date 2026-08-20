@@ -14,6 +14,7 @@ data class TodaySubNodeUiModel(
 data class TodayTimelineUiModel(
     val id: String,
     val title: String,
+    val description: String = "",
     val timeRangeText: String,
     val status: DailyInstanceStatus,
     val isMaterialized: Boolean,
@@ -22,5 +23,6 @@ data class TodayTimelineUiModel(
     val contextMetadata: List<Pair<String, String>> = emptyList(),
     val operationalMetadata: List<Pair<String, String>> = emptyList(),
     val isExpandable: Boolean = false,
-    val isExpanded: Boolean = false
+    val isExpanded: Boolean = false,
+    val isAdHoc: Boolean = false
 )

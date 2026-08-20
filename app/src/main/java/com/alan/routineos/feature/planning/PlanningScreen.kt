@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,11 +16,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineScaffold
-import com.alan.routineos.core.designsystem.component.RoutineSectionHeader
 import com.alan.routineos.core.designsystem.component.RoutineTopBar
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.planning.components.PlanningTimeBlock
+import com.alan.routineos.feature.planning.components.PlanningUnscheduledCard
 import com.alan.routineos.feature.planning.components.PlanningWeekHeader
+import com.alan.routineos.feature.planning.components.PlanningExceptionCard // Assuming we'll use a specific card for exceptions
 
 @Composable
 fun PlanningScreen(
@@ -63,7 +62,7 @@ fun PlanningScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = RoutineTheme.spacing.lg)
+                .padding(bottom = 80.dp)
         ) {
             // Segmented Control
             SegmentedControl(
@@ -82,35 +81,61 @@ fun PlanningScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Activity Blocks
-            Column(modifier = Modifier.padding(horizontal = RoutineTheme.spacing.md)) {
-                Text(
-                    text = "BLOQUES DE RUTINA",
-                    style = RoutineTheme.typography.labelCaps.copy(letterSpacing = 2.sp),
-                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
+            // 1. ROUTINE BLOCKS
+            PlanningSection(title = "BLOQUES DE RUTINA") {
                 if (uiState.timelineEntries.isEmpty()) {
-                    Text(
-                        text = "Sin actividades para este día",
-                        style = RoutineTheme.typography.bodyBase,
-                        color = RoutineTheme.colors.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 16.dp).align(Alignment.CenterHorizontally)
-                    )
+                    EmptySectionMessage("Sin actividades programadas")
                 } else {
                     uiState.timelineEntries.forEach { entry ->
                         PlanningTimeBlock(item = entry)
-                        Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 2. EXCEPTIONS
+            if (uiState.exceptions.isNotEmpty()) {
+                PlanningSection(title = "EXCEPCIONES") {
+                    uiState.exceptions.forEach { entry ->
+                        PlanningExceptionCard(item = entry) 
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 3. UNSCHEDULED (PENDIENTES FLEXIBLES)
+            PlanningSection(
+                title = "SIN HORARIO",
+                subtitle = "PENDIENTES FLEXIBLES"
+            ) {
+                if (uiState.unscheduledItems.isEmpty()) {
+                    EmptySectionMessage("No hay pendientes flexibles")
+                } else {
+                    // 2-column grid for unscheduled
+                    uiState.unscheduledItems.chunked(2).forEach { rowItems ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            rowItems.forEach { item ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    PlanningUnscheduledCard(
+                                        title = item.title,
+                                        description = item.description
+                                    )
+                                }
+                            }
+                            if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
         }
         
         // FAB
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             FloatingActionButton(
                 onClick = { },
                 containerColor = RoutineTheme.colors.primary,
@@ -119,12 +144,54 @@ fun PlanningScreen(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(RoutineTheme.spacing.lg)
+                    .padding(bottom = 16.dp) // Extra bottom margin for nav
                     .size(56.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
         }
     }
+}
+
+@Composable
+private fun PlanningSection(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier = Modifier.padding(horizontal = RoutineTheme.spacing.md)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                text = title,
+                style = RoutineTheme.typography.labelCaps.copy(letterSpacing = 2.sp),
+                color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
+                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        content()
+    }
+}
+
+@Composable
+private fun EmptySectionMessage(message: String) {
+    Text(
+        text = message,
+        style = RoutineTheme.typography.bodyBase,
+        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth(),
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+    )
 }
 
 @Composable

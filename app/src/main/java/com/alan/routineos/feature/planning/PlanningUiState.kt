@@ -8,5 +8,7 @@ data class PlanningUiState(
     val isLoading: Boolean = false,
     val selectedDate: LocalDate = LocalDate.now(),
     val weekDays: List<PlanningDay> = emptyList(),
-    val timelineEntries: List<TodayTimelineUiModel> = emptyList()
+    val timelineEntries: List<TodayTimelineUiModel> = emptyList(),
+    val unscheduledItems: List<TodayTimelineUiModel> = emptyList(),
+    val exceptions: List<TodayTimelineUiModel> = emptyList()
 )

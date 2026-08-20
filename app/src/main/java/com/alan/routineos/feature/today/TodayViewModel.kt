@@ -131,6 +131,7 @@ class TodayViewModel @Inject constructor(
         return TodayTimelineUiModel(
             id = root.instance.id,
             title = root.instance.titleSnapshot,
+            description = root.instance.descriptionSnapshot,
             timeRangeText = root.instance.plannedStartTime?.let { formatMinutes(it) } ?: "",
             status = root.instance.status,
             isMaterialized = root.isMaterialized,
@@ -139,7 +140,8 @@ class TodayViewModel @Inject constructor(
             contextMetadata = meta.context,
             operationalMetadata = meta.operational,
             isExpandable = discoveredChildren.isNotEmpty(),
-            isExpanded = isExpanded
+            isExpanded = isExpanded,
+            isAdHoc = root.instance.isAdHoc
         )
     }
 
