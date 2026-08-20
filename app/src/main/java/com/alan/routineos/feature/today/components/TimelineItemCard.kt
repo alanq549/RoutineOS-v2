@@ -144,7 +144,10 @@ fun TimelineItemCard(
                         }
                     }
                     
-                    if (item.status == DailyInstanceStatus.PLANNED) {
+                    if (item.status == DailyInstanceStatus.PLANNED || item.isAdHoc) {
+                        IconButton(onClick = { onAction(item.id, "MOVE_REQUEST") }) {
+                            Icon(Icons.Default.EditCalendar, contentDescription = "Reschedule", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        }
                         IconButton(onClick = { onAction(item.id, "SKIP") }) {
                             Icon(Icons.Default.Block, contentDescription = "Skip", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         }

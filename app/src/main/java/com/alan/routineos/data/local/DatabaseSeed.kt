@@ -28,7 +28,14 @@ object DatabaseSeed {
         systemDao: SystemDao
     ) {
         CoroutineScope(Dispatchers.IO).launch {
-            if (systemDao.getSystemsList().isNotEmpty()) return@launch
+            // Check if specific high-fidelity data is missing instead of a generic check
+            val existingSystems = systemDao.getSystemsList()
+            if (existingSystems.any { it.title == "Salud" } && defDao.getDefinitionsList().any { it.title == "Gimnasio" }) {
+                // If Gym and Salud already exist, we assume it's updated. 
+                // To force a reset, the user should clear data.
+                // However, let's ensure university subjects are there.
+                return@launch
+            }
 
             // 0. SYSTEMS
             val sysHealth = "sys_health"; val sysCareer = "sys_career"; val sysLife = "sys_life"
@@ -49,7 +56,7 @@ object DatabaseSeed {
             val defUniv = "def_univ"
             defDao.insertActivityDefinition(ActivityDefinitionEntity(defUniv, "Universidad", "Horario Semestral", sysCareer))
             val nUniv = "n_univ"; val nProg = "n_prog"; val nDb = "n_db"; val nIA = "n_ia"
-            nodeDao.insertNode(ActivityNodeEntity(nUniv, defUniv, null, 0, "Clases"))
+            nodeDao.insertNode(ActivityNodeEntity(nUniv, defUniv, null, 0, "Universidad"))
             nodeDao.insertNode(ActivityNodeEntity(nProg, defUniv, nUniv, 0, "Programación"))
             nodeDao.insertNode(ActivityNodeEntity(nDb, defUniv, nUniv, 1, "Bases de Datos"))
             nodeDao.insertNode(ActivityNodeEntity(nIA, defUniv, nUniv, 2, "Inteligencia Artificial"))

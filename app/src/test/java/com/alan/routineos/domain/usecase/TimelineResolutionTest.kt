@@ -62,10 +62,12 @@ class TimelineResolutionTest {
             sourceRuleId = "r1"
         )
         
+        val node = ActivityNode("node1", "act1", null, 0, "Node 1")
+        
         val repository = object : FakeActivityRepository() {
             override fun getAllRules() = flowOf(listOf(rule))
             override fun getDailyInstancesForDate(date: Long) = flowOf(listOf(materialized))
-            override fun getAllNodes() = flowOf(emptyList<ActivityNode>())
+            override fun getAllNodes() = flowOf(listOf(node))
             override fun getActivityDefinitions() = flowOf(emptyList<ActivityDefinition>())
             override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
         }

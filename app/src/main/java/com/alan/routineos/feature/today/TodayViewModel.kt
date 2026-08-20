@@ -60,10 +60,11 @@ class TodayViewModel @Inject constructor(
         entries: List<HierarchicalTimelineEntry>,
         allNodes: List<ActivityNode>
     ): Flow<Map<String, MetadataSnapshot>> {
+        // Find ALL descendants recursively for each entry root to ensure deep metadata resolve
         val allTargetIds = entries.flatMap { entry ->
             val rootId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
-            val childIds = allNodes.filter { it.parentId == rootId }.map { it.id }
-            listOfNotNull(rootId) + childIds
+            val descendants = if (rootId != null) getDescendantIds(rootId, allNodes) else emptyList()
+            listOfNotNull(rootId) + descendants
         }.distinct()
 
         val flows = allTargetIds.map { nodeId ->
@@ -72,6 +73,11 @@ class TodayViewModel @Inject constructor(
             }
         }
         return if (flows.isEmpty()) flowOf(emptyMap()) else combine(flows) { it.toMap() }
+    }
+
+    private fun getDescendantIds(parentId: String, allNodes: List<ActivityNode>): List<String> {
+        val children = allNodes.filter { it.parentId == parentId }.map { it.id }
+        return children + children.flatMap { getDescendantIds(it, allNodes) }
     }
 
     private data class MetadataSnapshot(
@@ -148,9 +154,13 @@ class TodayViewModel @Inject constructor(
     fun onActionTriggered(instanceId: String, actionType: String) {
         val entry = findEntry(instanceId) ?: return
         viewModelScope.launch {
-            when (actionType) {
-                "SKIP" -> registerDailyActionUseCase(entry, DailyAction.Skip)
-                "COMPLETE" -> handleCompleteRequest(entry)
+            when {
+                actionType == "SKIP" -> registerDailyActionUseCase(entry, DailyAction.Skip)
+                actionType == "COMPLETE" -> handleCompleteRequest(entry)
+                actionType.startsWith("MOVE_CONFIRM") -> {
+                    val minutes = actionType.split(":")[1].toInt()
+                    registerDailyActionUseCase(entry, DailyAction.Move(minutes))
+                }
             }
         }
     }
