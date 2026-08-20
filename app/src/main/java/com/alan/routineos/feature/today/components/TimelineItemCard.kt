@@ -1,20 +1,8 @@
 package com.alan.routineos.feature.today.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -67,11 +55,26 @@ fun TimelineItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    if (item.isAdHoc) {
+                        Surface(
+                            color = RoutineTheme.colors.primary.copy(alpha = 0.2f),
+                            shape = RoutineTheme.shapes.small,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        ) {
+                            Text(
+                                text = "ESPONTÁNEA",
+                                style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
+                                color = RoutineTheme.colors.primary,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    
                     if (item.timeRangeText.isNotBlank()) {
                         Text(
                             text = item.timeRangeText,
                             style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
-                            color = if (isModified) RoutineTheme.colors.secondary else RoutineTheme.colors.onSurfaceVariant
+                            color = if (isModified) RoutineTheme.colors.secondary else RoutineTheme.colors.primary
                         )
                     }
                     
@@ -84,6 +87,33 @@ fun TimelineItemCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    
+                    if (item.hasConflict) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            color = RoutineTheme.colors.error.copy(alpha = 0.1f),
+                            shape = RoutineTheme.shapes.small,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.error.copy(alpha = 0.2f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = RoutineTheme.colors.error,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Conflicto detectado",
+                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
+                                    color = RoutineTheme.colors.error
+                                )
+                            }
+                        }
+                    }
                     
                     // Display Metadata
                     if (item.contextMetadata.isNotEmpty() || item.operationalMetadata.isNotEmpty()) {
@@ -114,7 +144,10 @@ fun TimelineItemCard(
                         }
                     }
                     
-                    if (item.status == DailyInstanceStatus.PLANNED) {
+                    if (item.status == DailyInstanceStatus.PLANNED || item.isAdHoc) {
+                        IconButton(onClick = { onAction(item.id, "MOVE_REQUEST") }) {
+                            Icon(Icons.Default.EditCalendar, contentDescription = "Reschedule", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        }
                         IconButton(onClick = { onAction(item.id, "SKIP") }) {
                             Icon(Icons.Default.Block, contentDescription = "Skip", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         }

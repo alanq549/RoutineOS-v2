@@ -3,13 +3,7 @@ package com.alan.routineos.feature.planning.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -29,12 +23,13 @@ fun PlanningWeekHeader(
     onDaySelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = RoutineTheme.spacing.md),
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = RoutineTheme.spacing.md),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        items(days) { day ->
+        days.forEach { day ->
             DayItem(
                 day = day,
                 onClick = { onDaySelected(day.id) }
@@ -48,25 +43,31 @@ private fun DayItem(
     day: PlanningDay,
     onClick: () -> Unit
 ) {
-    val containerColor = if (day.isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.surface1
+    val containerColor = if (day.isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.surface2
     val contentColor = if (day.isSelected) RoutineTheme.colors.onPrimary else RoutineTheme.colors.onSurface
-    val borderColor = if (day.isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.border.copy(alpha = 0.3f)
+    
+    val isWeekend = day.name.equals("Sáb", ignoreCase = true) || day.name.equals("Dom", ignoreCase = true)
 
     Column(
         modifier = Modifier
-            .width(56.dp)
+            .width(48.dp)
+            .height(72.dp)
             .clip(RoutineTheme.shapes.medium)
             .background(containerColor)
-            .border(1.dp, borderColor, RoutineTheme.shapes.medium)
+            .border(
+                width = 1.dp, 
+                color = if (day.isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.border.copy(alpha = 0.3f),
+                shape = RoutineTheme.shapes.medium
+            )
             .clickable(onClick = onClick)
-            .padding(vertical = RoutineTheme.spacing.md),
+            .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(RoutineTheme.spacing.xs)
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = day.name.uppercase(),
             style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
-            color = if (day.isSelected) contentColor else RoutineTheme.colors.onSurfaceVariant,
+            color = if (day.isSelected) contentColor else if (isWeekend) RoutineTheme.colors.tertiary else RoutineTheme.colors.onSurfaceVariant,
             fontWeight = FontWeight.Bold
         )
         Text(

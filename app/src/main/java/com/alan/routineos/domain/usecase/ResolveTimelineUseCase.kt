@@ -30,10 +30,30 @@ class ResolveTimelineUseCase @Inject constructor(
             repository.getDailyInstancesForDate(epochDay)
         ) { definitions, nodes, rules, exceptions, materialized ->
             val entries = mutableListOf<TimelineEntry>()
-            val materializedByRule = materialized.associateBy { it.sourceRuleId }
+            
+            // Filter out rules for targets that don't exist in the non-deleted sets
+            val validDefIds = definitions.map { it.id }.toSet()
+            val validNodeIds = nodes.map { it.id }.toSet()
+            
+            val validRules = rules.filter { rule ->
+                when (val target = rule.target) {
+                    is ScheduleTarget.Definition -> validDefIds.contains(target.id)
+                    is ScheduleTarget.Node -> validNodeIds.contains(target.id)
+                }
+            }
 
-            resolveScheduled(date, epochDay, rules, exceptions, materializedByRule, definitions, nodes, entries)
-            resolveAdHoc(materialized, entries)
+            val validMaterialized = materialized.filter { instance ->
+                val target = instance.target
+                target == null || when (target) {
+                    is ScheduleTarget.Definition -> validDefIds.contains(target.id)
+                    is ScheduleTarget.Node -> validNodeIds.contains(target.id)
+                }
+            }
+
+            val materializedByRule = validMaterialized.associateBy { it.sourceRuleId }
+
+            resolveScheduled(date, epochDay, validRules, exceptions, materializedByRule, definitions, nodes, entries)
+            resolveAdHoc(validMaterialized, entries)
 
             detectConflicts(entries)
         }

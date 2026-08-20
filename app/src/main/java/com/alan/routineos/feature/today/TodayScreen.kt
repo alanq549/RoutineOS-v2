@@ -23,6 +23,7 @@ import com.alan.routineos.feature.today.components.TodayTimeline
 import kotlinx.coroutines.flow.SharedFlow
 import android.widget.Toast
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
     uiState: TodayUiState,
@@ -38,6 +39,10 @@ fun TodayScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     var showAdHocDialog by remember { mutableStateOf(false) }
+    
+    // Reschedule State
+    var moveTargetId by remember { mutableStateOf<String?>(null) }
+    val timePickerState = rememberTimePickerState()
 
     if (showAdHocDialog) {
         AdHocDialog(
@@ -46,6 +51,32 @@ fun TodayScreen(
                 showAdHocDialog = false
             },
             onDismiss = { showAdHocDialog = false }
+        )
+    }
+
+    if (moveTargetId != null) {
+        AlertDialog(
+            onDismissRequest = { moveTargetId = null },
+            title = { Text("Reprogramar actividad") },
+            text = {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TimePicker(state = timePickerState)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val minutes = timePickerState.hour * 60 + timePickerState.minute
+                    onAction(moveTargetId!!, "MOVE_CONFIRM:$minutes")
+                    moveTargetId = null
+                }) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { moveTargetId = null }) {
+                    Text("Cancelar")
+                }
+            }
         )
     }
 
@@ -82,7 +113,10 @@ fun TodayScreen(
 
                 TodayTimeline(
                     items = uiState.timelineItems,
-                    onAction = onAction,
+                    onAction = { id, type ->
+                        if (type == "MOVE_REQUEST") moveTargetId = id
+                        else onAction(id, type)
+                    },
                     onExpandClick = onExpandClick
                 )
                 

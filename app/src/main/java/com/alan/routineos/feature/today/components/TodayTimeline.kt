@@ -24,9 +24,6 @@ fun TodayTimeline(
                 onAction = onAction,
                 onExpandClick = onExpandClick
             )
-            if (index != items.lastIndex) {
-                Spacer(modifier = Modifier.height(RoutineTheme.spacing.md))
-            }
         }
     }
 }
