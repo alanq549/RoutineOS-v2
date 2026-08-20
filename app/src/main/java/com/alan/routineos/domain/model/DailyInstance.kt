@@ -16,6 +16,7 @@ data class DailyInstance(
     val plannedEndTime: Int? = null,
     val plannedDurationMinutes: Int? = null,
     val status: DailyInstanceStatus = DailyInstanceStatus.PLANNED,
+    val mobility: TemporalMobility = TemporalMobility.FLEXIBLE,
     val sourceRuleId: String? = null,
     val isAdHoc: Boolean = false
 )

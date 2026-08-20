@@ -14,6 +14,7 @@ data class ScheduleRule(
     val id: String,
     val target: ScheduleTarget,
     val type: ScheduleRuleType,
+    val mobility: TemporalMobility = TemporalMobility.FLEXIBLE,
     val daysOfWeek: Set<Int> = emptySet(), // 1 (Mon) to 7 (Sun)
     val frequencyPerPeriod: Int = 0,
     val startTime: Int? = null,

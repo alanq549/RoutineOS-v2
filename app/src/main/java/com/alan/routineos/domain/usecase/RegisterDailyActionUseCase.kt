@@ -40,16 +40,16 @@ class RegisterDailyActionUseCase @Inject constructor(
         // 1. Update instance status
         repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.MODIFIED))
         
-        // 2. Register execution
-        val nodeId = (instance.target as? ScheduleTarget.Node)?.id 
-            ?: throw IllegalStateException("Cannot complete an instance without a Node target")
-            
-        repository.registerExecution(
-            nodeId = nodeId,
-            scheduledDate = instance.scheduledDate,
-            metadataJson = metadataJson,
-            dailyInstanceId = instance.id
-        )
+        // 2. Register execution ONLY if it has a Node target
+        val target = instance.target
+        if (target is ScheduleTarget.Node) {
+            repository.registerExecution(
+                nodeId = target.id,
+                scheduledDate = instance.scheduledDate,
+                metadataJson = metadataJson,
+                dailyInstanceId = instance.id
+            )
+        }
     }
 
     private suspend fun handleSkip(instance: DailyInstance) {

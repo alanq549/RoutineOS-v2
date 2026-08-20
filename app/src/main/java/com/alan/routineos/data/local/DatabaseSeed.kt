@@ -62,9 +62,9 @@ object DatabaseSeed {
             nodeDao.insertNode(ActivityNodeEntity(nIA, defUniv, nUniv, 2, "Inteligencia Artificial"))
             
             // Rules: Mon, Wed, Thu (7-14) | Tue (7-13) | Fri (7-15)
-            ruleDao.insertRule(createRule(nUniv, "NODE", setOf(1, 3, 4), 420, 840))
-            ruleDao.insertRule(createRule(nUniv, "NODE", setOf(2), 420, 780))
-            ruleDao.insertRule(createRule(nUniv, "NODE", setOf(5), 420, 900))
+            ruleDao.insertRule(createRule(nUniv, "NODE", setOf(1, 3, 4), 420, 840, "IMMOBILE"))
+            ruleDao.insertRule(createRule(nUniv, "NODE", setOf(2), 420, 780, "IMMOBILE"))
+            ruleDao.insertRule(createRule(nUniv, "NODE", setOf(5), 420, 900, "IMMOBILE"))
             
             insertContextSchema(metaDao, nProg, "Profesor", "Grace Hopper")
             insertContextSchema(metaDao, nDb, "Profesor", "Edgar Codd")
@@ -131,14 +131,15 @@ object DatabaseSeed {
         }
     }
 
-    private fun createRule(targetId: String, type: String, days: Set<Int>, start: Int, end: Int? = null) = ScheduleRuleEntity(
+    private fun createRule(targetId: String, type: String, days: Set<Int>, start: Int, end: Int? = null, mobility: String = "FLEXIBLE") = ScheduleRuleEntity(
         id = UUID.randomUUID().toString(),
         targetId = targetId,
         targetType = type,
         type = ScheduleRuleType.FIXED_DAYS.name,
         daysOfWeek = days.sorted().joinToString(","),
         startTime = start,
-        endTime = end
+        endTime = end,
+        mobility = mobility
     )
 
     private suspend fun insertExerciseSchema(dao: MetadataSchemaDao, nodeId: String, series: Int, reps: Int, weight: Int) {

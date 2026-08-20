@@ -57,8 +57,8 @@ class GoldTestEC008 {
     @Test
     fun `Multiple rules for same target on same day coexist independently`() = runTest {
         val target = ScheduleTarget.Node("n1")
-        val ruleA = ScheduleRule("ruleA", target, ScheduleRuleType.FIXED_DAYS, setOf(1), startTime = 480)
-        val ruleB = ScheduleRule("ruleB", target, ScheduleRuleType.FIXED_DAYS, setOf(1), startTime = 1080)
+        val ruleA = ScheduleRule(id = "ruleA", target = target, type = ScheduleRuleType.FIXED_DAYS, daysOfWeek = setOf(1), startTime = 480)
+        val ruleB = ScheduleRule(id = "ruleB", target = target, type = ScheduleRuleType.FIXED_DAYS, daysOfWeek = setOf(1), startTime = 1080)
         
         val repository = object : FakeActivityRepository() {
             override fun getAllRules() = flowOf(listOf(ruleA, ruleB))

@@ -23,7 +23,8 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-005 | Metadata Schemas & Context | High | Medium | AI Agent | EC-RE-004 | CLOSED | CRUD and Context logic implemented. |
 | EC-RE-006 | Today Workspace (Actions & Capture) | Critical | Large | AI Agent | EC-RE-005 | CLOSED | Refactored domain hierarchy and dynamic capture. |
 | EC-RE-007 | Contextual Organization (Systems) | Medium | Medium | AI Agent | EC-RE-006 | CLOSED | Grouping activities into top-level Life Systems. |
-| EC-RE-008 | Visual Planning & Today Refinement | High | Large | AI Agent | EC-RE-007 | APPROVED | Real data in Planning and visual polish in Today. |
+| EC-RE-008 | Visual Planning & Today Refinement | High | Large | AI Agent | EC-RE-007 | CLOSED | Real data in Planning and visual polish in Today. |
+| EC-RE-009 | Interruption & Intersection Logic | High | Medium | AI Agent | EC-RE-008 | READY | Handling rigid tasks and spontaneous events. |
 
 ---
 

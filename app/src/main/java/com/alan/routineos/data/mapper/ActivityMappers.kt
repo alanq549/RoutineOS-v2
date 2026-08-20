@@ -83,6 +83,7 @@ fun ScheduleRuleEntity.toDomain(): ScheduleRule {
         id = id,
         target = target,
         type = ScheduleRuleType.valueOf(type),
+        mobility = TemporalMobility.valueOf(mobility),
         daysOfWeek = if (daysOfWeek.isBlank()) emptySet() else daysOfWeek.split(",").map { it.toInt() }.toSet(),
         frequencyPerPeriod = frequencyPerPeriod,
         startTime = startTime,
@@ -102,6 +103,7 @@ fun ScheduleRule.toEntity(): ScheduleRuleEntity {
         targetId = targetId,
         targetType = targetType,
         type = type.name,
+        mobility = mobility.name,
         daysOfWeek = daysOfWeek.sorted().joinToString(","),
         frequencyPerPeriod = frequencyPerPeriod,
         startTime = startTime,
@@ -147,6 +149,7 @@ fun DailyInstanceEntity.toDomain(): DailyInstance {
         plannedEndTime = plannedEndTime,
         plannedDurationMinutes = plannedDurationMinutes,
         status = DailyInstanceStatus.valueOf(status),
+        mobility = TemporalMobility.valueOf(mobility),
         isAdHoc = targetType == "AD_HOC"
     )
 }
@@ -173,6 +176,7 @@ fun DailyInstance.toEntity(): DailyInstanceEntity {
         plannedEndTime = plannedEndTime,
         plannedDurationMinutes = plannedDurationMinutes,
         status = status.name,
+        mobility = mobility.name,
         sourceRuleId = sourceRuleId
     )
 }

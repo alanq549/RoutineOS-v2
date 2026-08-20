@@ -25,5 +25,6 @@ data class DailyInstanceEntity(
     val plannedEndTime: Int? = null,
     val plannedDurationMinutes: Int? = null,
     val status: String, // PLANNED, MODIFIED, OMITTED
+    val mobility: String = "FLEXIBLE", // IMMOBILE, FLEXIBLE
     val sourceRuleId: String? = null
 )

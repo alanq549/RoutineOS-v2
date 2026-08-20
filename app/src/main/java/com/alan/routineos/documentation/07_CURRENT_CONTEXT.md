@@ -5,9 +5,9 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | **Current Branch** | `develop` |
 | **Current Phase** | Fase 5: Execution Intelligence & Analytics |
-| **Current Goal** | Finalizar cierre de EC-RE-008 |
-| **Current EC** | [EC-RE-008_PLANNING_TODAY_REFINE](./EC/EC-RE-008_PLANNING_TODAY_REFINE.md) |
-| **Next EC** | [EC-RE-009_HISTORICAL_ANALYSIS](./EC/EC-RE-009_HISTORICAL_ANALYSIS.md) |
+| **Current Goal** | Iniciar EC-RE-009: Lógica de Interrupciones |
+| **Current EC** | Ninguna |
+| **Next EC** | [EC-RE-009_INTERRUPTION_LOGIC](./EC/EC-RE-009_INTERRUPTION_LOGIC.md) |
 | **Blocked By** | Ninguna |
 | **Working Directory** | `feature/dashboard/` |
 | **Current Sprint** | Sprint 2: Feature Layer |

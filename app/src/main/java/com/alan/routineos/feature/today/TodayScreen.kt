@@ -31,7 +31,7 @@ fun TodayScreen(
     onExpandClick: (String) -> Unit,
     onMetadataCaptured: (String, String) -> Unit,
     onCloseCapture: () -> Unit,
-    onAddAdHoc: (String) -> Unit,
+    onAddAdHoc: (String, Int?) -> Unit,
     uiEvent: SharedFlow<ActivityDetailUiEvent>,
     modifier: Modifier = Modifier,
     bottomBar: @Composable () -> Unit = {}
@@ -46,8 +46,8 @@ fun TodayScreen(
 
     if (showAdHocDialog) {
         AdHocDialog(
-            onConfirm = { 
-                onAddAdHoc(it)
+            onConfirm = { title, time -> 
+                onAddAdHoc(title, time)
                 showAdHocDialog = false
             },
             onDismiss = { showAdHocDialog = false }
@@ -147,25 +147,45 @@ fun TodayScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AdHocDialog(
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Int?) -> Unit,
     onDismiss: () -> Unit
 ) {
     var text by remember { mutableStateOf("") }
+    var useSpecificTime by remember { mutableStateOf(false) }
+    val timePickerState = rememberTimePickerState()
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("¿Qué quieres hacer ahora?") },
         text = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                placeholder = { Text("Ej: Leer artículo, Meditar...") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    placeholder = { Text("Ej: Leer artículo, Meditar...") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = useSpecificTime, onCheckedChange = { useSpecificTime = it })
+                    Text("Definir hora específica", style = RoutineTheme.typography.bodyBase)
+                }
+
+                if (useSpecificTime) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        TimePicker(state = timePickerState)
+                    }
+                }
+            }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text) }, enabled = text.isNotBlank()) {
+            TextButton(onClick = { 
+                val time = if (useSpecificTime) timePickerState.hour * 60 + timePickerState.minute else null
+                onConfirm(text, time) 
+            }, enabled = text.isNotBlank()) {
                 Text("Añadir")
             }
         },

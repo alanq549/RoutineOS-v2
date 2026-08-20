@@ -25,5 +25,6 @@ data class ScheduleRuleEntity(
     val startTime: Int? = null, // Minutes from midnight
     val endTime: Int? = null,
     val durationMinutes: Int? = null,
+    val mobility: String = "FLEXIBLE", // IMMOBILE, FLEXIBLE
     val metadataJson: String = "{}"
 )

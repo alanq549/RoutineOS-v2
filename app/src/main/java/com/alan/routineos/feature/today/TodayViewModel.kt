@@ -224,9 +224,9 @@ class TodayViewModel @Inject constructor(
         return items.firstOrNull { it.status == DailyInstanceStatus.PLANNED }
     }
 
-    fun onAddAdHoc(title: String) {
+    fun onAddAdHoc(title: String, startTime: Int? = null) {
         val today = LocalDate.now()
-        val minutes = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) * 60 + Calendar.getInstance().get(Calendar.MINUTE)
+        val minutes = startTime ?: (Calendar.getInstance().get(Calendar.HOUR_OF_DAY) * 60 + Calendar.getInstance().get(Calendar.MINUTE))
         val adHocInstance = DailyInstance(
             id = UUID.randomUUID().toString(),
             target = null,
@@ -234,6 +234,7 @@ class TodayViewModel @Inject constructor(
             titleSnapshot = title,
             descriptionSnapshot = "Ad-hoc task",
             plannedStartTime = minutes,
+            plannedDurationMinutes = 30, // Default duration for intersections
             status = DailyInstanceStatus.MODIFIED,
             isAdHoc = true
         )
