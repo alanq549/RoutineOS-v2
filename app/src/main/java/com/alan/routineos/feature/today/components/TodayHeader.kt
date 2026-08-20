@@ -29,16 +29,16 @@ fun TodayHeader(
     ) {
         Text(
             text = dateText.uppercase(),
-            style = RoutineTheme.typography.labelCaps,
+            style = RoutineTheme.typography.labelCaps.copy(letterSpacing = 2.sp),
             color = RoutineTheme.colors.primary,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.sp
+            fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Tu Progreso",
             style = RoutineTheme.typography.displayLarge.copy(fontSize = 32.sp),
-            color = RoutineTheme.colors.onSurface
+            color = RoutineTheme.colors.onSurface,
+            fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(16.dp))
         TodayProgressCircle(progress = progress)
