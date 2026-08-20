@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.today.model.TodayProgress
 
@@ -23,22 +24,23 @@ fun TodayHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = RoutineTheme.spacing.lg),
+            .padding(top = 48.dp, bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = dateText.uppercase(),
             style = RoutineTheme.typography.labelCaps,
             color = RoutineTheme.colors.primary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp
         )
-        Spacer(modifier = Modifier.height(RoutineTheme.spacing.xs))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Tu Progreso",
-            style = RoutineTheme.typography.displayLarge,
+            style = RoutineTheme.typography.displayLarge.copy(fontSize = 32.sp),
             color = RoutineTheme.colors.onSurface
         )
-        Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
+        Spacer(modifier = Modifier.height(16.dp))
         TodayProgressCircle(progress = progress)
     }
 }

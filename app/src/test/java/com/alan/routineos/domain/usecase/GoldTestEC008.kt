@@ -10,82 +10,102 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
 
-class TimelineResolutionTest {
+class GoldTestEC008 {
+
+    private val date = LocalDate.of(2023, 10, 23) // Monday
+    private val epochDay = date.toEpochDay()
 
     @Test
-    fun `resolves virtual fixed days rule correctly`() = runTest {
-        val date = LocalDate.of(2023, 10, 23) // Monday
+    fun `Materialized instance overrides Rule with same sourceRuleId`() = runTest {
+        val target = ScheduleTarget.Node("n1")
         val rule = ScheduleRule(
-            id = "r1",
-            target = ScheduleTarget.Node("node1"),
+            id = "rule1",
+            target = target,
             type = ScheduleRuleType.FIXED_DAYS,
             daysOfWeek = setOf(1), // Monday
-            startTime = 480
-        )
-        
-        val node = ActivityNode("node1", "act1", null, 0, "Node 1")
-        
-        val repository = object : FakeActivityRepository() {
-            override fun getAllRules() = flowOf(listOf(rule))
-            override fun getAllNodes() = flowOf(listOf(node))
-            override fun getDailyInstancesForDate(date: Long) = flowOf(emptyList<DailyInstance>())
-            override fun getActivityDefinitions() = flowOf(emptyList<ActivityDefinition>())
-            override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
-        }
-        
-        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
-        val result = useCase(date).first()
-
-        assertEquals(1, result.size)
-        assertEquals("Node 1", result[0].instance.titleSnapshot)
-        assertEquals(false, result[0].isMaterialized)
-    }
-
-    @Test
-    fun `materialized instance has precedence over rule`() = runTest {
-        val date = LocalDate.of(2023, 10, 23) // Monday
-        val rule = ScheduleRule(
-            id = "r1",
-            target = ScheduleTarget.Node("node1"),
-            type = ScheduleRuleType.FIXED_DAYS,
-            daysOfWeek = setOf(1),
-            startTime = 480
+            startTime = 480 // 08:00
         )
         
         val materialized = DailyInstance(
-            id = "m1",
-            target = ScheduleTarget.Node("node1"),
-            scheduledDate = date.toEpochDay(),
-            titleSnapshot = "Overridden Title",
+            id = "real1",
+            target = target,
+            scheduledDate = epochDay,
+            titleSnapshot = "Moved Title",
             descriptionSnapshot = "",
+            plannedStartTime = 570, // 09:30
             status = DailyInstanceStatus.MODIFIED,
-            sourceRuleId = "r1"
+            sourceRuleId = "rule1"
         )
         
         val repository = object : FakeActivityRepository() {
             override fun getAllRules() = flowOf(listOf(rule))
             override fun getDailyInstancesForDate(date: Long) = flowOf(listOf(materialized))
-            override fun getAllNodes() = flowOf(emptyList<ActivityNode>())
-            override fun getActivityDefinitions() = flowOf(emptyList<ActivityDefinition>())
-            override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
+            override fun getAllNodes() = flowOf(listOf(ActivityNode("n1", "a1", null, 0, "Node 1")))
         }
         
         val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
         val result = useCase(date).first()
 
-        // Should only have the materialized one, not the virtual one
+        // 1. Verify only 1 entry exists
         assertEquals(1, result.size)
-        assertEquals("Overridden Title", result[0].instance.titleSnapshot)
+        // 2. Verify it's the materialized one
+        assertEquals("real1", result[0].instance.id)
+        assertEquals(570, result[0].instance.plannedStartTime)
         assertEquals(true, result[0].isMaterialized)
     }
 
+    @Test
+    fun `Multiple rules for same target on same day coexist independently`() = runTest {
+        val target = ScheduleTarget.Node("n1")
+        val ruleA = ScheduleRule("ruleA", target, ScheduleRuleType.FIXED_DAYS, setOf(1), startTime = 480)
+        val ruleB = ScheduleRule("ruleB", target, ScheduleRuleType.FIXED_DAYS, setOf(1), startTime = 1080)
+        
+        val repository = object : FakeActivityRepository() {
+            override fun getAllRules() = flowOf(listOf(ruleA, ruleB))
+            override fun getAllNodes() = flowOf(listOf(ActivityNode("n1", "a1", null, 0, "Node 1")))
+        }
+        
+        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        
+        // Initial state
+        val result1 = useCase(date).first()
+        assertEquals(2, result1.size)
+        assertEquals(480, result1[0].instance.plannedStartTime)
+        assertEquals(1080, result1[1].instance.plannedStartTime)
+
+        // Materialize Rule A at a different time
+        val materializedA = DailyInstance(
+            id = "realA", target = target, scheduledDate = epochDay, 
+            titleSnapshot = "A", descriptionSnapshot = "", 
+            plannedStartTime = 570, status = DailyInstanceStatus.MODIFIED, 
+            sourceRuleId = "ruleA"
+        )
+
+        val repositoryWithA = object : FakeActivityRepository() {
+            override fun getAllRules() = flowOf(listOf(ruleA, ruleB))
+            override fun getDailyInstancesForDate(date: Long) = flowOf(listOf(materializedA))
+            override fun getAllNodes() = flowOf(listOf(ActivityNode("n1", "a1", null, 0, "Node 1")))
+        }
+
+        val useCaseWithA = ResolveTimelineUseCase(repositoryWithA, ConflictDetectorUseCase())
+        val result2 = useCaseWithA(date).first()
+
+        assertEquals(2, result2.size)
+        // Rule A materialization (09:30)
+        assertEquals(570, result2[0].instance.plannedStartTime)
+        assertEquals("realA", result2[0].instance.id)
+        // Rule B virtual (18:00)
+        assertEquals(1080, result2[1].instance.plannedStartTime)
+        assertEquals("virtual_ruleB_$epochDay", result2[1].instance.id)
+    }
+
     private open class FakeActivityRepository : ActivityRepository {
-        override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> = TODO()
-        override fun getAllNodes(): Flow<List<ActivityNode>> = TODO()
+        override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> = flowOf(emptyList())
+        override fun getAllNodes(): Flow<List<ActivityNode>> = flowOf(emptyList())
         override suspend fun getActivityDefinitionById(id: String): ActivityDefinition? = null
         override suspend fun upsertActivityDefinition(activityDefinition: ActivityDefinition) {}
         override suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition) {}
-        override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = TODO()
+        override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = flowOf(emptyList())
         override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> = emptyList()
         override suspend fun getNodeById(id: String): ActivityNode? = null
         override suspend fun upsertNode(node: ActivityNode) {}
@@ -94,7 +114,7 @@ class TimelineResolutionTest {
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
         override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {}
         override fun getAllExecutions(): Flow<List<ActivityExecution>> = flowOf(emptyList())
-        override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = TODO()
+        override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) {}
         override fun getAllRules(): Flow<List<ScheduleRule>> = flowOf(emptyList())

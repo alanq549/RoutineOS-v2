@@ -72,7 +72,8 @@ class ActivityDetailViewModel @Inject constructor(
     val uiEvent: SharedFlow<ActivityDetailUiEvent> = _uiEvent.asSharedFlow()
 
     private val processingNodeIds = MutableStateFlow<Set<String>>(emptySet())
-    private val expandedNodes = MutableStateFlow<Set<String>?>(null)
+    private val expandedNodes = MutableStateFlow<Set<String>>(emptySet())
+    private var isExpansionInitialized = false
     private val _schedulingTarget = MutableStateFlow<ScheduleTarget?>(null)
     private val _metadataTarget = MutableStateFlow<ScheduleTarget?>(null)
 
@@ -98,13 +99,13 @@ class ActivityDetailViewModel @Inject constructor(
             ) { flows ->
                 val activity = flows[0] as? ActivityDefinition
                 val tree = flows[1] as List<com.alan.routineos.domain.model.ActivityNodeTree>
-                val expanded = flows[2] as? Set<String>
+                val expanded = flows[2] as Set<String>
                 
-                // Initialize expansion for root nodes only if never initialized
-                if (expanded == null && tree.isNotEmpty()) {
+                // Initialize expansion for root nodes only once
+                if (!isExpansionInitialized && tree.isNotEmpty()) {
                     val rootIds = tree.map { it.node.id }.toSet()
                     expandedNodes.update { rootIds }
-                    return@combine ActivityDetailUiState(isLoading = true) // Wait for update
+                    isExpansionInitialized = true
                 }
 
                 val schTarget = flows[3] as? ScheduleTarget
@@ -113,7 +114,7 @@ class ActivityDetailViewModel @Inject constructor(
 
                 ActivityDetailUiState(
                     activity = activity,
-                    nodes = tree.toUiProjection(expandedNodes = expanded ?: emptySet()),
+                    nodes = tree.toUiProjection(expandedNodes = expanded),
                     isLoading = false,
                     isSchedulingSheetOpen = schTarget != null,
                     schedulingTarget = schTarget,
@@ -187,7 +188,7 @@ class ActivityDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 addChildUseCase(parentId, title)
-                expandedNodes.update { (it ?: emptySet()) + parentId }
+                expandedNodes.update { it + parentId }
             } catch (e: Exception) {
                 _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Error al añadir sub-paso"))
             }
@@ -260,8 +261,7 @@ class ActivityDetailViewModel @Inject constructor(
     }
 
     fun toggleExpand(nodeId: String) {
-        expandedNodes.update { current ->
-            val set = current ?: emptySet()
+        expandedNodes.update { set ->
             if (set.contains(nodeId)) set - nodeId else set + nodeId
         }
     }
