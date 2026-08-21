@@ -99,11 +99,22 @@ class TodayViewModel @Inject constructor(
         today: LocalDate,
         dateFormatter: DateTimeFormatter
     ): TodayUiState {
+        var totalTasks = 0
+        var completedTasks = 0
+
         val uiModels = entries.map { entry ->
             val rootTargetId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
+            
+            totalTasks++
+            if (entry.root.instance.status == DailyInstanceStatus.COMPLETED) completedTasks++
+
             val structuralChildren = if (rootTargetId != null) {
                 allNodes.filter { it.parentId == rootTargetId }.map { node ->
                     val scheduledChild = entry.children.find { (it.instance.target as? ScheduleTarget.Node)?.id == node.id }
+                    
+                    totalTasks++
+                    if (scheduledChild?.instance?.status == DailyInstanceStatus.COMPLETED) completedTasks++
+                    
                     val meta = metaMap[node.id] ?: MetadataSnapshot()
                     TodaySubNodeUiModel(
                         id = scheduledChild?.instance?.id ?: "structural_${node.id}",
@@ -123,7 +134,7 @@ class TodayViewModel @Inject constructor(
         return TodayUiState(
             isLoading = false,
             dateText = today.format(dateFormatter).uppercase(),
-            progress = calculateProgress(entries),
+            progress = TodayProgress(completedTasks, totalTasks),
             timelineItems = uiModels,
             nextActivity = findNextActivity(uiModels)
         )
@@ -152,8 +163,13 @@ class TodayViewModel @Inject constructor(
     }
 
     fun onActionTriggered(instanceId: String, actionType: String) {
-        val entry = findEntry(instanceId) ?: return
         viewModelScope.launch {
+            val entry = findEntry(instanceId) ?: if (instanceId.startsWith("structural_")) {
+                createStructuralEntry(instanceId.removePrefix("structural_"))
+            } else null
+            
+            if (entry == null) return@launch
+
             when {
                 actionType == "SKIP" -> registerDailyActionUseCase(entry, DailyAction.Skip)
                 actionType == "COMPLETE" -> handleCompleteRequest(entry)
@@ -163,6 +179,21 @@ class TodayViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private suspend fun createStructuralEntry(nodeId: String): TimelineEntry? {
+        val node = repository.getNodeById(nodeId) ?: return null
+        return TimelineEntry(
+            instance = DailyInstance(
+                id = "structural_virtual_$nodeId",
+                target = ScheduleTarget.Node(nodeId),
+                scheduledDate = LocalDate.now().toEpochDay(),
+                titleSnapshot = node.title,
+                descriptionSnapshot = node.description,
+                status = DailyInstanceStatus.PLANNED
+            ),
+            isMaterialized = false
+        )
     }
 
     private suspend fun handleCompleteRequest(entry: TimelineEntry) {
@@ -215,9 +246,8 @@ class TodayViewModel @Inject constructor(
     }
 
     private fun calculateProgress(entries: List<HierarchicalTimelineEntry>): TodayProgress {
-        val allEntries = entries.flatMap { listOf(it.root) + it.children }
-        val completed = allEntries.count { it.instance.status == DailyInstanceStatus.MODIFIED }
-        return TodayProgress(completed, allEntries.size) 
+        // Deprecated: logic moved to mapToUiState to account for structural children
+        return TodayProgress(0, 0)
     }
 
     private fun findNextActivity(items: List<TodayTimelineUiModel>): TodayTimelineUiModel? {

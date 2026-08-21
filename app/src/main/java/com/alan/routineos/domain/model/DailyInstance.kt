@@ -3,6 +3,7 @@ package com.alan.routineos.domain.model
 enum class DailyInstanceStatus {
     PLANNED,
     MODIFIED,
+    COMPLETED,
     OMITTED
 }
 

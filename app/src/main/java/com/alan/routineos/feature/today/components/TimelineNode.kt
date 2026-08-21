@@ -20,11 +20,9 @@ fun TimelineNode(
     val color = when (status) {
         DailyInstanceStatus.PLANNED -> RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
         DailyInstanceStatus.MODIFIED -> RoutineTheme.colors.secondary
+        DailyInstanceStatus.COMPLETED -> RoutineTheme.colors.primary
         DailyInstanceStatus.OMITTED -> RoutineTheme.colors.surface2
     }
-    
-    // Note: We don't have "COMPLETED" in DailyInstanceStatus yet, 
-    // it's derived from execution. This will be refined in Phase 3.
 
     Box(
         modifier = modifier

@@ -150,6 +150,7 @@ fun DailyInstanceEntity.toDomain(): DailyInstance {
         plannedDurationMinutes = plannedDurationMinutes,
         status = DailyInstanceStatus.valueOf(status),
         mobility = TemporalMobility.valueOf(mobility),
+        sourceRuleId = sourceRuleId,
         isAdHoc = targetType == "AD_HOC"
     )
 }

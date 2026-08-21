@@ -105,12 +105,22 @@ fun PlanningTimeBlock(
                     )
                 }
 
-                if (item.status == DailyInstanceStatus.OMITTED) {
-                    Text(
-                        text = "SALTADO",
-                        style = RoutineTheme.typography.labelCaps,
-                        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
+                when (item.status) {
+                    DailyInstanceStatus.OMITTED -> {
+                        Text(
+                            text = "SALTADO",
+                            style = RoutineTheme.typography.labelCaps,
+                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                    DailyInstanceStatus.COMPLETED -> {
+                        Text(
+                            text = "COMPLETADO",
+                            style = RoutineTheme.typography.labelCaps,
+                            color = RoutineTheme.colors.primary.copy(alpha = 0.7f)
+                        )
+                    }
+                    else -> {}
                 }
             }
         }

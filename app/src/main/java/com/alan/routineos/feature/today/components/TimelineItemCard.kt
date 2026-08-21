@@ -34,18 +34,23 @@ fun TimelineItemCard(
     onExpandClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardAlpha = if (item.status == DailyInstanceStatus.OMITTED) 0.4f else 1f
+    val isCompleted = item.status == DailyInstanceStatus.COMPLETED
+    val cardAlpha = if (item.status == DailyInstanceStatus.OMITTED || isCompleted) 0.7f else 1f
     val isModified = item.status == DailyInstanceStatus.MODIFIED
     
     RoutineCard(
         modifier = modifier
             .fillMaxWidth()
             .alpha(cardAlpha),
-        containerColor = if (isModified) RoutineTheme.colors.surface2 else RoutineTheme.colors.surface1,
-        border = if (isModified) {
-            androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.secondary)
-        } else {
-            androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border)
+        containerColor = when {
+            isCompleted -> RoutineTheme.colors.surface1
+            isModified -> RoutineTheme.colors.surface2
+            else -> RoutineTheme.colors.surface1
+        },
+        border = when {
+            isCompleted -> androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border)
+            isModified -> androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.secondary)
+            else -> androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border)
         }
     ) {
         Column(modifier = Modifier.padding(RoutineTheme.spacing.md)) {
@@ -74,16 +79,21 @@ fun TimelineItemCard(
                         Text(
                             text = item.timeRangeText,
                             style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
-                            color = if (isModified) RoutineTheme.colors.secondary else RoutineTheme.colors.primary
+                            color = when {
+                                isCompleted -> RoutineTheme.colors.primary
+                                isModified -> RoutineTheme.colors.secondary
+                                else -> RoutineTheme.colors.primary
+                            }
                         )
                     }
                     
                     Text(
                         text = item.title,
                         style = RoutineTheme.typography.bodyBase.copy(
-                            fontWeight = if (isModified) FontWeight.Bold else FontWeight.SemiBold
+                            fontWeight = if (isModified) FontWeight.Bold else FontWeight.SemiBold,
+                            textDecoration = if (isCompleted) TextDecoration.LineThrough else null
                         ),
-                        color = RoutineTheme.colors.onSurface,
+                        color = if (isCompleted) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -144,7 +154,7 @@ fun TimelineItemCard(
                         }
                     }
                     
-                    if (item.status == DailyInstanceStatus.PLANNED || item.isAdHoc) {
+                    if (item.status == DailyInstanceStatus.PLANNED || (item.isAdHoc && item.status == DailyInstanceStatus.MODIFIED)) {
                         IconButton(onClick = { onAction(item.id, "MOVE_REQUEST") }) {
                             Icon(Icons.Default.EditCalendar, contentDescription = "Reschedule", tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         }
@@ -205,9 +215,9 @@ private fun SubNodeRow(
                 text = subNode.title,
                 style = RoutineTheme.typography.bodyBase.copy(
                     fontSize = 14.sp,
-                    textDecoration = if (subNode.status == DailyInstanceStatus.OMITTED) TextDecoration.LineThrough else null
+                    textDecoration = if (subNode.status == DailyInstanceStatus.OMITTED || subNode.status == DailyInstanceStatus.COMPLETED) TextDecoration.LineThrough else null
                 ),
-                color = if (subNode.status == DailyInstanceStatus.OMITTED) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface,
+                color = if (subNode.status == DailyInstanceStatus.OMITTED || subNode.status == DailyInstanceStatus.COMPLETED) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -247,6 +257,7 @@ private fun StatusIcon(status: DailyInstanceStatus, size: androidx.compose.ui.un
     val (icon, color) = when (status) {
         DailyInstanceStatus.PLANNED -> Icons.Default.Schedule to RoutineTheme.colors.onSurfaceVariant
         DailyInstanceStatus.MODIFIED -> Icons.Default.Sync to RoutineTheme.colors.secondary
+        DailyInstanceStatus.COMPLETED -> Icons.Default.CheckCircle to RoutineTheme.colors.primary
         DailyInstanceStatus.OMITTED -> Icons.Default.Block to RoutineTheme.colors.onSurfaceVariant
     }
     

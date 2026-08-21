@@ -48,13 +48,20 @@ fun PlanningExceptionCard(
                         color = RoutineTheme.colors.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    val label = when (item.status) {
+                        DailyInstanceStatus.OMITTED -> "SALTADO"
+                        DailyInstanceStatus.COMPLETED -> "COMPLETADO"
+                        else -> "MODIFICADO"
+                    }
+                    val labelColor = if (item.status == DailyInstanceStatus.COMPLETED) RoutineTheme.colors.primary else RoutineTheme.colors.secondary
+                    
                     Text(
-                        text = if (item.status == DailyInstanceStatus.OMITTED) "SALTADO" else "MODIFICADO",
+                        text = label,
                         style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
-                        color = RoutineTheme.colors.secondary,
+                        color = labelColor,
                         modifier = Modifier
-                            .background(RoutineTheme.colors.secondary.copy(alpha = 0.1f), RoutineTheme.shapes.pill)
-                            .border(1.dp, RoutineTheme.colors.secondary.copy(alpha = 0.2f), RoutineTheme.shapes.pill)
+                            .background(labelColor.copy(alpha = 0.1f), RoutineTheme.shapes.pill)
+                            .border(1.dp, labelColor.copy(alpha = 0.2f), RoutineTheme.shapes.pill)
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     )
                 }

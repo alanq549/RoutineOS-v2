@@ -99,6 +99,44 @@ class GoldTestEC008 {
         assertEquals("virtual_ruleB_$epochDay", result2[1].instance.id)
     }
 
+    @Test
+    fun `Materialized instance with same rule ID does not generate false conflicts`() = runTest {
+        val target = ScheduleTarget.Node("n1")
+        val rule = ScheduleRule(
+            id = "rule1",
+            target = target,
+            type = ScheduleRuleType.FIXED_DAYS,
+            daysOfWeek = setOf(1),
+            startTime = 480 // 08:00
+        )
+        
+        // Persisted version of the SAME rule
+        val materialized = DailyInstance(
+            id = "persisted1",
+            target = target,
+            scheduledDate = epochDay,
+            titleSnapshot = "Title",
+            descriptionSnapshot = "",
+            plannedStartTime = 480, // Same time
+            status = DailyInstanceStatus.MODIFIED,
+            sourceRuleId = "rule1"
+        )
+        
+        val repository = object : FakeActivityRepository() {
+            override fun getAllRules() = flowOf(listOf(rule))
+            override fun getDailyInstancesForDate(date: Long) = flowOf(listOf(materialized))
+            override fun getAllNodes() = flowOf(listOf(ActivityNode("n1", "a1", null, 0, "Node 1")))
+        }
+        
+        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val result = useCase(date).first()
+
+        // 1. Verify only 1 entry (Identity replacement)
+        assertEquals("Should only have one entry when rule is materialized", 1, result.size)
+        // 2. Verify no conflict is detected against itself/virtual
+        assertEquals("Should not have conflicts", false, result[0].conflict?.hasConflict)
+    }
+
     private open class FakeActivityRepository : ActivityRepository {
         override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> = flowOf(emptyList())
         override fun getAllNodes(): Flow<List<ActivityNode>> = flowOf(emptyList())

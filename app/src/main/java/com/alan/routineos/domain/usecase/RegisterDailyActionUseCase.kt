@@ -38,7 +38,7 @@ class RegisterDailyActionUseCase @Inject constructor(
 
     private suspend fun handleComplete(instance: DailyInstance, metadataJson: String) {
         // 1. Update instance status
-        repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.MODIFIED))
+        repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.COMPLETED))
         
         // 2. Register execution ONLY if it has a Node target
         val target = instance.target
