@@ -2,6 +2,7 @@ package com.alan.routineos.feature.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alan.routineos.core.util.TimeProvider
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.*
@@ -9,9 +10,11 @@ import com.alan.routineos.feature.dashboard.ActivityDetailUiEvent
 import com.alan.routineos.feature.today.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.inject.Inject
@@ -20,7 +23,8 @@ import javax.inject.Inject
 class TodayViewModel @Inject constructor(
     private val repository: ActivityRepository,
     private val getHierarchicalTimelineUseCase: GetHierarchicalTimelineUseCase,
-    private val registerDailyActionUseCase: RegisterDailyActionUseCase
+    private val registerDailyActionUseCase: RegisterDailyActionUseCase,
+    private val timeProvider: TimeProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TodayUiState(isLoading = true))
@@ -45,7 +49,7 @@ class TodayViewModel @Inject constructor(
             val nodesFlow = repository.getAllNodes()
             val timelineFlow = getHierarchicalTimelineUseCase(today)
 
-            combine(nodesFlow, timelineFlow, expandedIds) { nodes, entries, expanded ->
+            combine(nodesFlow, timelineFlow, expandedIds, timeProvider.minuteTicker) { nodes, entries, expanded, _ ->
                 currentEntries = entries
                 resolveMetadataForEntries(entries, nodes).map { metaMap ->
                     mapToUiState(entries, metaMap, expanded, nodes, today, dateFormatter)
@@ -99,10 +103,12 @@ class TodayViewModel @Inject constructor(
         today: LocalDate,
         dateFormatter: DateTimeFormatter
     ): TodayUiState {
+        val now = timeProvider.now()
+        val currentMinutes = now.hour * 60 + now.minute
         var totalTasks = 0
         var completedTasks = 0
 
-        val uiModels = entries.map { entry ->
+        val uiModels = entries.mapIndexed { index, entry ->
             val rootTargetId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
             
             totalTasks++
@@ -128,7 +134,22 @@ class TodayViewModel @Inject constructor(
             } else emptyList()
 
             val rootMeta = metaMap[rootTargetId] ?: MetadataSnapshot()
-            entry.toUiModel(structuralChildren, rootMeta, expanded.contains(entry.root.instance.id))
+            val completedSubNodesCount = structuralChildren.count { it.status == DailyInstanceStatus.COMPLETED }
+            val totalSubNodesCount = structuralChildren.size
+            
+            // Infer end boundary from the next scheduled activity if explicit data is missing
+            val nextScheduled = entries.drop(index + 1).find { it.root.instance.plannedStartTime != null }
+            val nextStartTime = nextScheduled?.root?.instance?.plannedStartTime
+
+            entry.toUiModel(
+                structuralChildren, 
+                rootMeta, 
+                expanded.contains(entry.root.instance.id),
+                completedSubNodesCount,
+                totalSubNodesCount,
+                currentMinutes,
+                nextStartTime
+            )
         }
 
         return TodayUiState(
@@ -143,8 +164,26 @@ class TodayViewModel @Inject constructor(
     private fun HierarchicalTimelineEntry.toUiModel(
         discoveredChildren: List<TodaySubNodeUiModel>,
         meta: MetadataSnapshot,
-        isExpanded: Boolean
+        isExpanded: Boolean,
+        completedSubNodes: Int,
+        totalSubNodes: Int,
+        currentMinutes: Int,
+        inferredEndTime: Int?
     ): TodayTimelineUiModel {
+        val start = root.instance.plannedStartTime
+        val duration = root.instance.plannedDurationMinutes
+        val explicitEnd = root.instance.plannedEndTime ?: if (start != null && duration != null) start + duration else null
+        
+        val finalEnd = explicitEnd ?: inferredEndTime
+
+        val temporalState = when {
+            start != null && currentMinutes < start -> TimelineTemporalState.UPCOMING
+            start != null && finalEnd != null && currentMinutes >= start && currentMinutes < finalEnd -> TimelineTemporalState.CURRENT
+            finalEnd != null && currentMinutes >= finalEnd && root.instance.status == DailyInstanceStatus.PLANNED -> TimelineTemporalState.OVERDUE
+            start != null && currentMinutes >= start && finalEnd == null -> TimelineTemporalState.STALE_PENDING
+            else -> TimelineTemporalState.UPCOMING
+        }
+
         return TodayTimelineUiModel(
             id = root.instance.id,
             title = root.instance.titleSnapshot,
@@ -158,7 +197,10 @@ class TodayViewModel @Inject constructor(
             operationalMetadata = meta.operational,
             isExpandable = discoveredChildren.isNotEmpty(),
             isExpanded = isExpanded,
-            isAdHoc = root.instance.isAdHoc
+            isAdHoc = root.instance.isAdHoc,
+            completedSubNodesCount = completedSubNodes,
+            totalSubNodesCount = totalSubNodes,
+            temporalState = temporalState
         )
     }
 
@@ -251,7 +293,12 @@ class TodayViewModel @Inject constructor(
     }
 
     private fun findNextActivity(items: List<TodayTimelineUiModel>): TodayTimelineUiModel? {
-        return items.firstOrNull { it.status == DailyInstanceStatus.PLANNED }
+        // 1. Prioritize CURRENT
+        val current = items.find { it.status == DailyInstanceStatus.PLANNED && it.temporalState == TimelineTemporalState.CURRENT }
+        if (current != null) return current
+        
+        // 2. Next UPCOMING
+        return items.find { it.status == DailyInstanceStatus.PLANNED && it.temporalState == TimelineTemporalState.UPCOMING }
     }
 
     fun onAddAdHoc(title: String, startTime: Int? = null) {

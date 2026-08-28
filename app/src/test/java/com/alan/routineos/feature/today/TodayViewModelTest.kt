@@ -1,11 +1,13 @@
 package com.alan.routineos.feature.today
 
+import com.alan.routineos.core.util.TimeProvider
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
@@ -13,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
+import java.time.LocalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModelTest {
@@ -20,11 +23,13 @@ class TodayViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: TodayViewModel
     private lateinit var repository: FakeActivityRepository
+    private lateinit var timeProvider: FakeTimeProvider
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         repository = FakeActivityRepository()
+        timeProvider = FakeTimeProvider()
     }
 
     @After
@@ -51,14 +56,21 @@ class TodayViewModelTest {
         val getHierarchicalTimelineUseCase = GetHierarchicalTimelineUseCase(repository, resolveTimelineUseCase)
         val registerDailyActionUseCase = RegisterDailyActionUseCase(repository, MaterializeInstanceUseCase(repository))
         
-        viewModel = TodayViewModel(repository, getHierarchicalTimelineUseCase, registerDailyActionUseCase)
-        
+        viewModel = TodayViewModel(repository, getHierarchicalTimelineUseCase, registerDailyActionUseCase, timeProvider)
+        timeProvider.tick()
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(1, state.timelineItems.size)
         assertEquals("Task 1", state.timelineItems[0].title)
         assertEquals("08:00", state.timelineItems[0].timeRangeText)
+    }
+
+    private class FakeTimeProvider : TimeProvider {
+        private val _ticker = MutableSharedFlow<Unit>(replay = 1)
+        override val minuteTicker: Flow<Unit> = _ticker
+        fun tick() { _ticker.tryEmit(Unit) }
+        override fun now(): LocalTime = LocalTime.of(12, 0)
     }
 
     private class FakeActivityRepository : ActivityRepository {

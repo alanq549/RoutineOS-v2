@@ -2,6 +2,13 @@ package com.alan.routineos.feature.today.model
 
 import com.alan.routineos.domain.model.DailyInstanceStatus
 
+enum class TimelineTemporalState {
+    UPCOMING,
+    CURRENT,
+    OVERDUE,
+    STALE_PENDING
+}
+
 data class TodaySubNodeUiModel(
     val id: String,
     val title: String,
@@ -24,5 +31,8 @@ data class TodayTimelineUiModel(
     val operationalMetadata: List<Pair<String, String>> = emptyList(),
     val isExpandable: Boolean = false,
     val isExpanded: Boolean = false,
-    val isAdHoc: Boolean = false
+    val isAdHoc: Boolean = false,
+    val completedSubNodesCount: Int = 0,
+    val totalSubNodesCount: Int = 0,
+    val temporalState: TimelineTemporalState = TimelineTemporalState.UPCOMING
 )

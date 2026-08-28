@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.feature.today.model.TimelineTemporalState
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
+import java.time.LocalTime
 
 @Composable
 fun TodayNextActivityCard(
@@ -27,7 +29,7 @@ fun TodayNextActivityCard(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "SIGUIENTE",
+            text = if (activity.temporalState == TimelineTemporalState.CURRENT) "AHORA MISMO" else "SIGUIENTE",
             style = RoutineTheme.typography.labelCaps,
             color = RoutineTheme.colors.onSurfaceVariant,
             modifier = Modifier.padding(bottom = RoutineTheme.spacing.md)
@@ -35,7 +37,7 @@ fun TodayNextActivityCard(
 
         RoutineCard(
             modifier = Modifier.fillMaxWidth(),
-            containerColor = RoutineTheme.colors.surface3 // Glass effect placeholder
+            containerColor = RoutineTheme.colors.surface3
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 // Radial Gradient Decoration
@@ -62,12 +64,28 @@ fun TodayNextActivityCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
+                        val now = LocalTime.now()
+                        val currentMinutes = now.hour * 60 + now.minute
+                        
+                        val startMinutes = activity.timeRangeText.split(":").let { 
+                            if (it.size == 2) it[0].toInt() * 60 + it[1].toInt() else 0 
+                        }
+
+                        val badgeText = when {
+                            activity.temporalState == TimelineTemporalState.CURRENT -> "EN CURSO"
+                            startMinutes > currentMinutes -> {
+                                val diff = startMinutes - currentMinutes
+                                if (diff < 60) "EN $diff MIN" else "EN ${diff / 60}H ${diff % 60}M"
+                            }
+                            else -> "AHORA"
+                        }
+
                         Surface(
                             color = RoutineTheme.colors.primary.copy(alpha = 0.1f),
                             shape = RoutineTheme.shapes.small
                         ) {
                             Text(
-                                text = "EN 15 MIN", // TODO: Real logic
+                                text = badgeText,
                                 style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
                                 color = RoutineTheme.colors.primary,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
