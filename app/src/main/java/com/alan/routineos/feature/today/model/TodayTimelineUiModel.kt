@@ -13,7 +13,8 @@ data class ConflictUiModel(
     val hasConflict: Boolean,
     val impact: TemporalImpact = TemporalImpact.NONE,
     val relationship: TemporalRelationship = TemporalRelationship.NONE,
-    val suggestions: List<ConflictSuggestion> = emptyList()
+    val suggestions: List<ConflictSuggestion> = emptyList(),
+    val conflictingTitles: List<String> = emptyList()
 )
 
 /**

@@ -7,7 +7,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.today.model.TodayTimelineUiModel
+import com.alan.routineos.feature.today.model.*
+import com.alan.routineos.domain.model.TemporalImpact
 
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -42,7 +43,7 @@ fun TimelineRow(
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
     ) {
-        // Vertical Axis Column (Stitch V3 style)
+        // Vertical Axis Column
         Box(
             modifier = Modifier
                 .width(48.dp)
@@ -50,12 +51,20 @@ fun TimelineRow(
             contentAlignment = Alignment.TopCenter
         ) {
             if (!isLast) {
+                // Determine rail color based on localized impact
+                val railColor = when (item.conflict.impact) {
+                    TemporalImpact.WARNING -> RoutineTheme.colors.error.copy(alpha = 0.6f)
+                    TemporalImpact.INFO -> RoutineTheme.colors.secondary.copy(alpha = 0.6f)
+                    else -> RoutineTheme.colors.border
+                }
+                val railWidth = if (item.conflict.impact == TemporalImpact.WARNING) 2.dp else 1.dp
+
                 Box(
                     modifier = Modifier
                         .padding(top = 24.dp)
-                        .width(1.dp)
+                        .width(railWidth)
                         .fillMaxHeight()
-                        .background(RoutineTheme.colors.border)
+                        .background(railColor)
                 )
             }
             

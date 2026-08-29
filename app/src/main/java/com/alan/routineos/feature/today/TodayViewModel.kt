@@ -106,14 +106,14 @@ class TodayViewModel @Inject constructor(
         val completedTasks = allLeaves.count { it.instance.status == DailyInstanceStatus.COMPLETED }
 
         val uiModels = entries.mapIndexed { index, entry ->
-            val subNodeModels = entry.children.map { mapToSubNodeUiModel(it, metaMap) }
+            val subNodeModels = entry.children.map { mapToSubNodeUiModel(it, metaMap, entries) }
             val rootTargetId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
             val rootMeta = metaMap[rootTargetId] ?: MetadataSnapshot()
             
             val nextScheduled = entries.drop(index + 1).find { it.root.instance.plannedStartTime != null }
             val nextStartTime = nextScheduled?.root?.instance?.plannedStartTime
 
-            entry.toUiModel(subNodeModels, rootMeta, expanded.contains(entry.root.instance.id), currentMinutes, nextStartTime)
+            entry.toUiModel(subNodeModels, rootMeta, expanded.contains(entry.root.instance.id), currentMinutes, nextStartTime, entries)
         }
 
         return TodayUiState(
@@ -126,7 +126,11 @@ class TodayViewModel @Inject constructor(
         )
     }
 
-    private fun mapToSubNodeUiModel(entry: HierarchicalTimelineEntry, metaMap: Map<String, MetadataSnapshot>): TodaySubNodeUiModel {
+    private fun mapToSubNodeUiModel(
+        entry: HierarchicalTimelineEntry, 
+        metaMap: Map<String, MetadataSnapshot>,
+        allEntries: List<HierarchicalTimelineEntry>
+    ): TodaySubNodeUiModel {
         val nodeId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
         val meta = if (nodeId != null) metaMap[nodeId] ?: MetadataSnapshot() else MetadataSnapshot()
         
@@ -140,11 +144,27 @@ class TodayViewModel @Inject constructor(
             completedCount = entry.completedCount,
             totalCount = entry.totalCount,
             completion = entry.completion,
-            children = entry.children.map { mapToSubNodeUiModel(it, metaMap) },
+            children = entry.children.map { mapToSubNodeUiModel(it, metaMap, allEntries) },
             conflict = entry.root.conflict?.let { 
-                ConflictUiModel(it.hasConflict, it.impact, it.relationship, it.suggestions)
+                ConflictUiModel(
+                    hasConflict = it.hasConflict, 
+                    impact = it.impact, 
+                    relationship = it.relationship, 
+                    suggestions = it.suggestions,
+                    conflictingTitles = it.conflictingInstanceIds.mapNotNull { cid ->
+                        findInHierarchy(allEntries, cid)?.root?.instance?.titleSnapshot
+                    }
+                )
             } ?: ConflictUiModel(false)
         )
+    }
+
+    private fun findInHierarchy(entries: List<HierarchicalTimelineEntry>, id: String): HierarchicalTimelineEntry? {
+        entries.forEach { entry ->
+            if (entry.root.instance.id == id) return entry
+            findInHierarchy(entry.children, id)?.let { return it }
+        }
+        return null
     }
 
     private fun collectAllLeafEntries(entries: List<HierarchicalTimelineEntry>): List<TimelineEntry> {
@@ -164,7 +184,8 @@ class TodayViewModel @Inject constructor(
         meta: MetadataSnapshot,
         isExpanded: Boolean,
         currentMinutes: Int,
-        inferredEndTime: Int?
+        inferredEndTime: Int?,
+        allEntries: List<HierarchicalTimelineEntry>
     ): TodayTimelineUiModel {
         val start = root.instance.plannedStartTime
         val duration = root.instance.plannedDurationMinutes
@@ -187,7 +208,15 @@ class TodayViewModel @Inject constructor(
             status = root.instance.status,
             isMaterialized = root.isMaterialized,
             conflict = root.conflict?.let { 
-                ConflictUiModel(it.hasConflict, it.impact, it.relationship, it.suggestions)
+                ConflictUiModel(
+                    hasConflict = it.hasConflict, 
+                    impact = it.impact, 
+                    relationship = it.relationship, 
+                    suggestions = it.suggestions,
+                    conflictingTitles = it.conflictingInstanceIds.mapNotNull { cid ->
+                        findInHierarchy(allEntries, cid)?.root?.instance?.titleSnapshot
+                    }
+                )
             } ?: ConflictUiModel(false),
             subNodes = subNodeModels,
             contextMetadata = meta.context,

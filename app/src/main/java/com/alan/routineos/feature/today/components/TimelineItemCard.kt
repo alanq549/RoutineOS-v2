@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -57,6 +56,12 @@ fun TimelineItemCard(
         else -> RoutineTheme.colors.primary
     }
 
+    val impactColor = when (item.conflict.impact) {
+        TemporalImpact.WARNING -> RoutineTheme.colors.error
+        TemporalImpact.INFO -> RoutineTheme.colors.secondary
+        else -> null
+    }
+
     val meshBrush = if (!isCompleted && (isCurrent || (item.isAdHoc && !isOmitted))) {
         Brush.radialGradient(
             colors = listOf(accentColor.copy(alpha = 0.12f), Color.Transparent),
@@ -73,15 +78,21 @@ fun TimelineItemCard(
         containerColor = Color.Transparent,
         border = BorderStroke(
             width = 1.dp,
-            color = when {
-                isCompleted -> RoutineTheme.colors.border
-                item.conflict.impact == TemporalImpact.WARNING -> RoutineTheme.colors.error.copy(alpha = 0.5f)
-                item.conflict.impact == TemporalImpact.INFO -> RoutineTheme.colors.secondary.copy(alpha = 0.5f)
-                else -> accentColor.copy(alpha = 0.4f)
-            }
+            color = if (isCompleted) RoutineTheme.colors.border else accentColor.copy(alpha = 0.4f)
         )
     ) {
         Box(modifier = Modifier.fillMaxWidth().background(meshBrush)) {
+            // Localized Side Bar for Impact
+            if (impactColor != null && !isCompleted) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .width(4.dp)
+                        .fillMaxHeight()
+                        .background(impactColor)
+                )
+            }
+
             Column(modifier = Modifier.padding(RoutineTheme.spacing.md)) {
                 // HEADER
                 Row(
@@ -155,48 +166,62 @@ fun TimelineItemCard(
                     }
                 }
 
-                // TIME
-                Row(modifier = Modifier.padding(start = 26.dp, top = 8.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(item.timeRangeText, style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp), color = if (isOverdue) OverdueAccent.copy(alpha = 0.8f) else RoutineTheme.colors.onSurfaceVariant)
-                    if (isOverdue) Text("OVERDUE", style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold), color = OverdueAccent)
-                }
+                // TIME & CONFLICT BADGE
+                Row(
+                    modifier = Modifier.padding(start = 26.dp, top = 8.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        item.timeRangeText, 
+                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp), 
+                        color = if (isOverdue) OverdueAccent.copy(alpha = 0.8f) else RoutineTheme.colors.onSurfaceVariant
+                    )
+                    
+                    if (isOverdue) {
+                        Text("OVERDUE", style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold), color = OverdueAccent)
+                    }
 
-                // CONFLICTS & SUGGESTIONS
-                if (item.conflict.hasConflict) {
-                    Column(modifier = Modifier.padding(start = 26.dp, top = 8.dp)) {
-                        val impactColor = when (item.conflict.impact) {
-                            TemporalImpact.WARNING -> RoutineTheme.colors.error
-                            TemporalImpact.INFO -> RoutineTheme.colors.secondary
-                            else -> RoutineTheme.colors.onSurfaceVariant
+                    // RELATIONSHIP BADGE
+                    if (item.conflict.hasConflict && impactColor != null && !isCompleted) {
+                        val relationText = when (item.conflict.relationship) {
+                            TemporalRelationship.CONTAINS -> "DENTRO DE"
+                            TemporalRelationship.CONTAINED_BY -> "DENTRO DE"
+                            TemporalRelationship.OVERLAP -> "SE CRUZA CON"
+                            else -> ""
                         }
+                        val targetTitle = item.conflict.conflictingTitles.firstOrNull() ?: "OTRA"
                         
                         Surface(
                             color = impactColor.copy(alpha = 0.1f),
-                            shape = RoutineTheme.shapes.small,
-                            border = BorderStroke(1.dp, impactColor.copy(alpha = 0.2f))
+                            shape = RoutineTheme.shapes.pill,
+                            border = BorderStroke(1.dp, impactColor.copy(alpha = 0.3f))
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
                                     imageVector = if (item.conflict.impact == TemporalImpact.WARNING) Icons.Default.Warning else Icons.Default.Info,
                                     contentDescription = null,
-                                    modifier = Modifier.size(12.dp),
+                                    modifier = Modifier.size(10.dp),
                                     tint = impactColor
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (item.conflict.impact == TemporalImpact.WARNING) "CONFLICT DETECTED" else "INTERSECTION",
+                                    text = "$relationText · $targetTitle",
                                     style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
                                     color = impactColor
                                 )
                             }
                         }
+                    }
+                }
 
-                        // Suggestions
+                // SUGGESTIONS
+                if (item.conflict.hasConflict && item.conflict.suggestions.isNotEmpty() && !isCompleted) {
+                    Column(modifier = Modifier.padding(start = 26.dp, top = 8.dp)) {
                         item.conflict.suggestions.forEach { suggestion ->
-                            Spacer(modifier = Modifier.height(8.dp))
                             Surface(
                                 onClick = { 
                                     if (suggestion.type == SuggestionType.MOVE) {
@@ -220,6 +245,7 @@ fun TimelineItemCard(
                                     )
                                 }
                             }
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
                 }
@@ -287,13 +313,24 @@ private fun SubNodeRow(subNode: TodaySubNodeUiModel, onAction: (String, String) 
                         Text("${subNode.completedCount}/${subNode.totalCount}", style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp), color = if (isCompleted) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f))
                     }
                 }
-                
-                // Metadata for sub-nodes
-                if (subNode.contextMetadata.isNotEmpty() || subNode.operationalMetadata.isNotEmpty()) {
-                    FlowRow(modifier = Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        subNode.contextMetadata.forEach { (name, value) -> MetadataLabel(name = name, value = value, isContext = true) }
-                        subNode.operationalMetadata.forEach { (name, value) -> MetadataLabel(name = name, value = value, isContext = false) }
+
+                // SUB-NODE RELATIONSHIP BADGE
+                if (subNode.conflict.hasConflict && subNode.conflict.impact != TemporalImpact.NONE && !isCompleted) {
+                    val impactColor = if (subNode.conflict.impact == TemporalImpact.WARNING) RoutineTheme.colors.error else RoutineTheme.colors.secondary
+                    val relationText = when (subNode.conflict.relationship) {
+                        TemporalRelationship.CONTAINS -> "DENTRO DE"
+                        TemporalRelationship.CONTAINED_BY -> "DENTRO DE"
+                        TemporalRelationship.OVERLAP -> "SE CRUZA CON"
+                        else -> ""
                     }
+                    val targetTitle = subNode.conflict.conflictingTitles.firstOrNull() ?: "OTRA"
+                    
+                    Text(
+                        text = "$relationText · $targetTitle",
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
+                        color = impactColor,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
             }
 
@@ -306,7 +343,6 @@ private fun SubNodeRow(subNode: TodaySubNodeUiModel, onAction: (String, String) 
             }
         }
         
-        // Render nested children recursively
         if (subNode.children.isNotEmpty()) {
             Column(modifier = Modifier.padding(start = 12.dp).drawThreadLine(RoutineTheme.colors.border.copy(alpha = 0.2f)).padding(start = 12.dp)) {
                 subNode.children.forEach { child ->
