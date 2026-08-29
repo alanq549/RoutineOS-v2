@@ -145,24 +145,48 @@ class TodayViewModel @Inject constructor(
             totalCount = entry.totalCount,
             completion = entry.completion,
             children = entry.children.map { mapToSubNodeUiModel(it, metaMap, allEntries) },
-            conflict = entry.root.conflict?.let { 
-                ConflictUiModel(
-                    hasConflict = it.hasConflict, 
-                    impact = it.impact, 
-                    relationship = it.relationship, 
-                    suggestions = it.suggestions,
-                    conflictingTitles = it.conflictingInstanceIds.mapNotNull { cid ->
-                        findInHierarchy(allEntries, cid)?.root?.instance?.titleSnapshot
-                    }
-                )
-            } ?: ConflictUiModel(false)
+            conflict = entry.root.conflict?.toUiModel(allEntries, entry.root.instance) ?: ConflictUiModel(false)
+        )
+    }
+
+    private fun ConflictResult.toUiModel(allEntries: List<HierarchicalTimelineEntry>, current: DailyInstance): ConflictUiModel {
+        val detailUiList = details.map { detail ->
+            val otherTitle = findInHierarchy(allEntries, detail.otherInstanceId)?.root?.instance?.titleSnapshot ?: "OTRA"
+            ConflictDetailUiModel(
+                otherInstanceId = detail.otherInstanceId,
+                otherTitle = otherTitle,
+                relationship = detail.relationship,
+                impact = detail.impact,
+                isInterruption = detail.isInterruption
+            )
+        }
+
+        val interrupter = hasConflict && (
+            current.isAdHoc || 
+            (current.mobility == TemporalMobility.FLEXIBLE && detailUiList.any { it.impact == TemporalImpact.WARNING })
+        )
+
+        return ConflictUiModel(
+            hasConflict = hasConflict,
+            impact = impact,
+            details = detailUiList,
+            suggestions = suggestions,
+            isInterrupter = interrupter
         )
     }
 
     private fun findInHierarchy(entries: List<HierarchicalTimelineEntry>, id: String): HierarchicalTimelineEntry? {
         entries.forEach { entry ->
             if (entry.root.instance.id == id) return entry
-            findInHierarchy(entry.children, id)?.let { return it }
+            findChildInHierarchy(entry.children, id)?.let { return it }
+        }
+        return null
+    }
+
+    private fun findChildInHierarchy(children: List<HierarchicalTimelineEntry>, id: String): HierarchicalTimelineEntry? {
+        children.forEach { child ->
+            if (child.root.instance.id == id) return child
+            findChildInHierarchy(child.children, id)?.let { return it }
         }
         return null
     }
@@ -205,19 +229,11 @@ class TodayViewModel @Inject constructor(
             title = root.instance.titleSnapshot,
             description = root.instance.descriptionSnapshot,
             timeRangeText = root.instance.plannedStartTime?.let { formatMinutes(it) } ?: "",
+            startTimeMinutes = start,
+            endTimeMinutes = finalEnd,
             status = root.instance.status,
             isMaterialized = root.isMaterialized,
-            conflict = root.conflict?.let { 
-                ConflictUiModel(
-                    hasConflict = it.hasConflict, 
-                    impact = it.impact, 
-                    relationship = it.relationship, 
-                    suggestions = it.suggestions,
-                    conflictingTitles = it.conflictingInstanceIds.mapNotNull { cid ->
-                        findInHierarchy(allEntries, cid)?.root?.instance?.titleSnapshot
-                    }
-                )
-            } ?: ConflictUiModel(false),
+            conflict = root.conflict?.toUiModel(allEntries, root.instance) ?: ConflictUiModel(false),
             subNodes = subNodeModels,
             contextMetadata = meta.context,
             operationalMetadata = meta.operational,

@@ -6,6 +6,7 @@ import com.alan.routineos.domain.model.DailyInstanceStatus
 import com.alan.routineos.domain.usecase.ResolveTimelineUseCase
 import com.alan.routineos.domain.usecase.TimelineEntry
 import com.alan.routineos.feature.planning.model.PlanningDay
+import com.alan.routineos.feature.today.model.ConflictDetailUiModel
 import com.alan.routineos.feature.today.model.ConflictUiModel
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -78,7 +79,14 @@ class PlanningViewModel @Inject constructor(
             status = instance.status,
             isMaterialized = isMaterialized,
             conflict = conflict?.let { 
-                ConflictUiModel(it.hasConflict, it.impact, it.relationship, it.suggestions)
+                ConflictUiModel(
+                    hasConflict = it.hasConflict, 
+                    impact = it.impact, 
+                    details = it.details.map { d -> 
+                        ConflictDetailUiModel(d.otherInstanceId, "OTRA", d.relationship, d.impact, d.isInterruption) 
+                    },
+                    suggestions = it.suggestions
+                )
             } ?: ConflictUiModel(false)
         )
     }

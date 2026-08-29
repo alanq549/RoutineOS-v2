@@ -9,17 +9,25 @@ enum class TimelineTemporalState {
     STALE_PENDING
 }
 
+data class ConflictDetailUiModel(
+    val otherInstanceId: String,
+    val otherTitle: String,
+    val relationship: TemporalRelationship,
+    val impact: TemporalImpact,
+    val isInterruption: Boolean
+)
+
 data class ConflictUiModel(
     val hasConflict: Boolean,
     val impact: TemporalImpact = TemporalImpact.NONE,
-    val relationship: TemporalRelationship = TemporalRelationship.NONE,
+    val details: List<ConflictDetailUiModel> = emptyList(),
     val suggestions: List<ConflictSuggestion> = emptyList(),
+    val isInterrupter: Boolean = false,
     val conflictingTitles: List<String> = emptyList()
 )
 
 /**
  * UI representation of a sub-node step.
- * Supports recursion for deep hierarchies and completion metadata.
  */
 data class TodaySubNodeUiModel(
     val id: String,
@@ -40,6 +48,8 @@ data class TodayTimelineUiModel(
     val title: String,
     val description: String = "",
     val timeRangeText: String,
+    val startTimeMinutes: Int? = null,
+    val endTimeMinutes: Int? = null,
     val status: DailyInstanceStatus,
     val isMaterialized: Boolean,
     val conflict: ConflictUiModel = ConflictUiModel(false),

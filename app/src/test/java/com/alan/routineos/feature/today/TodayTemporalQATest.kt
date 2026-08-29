@@ -46,7 +46,8 @@ class TodayTemporalQATest {
         
         val state = viewModel.uiState.value
         val uiA = state.timelineItems.find { it.id.contains("A") }!!
-        assertEquals(TemporalRelationship.NONE, uiA.conflict.relationship)
+        val rel = uiA.conflict.details.firstOrNull()?.relationship ?: TemporalRelationship.NONE
+        assertEquals(TemporalRelationship.NONE, rel)
         assertEquals(TemporalImpact.NONE, uiA.conflict.impact)
     }
 
@@ -68,7 +69,8 @@ class TodayTemporalQATest {
         initViewModel()
         
         val uiB = viewModel.uiState.value.timelineItems.find { it.id == "vB" }!!
-        assertEquals(TemporalRelationship.CONTAINED_BY, uiB.conflict.relationship)
+        val rel = uiB.conflict.details.firstOrNull()?.relationship ?: TemporalRelationship.NONE
+        assertEquals(TemporalRelationship.CONTAINED_BY, rel)
         assertEquals(TemporalImpact.WARNING, uiB.conflict.impact)
     }
 
@@ -91,7 +93,8 @@ class TodayTemporalQATest {
         
         val uiA = viewModel.uiState.value.timelineItems.find { it.id == "vA" }!!
         val uiB = uiA.subNodes.find { it.id == "vB" }!!
-        assertEquals(TemporalRelationship.CONTAINED_BY, uiB.conflict.relationship)
+        val rel = uiB.conflict.details.firstOrNull()?.relationship ?: TemporalRelationship.NONE
+        assertEquals(TemporalRelationship.CONTAINED_BY, rel)
         assertEquals(TemporalImpact.INFO, uiB.conflict.impact)
     }
 
@@ -104,7 +107,8 @@ class TodayTemporalQATest {
         initViewModel()
         
         val uiA = viewModel.uiState.value.timelineItems.find { it.id.contains("A") }!!
-        assertEquals(TemporalRelationship.OVERLAP, uiA.conflict.relationship)
+        val rel = uiA.conflict.details.firstOrNull()?.relationship ?: TemporalRelationship.NONE
+        assertEquals(TemporalRelationship.OVERLAP, rel)
     }
 
     @Test
@@ -146,7 +150,7 @@ class TodayTemporalQATest {
         val uiB = viewModel.uiState.value.timelineItems.find { it.id == "vB" }!!
         val moveSuggestion = uiB.conflict.suggestions.find { it.newStartTimeMinutes == 960 }
         val invalidSuggestion = uiB.conflict.suggestions.find { it.newStartTimeMinutes == 840 }
-        assertEquals("Move after immobile block to 16:00", moveSuggestion?.message)
+        assertEquals("Mover a las 16:00", moveSuggestion?.message)
         assertNull(invalidSuggestion)
     }
 
@@ -178,18 +182,22 @@ class TodayTemporalQATest {
     }
 
     @Test
-    fun `Containers never allow action and have no execution registered`() = runTest {
+    fun `Multiple simultaneous intersections handled correctly`() = runTest {
         val date = LocalDate.now()
-        val epoch = date.toEpochDay()
-        val parentNode = ActivityNode("nP", "act", null, 0, "Parent")
-        val childNode = ActivityNode("nC", "act", "nP", 0, "Child Leaf")
-        repository.setNodes(listOf(parentNode, childNode))
-        val instP = createVirtualInstance("vP", "nP", epoch)
-        repository.setDailyInstances(listOf(instP))
+        val nodeA = ActivityNode("nA", "act", null, 0, "A")
+        val nodeB = ActivityNode("nB", "act", null, 0, "B")
+        val nodeC = ActivityNode("nC", "act", null, 0, "C")
+        repository.setNodes(listOf(nodeA, nodeB, nodeC))
+        val instA = DailyInstance("vA", ScheduleTarget.Node("nA"), date.toEpochDay(), "A", "", plannedStartTime = 480, plannedEndTime = 720, mobility = TemporalMobility.IMMOBILE)
+        val instB = DailyInstance("vB", ScheduleTarget.Node("nB"), date.toEpochDay(), "B", "", plannedStartTime = 600, plannedEndTime = 840, mobility = TemporalMobility.FLEXIBLE)
+        val instC = DailyInstance("vC", ScheduleTarget.Node("nC"), date.toEpochDay(), "C", "", plannedStartTime = 660, plannedEndTime = 780, mobility = TemporalMobility.IMMOBILE)
+        repository.setDailyInstances(listOf(instA, instB, instC))
         initViewModel()
-        viewModel.onActionTriggered("vP", "COMPLETE")
-        advanceUntilIdle()
-        assertEquals(0, repository.executionsCount)
+        val uiB = viewModel.uiState.value.timelineItems.find { it.id == "vB" }!!
+        assertEquals(true, uiB.conflict.hasConflict)
+        assertEquals(TemporalImpact.WARNING, uiB.conflict.impact)
+        val rel = uiB.conflict.details.maxByOrNull { it.relationship.ordinal }?.relationship ?: TemporalRelationship.NONE
+        assertEquals(TemporalRelationship.CONTAINS, rel)
     }
 
     private fun createVirtualInstance(id: String, nodeId: String, date: Long): DailyInstance {

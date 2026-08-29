@@ -5,10 +5,16 @@ import javax.inject.Inject
 
 data class ConflictResult(
     val hasConflict: Boolean,
-    val relationship: TemporalRelationship = TemporalRelationship.NONE,
     val impact: TemporalImpact = TemporalImpact.NONE,
-    val conflictingInstanceIds: List<String> = emptyList(),
+    val details: List<ConflictDetail> = emptyList(),
     val suggestions: List<ConflictSuggestion> = emptyList()
+)
+
+data class ConflictDetail(
+    val otherInstanceId: String,
+    val relationship: TemporalRelationship,
+    val impact: TemporalImpact,
+    val isInterruption: Boolean
 )
 
 /**
@@ -29,9 +35,7 @@ class ConflictDetectorUseCase @Inject constructor() {
                 ?: current.plannedDurationMinutes?.let { startA + it }
                 ?: (startA + 30)
             
-            val conflictingIds = mutableListOf<String>()
-            var worstRelationship = TemporalRelationship.NONE
-            var worstImpact = TemporalImpact.NONE
+            val details = mutableListOf<ConflictDetail>()
 
             instances.filter { it.id != current.id }.forEach { other ->
                 val startB = other.plannedStartTime ?: return@forEach
@@ -41,22 +45,22 @@ class ConflictDetectorUseCase @Inject constructor() {
                 
                 // Overlap check [s, e): s1 < e2 && e1 > s2
                 if (startA < endB && endA > startB) {
-                    conflictingIds.add(other.id)
-                    
                     val rel = determineRelationship(startA, endA, startB, endB)
                     val imp = determineImpact(current, other, rel, nodeMap)
                     
-                    // Update worst cases
-                    if (rel.ordinal > worstRelationship.ordinal) worstRelationship = rel
-                    if (imp.ordinal > worstImpact.ordinal) worstImpact = imp
+                    val isInterruption = (imp == TemporalImpact.WARNING && 
+                        (current.mobility == TemporalMobility.IMMOBILE || other.mobility == TemporalMobility.IMMOBILE))
+                    
+                    details.add(ConflictDetail(other.id, rel, imp, isInterruption))
                 }
             }
             
+            val worstImpact = details.maxByOrNull { it.impact.ordinal }?.impact ?: TemporalImpact.NONE
+            
             results[current.id] = ConflictResult(
-                hasConflict = conflictingIds.isNotEmpty(),
-                relationship = worstRelationship,
+                hasConflict = details.isNotEmpty(),
                 impact = worstImpact,
-                conflictingInstanceIds = conflictingIds
+                details = details
             )
         }
         
@@ -64,7 +68,7 @@ class ConflictDetectorUseCase @Inject constructor() {
     }
 
     private fun determineRelationship(s1: Int, e1: Int, s2: Int, e2: Int): TemporalRelationship {
-        if (s1 == s2 && e1 == e2) return TemporalRelationship.OVERLAP // Requirement: equal intervals are OVERLAP
+        if (s1 == s2 && e1 == e2) return TemporalRelationship.OVERLAP
         
         return when {
             s1 <= s2 && e1 >= e2 -> TemporalRelationship.CONTAINS
@@ -74,24 +78,24 @@ class ConflictDetectorUseCase @Inject constructor() {
     }
 
     private fun determineImpact(
-        a: DailyInstance, 
-        b: DailyInstance, 
+        current: DailyInstance, 
+        other: DailyInstance, 
         rel: TemporalRelationship,
         nodeMap: Map<String, ActivityNode>
     ): TemporalImpact {
-        // INFO only if there is a real structural relationship
-        val isStructural = isStructuralChild(a, b, nodeMap) || isStructuralChild(b, a, nodeMap)
+        val isStructural = isStructuralChild(current, other, nodeMap) || isStructuralChild(other, current, nodeMap)
         
+        // INFO only if there is a real structural relationship and it's a container relationship
         if (isStructural && (rel == TemporalRelationship.CONTAINS || rel == TemporalRelationship.CONTAINED_BY)) {
             return TemporalImpact.INFO
         }
 
-        // WARNING if one is IMMOBILE or they are independent overlaps
-        if (a.mobility == TemporalMobility.IMMOBILE || b.mobility == TemporalMobility.IMMOBILE) {
+        // WARNING if they are independent overlaps or one is immobile
+        if (!isStructural) {
             return TemporalImpact.WARNING
         }
 
-        return if (isStructural) TemporalImpact.NONE else TemporalImpact.WARNING
+        return TemporalImpact.NONE
     }
 
     private fun isStructuralChild(child: DailyInstance, parent: DailyInstance, nodeMap: Map<String, ActivityNode>): Boolean {
@@ -107,7 +111,6 @@ class ConflictDetectorUseCase @Inject constructor() {
                 }
             }
             is ScheduleTarget.Definition -> {
-                // If it\u0027s a root node of the definition
                 if (node.activityDefinitionId == parentTarget.id && node.parentId == null) return true
             }
             else -> {}

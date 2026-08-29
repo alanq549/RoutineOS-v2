@@ -45,6 +45,7 @@ fun TimelineItemCard(
     val isOverdue = item.temporalState == TimelineTemporalState.OVERDUE
     val isStale = item.temporalState == TimelineTemporalState.STALE_PENDING
     val isCurrent = item.temporalState == TimelineTemporalState.CURRENT
+    val isInterrupter = item.conflict.isInterrupter
 
     val cardAlpha = if (isOmitted || isCompleted || isOverdue || isStale) 0.65f else 1f
 
@@ -74,20 +75,27 @@ fun TimelineItemCard(
     var showMenu by remember { mutableStateOf(false) }
 
     RoutineCard(
-        modifier = modifier.fillMaxWidth().alpha(cardAlpha),
-        containerColor = Color.Transparent,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = if (isInterrupter) 24.dp else 0.dp)
+            .alpha(cardAlpha),
+        containerColor = if (isInterrupter) RoutineTheme.colors.background.copy(alpha = 0.5f) else Color.Transparent,
         border = BorderStroke(
-            width = 1.dp,
-            color = if (isCompleted) RoutineTheme.colors.border else accentColor.copy(alpha = 0.4f)
+            width = if (isInterrupter) 1.5.dp else 1.dp,
+            color = when {
+                isCompleted -> RoutineTheme.colors.border
+                isInterrupter && impactColor != null -> impactColor
+                else -> accentColor.copy(alpha = 0.4f)
+            }
         )
     ) {
         Box(modifier = Modifier.fillMaxWidth().background(meshBrush)) {
-            // Localized Side Bar for Impact
-            if (impactColor != null && !isCompleted) {
+            // Minimal Impact Side Bar (removed for Interrupters to focus on the Inset look)
+            if (impactColor != null && !isCompleted && !isInterrupter && item.conflict.details.any { it.impact == TemporalImpact.WARNING }) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .width(4.dp)
+                        .width(2.dp)
                         .fillMaxHeight()
                         .background(impactColor)
                 )
@@ -128,22 +136,22 @@ fun TimelineItemCard(
                     if (item.isExpandable) {
                         val rotation by animateFloatAsState(if (item.isExpanded) 180f else 0f, label = "rotate")
                         IconButton(onClick = { onExpandClick(item.id) }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.ExpandMore, "Expand", Modifier.rotate(rotation), RoutineTheme.colors.onSurfaceVariant)
+                            Icon(Icons.Default.ExpandMore, "Expandir", Modifier.rotate(rotation), RoutineTheme.colors.onSurfaceVariant)
                         }
                     }
 
                     Box {
                         IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.MoreVert, "Actions", tint = RoutineTheme.colors.onSurfaceVariant)
+                            Icon(Icons.Default.MoreVert, "Acciones", tint = RoutineTheme.colors.onSurfaceVariant)
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                             DropdownMenuItem(
-                                text = { Text("Edit") },
+                                text = { Text("Editar") },
                                 onClick = { showMenu = false; onAction(item.id, "MOVE_REQUEST") },
                                 leadingIcon = { Icon(Icons.Default.Edit, null) }
                             )
                             DropdownMenuItem(
-                                text = { Text("Skip") },
+                                text = { Text("Omitir") },
                                 onClick = { showMenu = false; onAction(item.id, "SKIP") },
                                 leadingIcon = { Icon(Icons.Default.Block, null) }
                             )
@@ -155,7 +163,7 @@ fun TimelineItemCard(
                 if (isContainer) {
                     Row(modifier = Modifier.padding(start = 26.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "${item.completedSubNodesCount}/${item.totalSubNodesCount} completed",
+                            text = "${item.completedSubNodesCount}/${item.totalSubNodesCount} completados",
                             style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
                             color = if (isCompleted) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.8f)
                         )
@@ -166,60 +174,43 @@ fun TimelineItemCard(
                     }
                 }
 
-                // TIME & CONFLICT BADGE
+                // TIME
                 Row(
                     modifier = Modifier.padding(start = 26.dp, top = 8.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        item.timeRangeText, 
-                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp), 
-                        color = if (isOverdue) OverdueAccent.copy(alpha = 0.8f) else RoutineTheme.colors.onSurfaceVariant
-                    )
+                    // Start Time (shown inside card only if NOT an interrupter, to avoid rail marker double-up)
+                    if (!isInterrupter) {
+                        Text(
+                            item.timeRangeText, 
+                            style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp), 
+                            color = if (isOverdue) OverdueAccent.copy(alpha = 0.8f) else RoutineTheme.colors.onSurfaceVariant
+                        )
+                    } else {
+                        // For interrupters, show a small specific badge
+                        Text(
+                            item.timeRangeText,
+                            style = RoutineTheme.typography.dataLarge.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                            color = impactColor ?: RoutineTheme.colors.primary
+                        )
+                    }
                     
                     if (isOverdue) {
-                        Text("OVERDUE", style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold), color = OverdueAccent)
+                        Text("ATRASADA", style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold), color = OverdueAccent)
                     }
 
-                    // RELATIONSHIP BADGE
-                    if (item.conflict.hasConflict && impactColor != null && !isCompleted) {
-                        val relationText = when (item.conflict.relationship) {
-                            TemporalRelationship.CONTAINS -> "DENTRO DE"
-                            TemporalRelationship.CONTAINED_BY -> "DENTRO DE"
-                            TemporalRelationship.OVERLAP -> "SE CRUZA CON"
-                            else -> ""
-                        }
-                        val targetTitle = item.conflict.conflictingTitles.firstOrNull() ?: "OTRA"
-                        
-                        Surface(
-                            color = impactColor.copy(alpha = 0.1f),
-                            shape = RoutineTheme.shapes.pill,
-                            border = BorderStroke(1.dp, impactColor.copy(alpha = 0.3f))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = if (item.conflict.impact == TemporalImpact.WARNING) Icons.Default.Warning else Icons.Default.Info,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(10.dp),
-                                    tint = impactColor
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "$relationText · $targetTitle",
-                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
-                                    color = impactColor
-                                )
-                            }
-                        }
+                    // RELATIONSHIP SUMMARY (Internal hidden for interrupters - moved to Rail labels)
+                    if (item.conflict.hasConflict && !isCompleted && !isInterrupter && impactColor == RoutineTheme.colors.secondary) {
+                        RelationshipBadge(
+                            text = getRelationLabel(item.conflict.details.first()),
+                            color = RoutineTheme.colors.secondary
+                        )
                     }
                 }
 
-                // SUGGESTIONS
-                if (item.conflict.hasConflict && item.conflict.suggestions.isNotEmpty() && !isCompleted) {
+                // SUGGESTIONS 
+                if (item.isExpanded && item.conflict.hasConflict && !isCompleted) {
                     Column(modifier = Modifier.padding(start = 26.dp, top = 8.dp)) {
                         item.conflict.suggestions.forEach { suggestion ->
                             Surface(
@@ -271,7 +262,7 @@ fun TimelineItemCard(
                     }
                 }
 
-                // FOOTER: Action "COMPLETE" (Only for Leaves)
+                // FOOTER: Action "COMPLETE"
                 if (!isCompleted && !isOmitted && !isContainer) {
                     Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
                         Button(
@@ -287,6 +278,44 @@ fun TimelineItemCard(
             }
         }
     }
+}
+
+@Composable
+private fun RelationshipBadge(text: String, color: Color) {
+    Surface(
+        color = color.copy(alpha = 0.1f),
+        shape = RoutineTheme.shapes.pill,
+        border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Tune,
+                contentDescription = null,
+                modifier = Modifier.size(10.dp),
+                tint = color
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = text,
+                style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
+                color = color
+            )
+        }
+    }
+}
+
+private fun getRelationLabel(detail: ConflictDetailUiModel): String {
+    val verb = when {
+        detail.isInterruption -> "INTERRUMPE"
+        detail.relationship == TemporalRelationship.CONTAINS -> "DENTRO DE"
+        detail.relationship == TemporalRelationship.CONTAINED_BY -> "DENTRO DE"
+        detail.relationship == TemporalRelationship.OVERLAP -> "SE CRUZA CON"
+        else -> "RELACIÓN"
+    }
+    return "$verb · ${detail.otherTitle}"
 }
 
 @Composable
@@ -312,25 +341,6 @@ private fun SubNodeRow(subNode: TodaySubNodeUiModel, onAction: (String, String) 
                         if (subNode.timeText.isNotBlank()) Spacer(modifier = Modifier.width(8.dp))
                         Text("${subNode.completedCount}/${subNode.totalCount}", style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp), color = if (isCompleted) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f))
                     }
-                }
-
-                // SUB-NODE RELATIONSHIP BADGE
-                if (subNode.conflict.hasConflict && subNode.conflict.impact != TemporalImpact.NONE && !isCompleted) {
-                    val impactColor = if (subNode.conflict.impact == TemporalImpact.WARNING) RoutineTheme.colors.error else RoutineTheme.colors.secondary
-                    val relationText = when (subNode.conflict.relationship) {
-                        TemporalRelationship.CONTAINS -> "DENTRO DE"
-                        TemporalRelationship.CONTAINED_BY -> "DENTRO DE"
-                        TemporalRelationship.OVERLAP -> "SE CRUZA CON"
-                        else -> ""
-                    }
-                    val targetTitle = subNode.conflict.conflictingTitles.firstOrNull() ?: "OTRA"
-                    
-                    Text(
-                        text = "$relationText · $targetTitle",
-                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
-                        color = impactColor,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
                 }
             }
 
