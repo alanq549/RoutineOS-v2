@@ -1,27 +1,26 @@
 package com.alan.routineos.feature.today
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.alan.routineos.core.designsystem.component.RoutineScaffold
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.dashboard.ActivityDetailUiEvent
-import com.alan.routineos.feature.today.components.CaptureMetadataSheet
-import com.alan.routineos.feature.today.components.TodayHeader
-import com.alan.routineos.feature.today.components.TodayNextActivityCard
-import com.alan.routineos.feature.today.components.TodayTimeline
+import com.alan.routineos.feature.today.components.*
 import kotlinx.coroutines.flow.SharedFlow
-import android.widget.Toast
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,19 +37,60 @@ fun TodayScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
-    var showAdHocDialog by remember { mutableStateOf(false) }
+    var showQuickAdd by remember { mutableStateOf(false) }
     
-    // Reschedule State
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    var userScrollDetected by remember { mutableStateOf(false) }
+    var lastScrolledFocusId by remember { mutableStateOf<String?>(null) }
+    
     var moveTargetId by remember { mutableStateOf<String?>(null) }
     val timePickerState = rememberTimePickerState()
 
-    if (showAdHocDialog) {
-        AdHocDialog(
+    // Auto-scroll logic: only on first load of a focus item or explicit "Now" click
+    LaunchedEffect(uiState.focusItemId) {
+        if (!userScrollDetected && uiState.focusItemId != null && uiState.focusItemId != lastScrolledFocusId) {
+            val index = uiState.timelineItems.indexOfFirst { it.id == uiState.focusItemId }
+            if (index != -1) {
+                lastScrolledFocusId = uiState.focusItemId
+                // Scroll with offset to account for the fading edge and next activity card
+                listState.animateScrollToItem(index + 2)
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.dateText) {
+        userScrollDetected = false
+        lastScrolledFocusId = null
+    }
+
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (listState.isScrollInProgress) userScrollDetected = true
+    }
+
+    val showNowButton by remember {
+        derivedStateOf {
+            val visibleIndices = listState.layoutInfo.visibleItemsInfo.map { it.index }
+            val targetIndex = uiState.timelineItems.indexOfFirst { it.id == uiState.focusItemId } + 2
+            userScrollDetected && targetIndex != -1 && targetIndex !in visibleIndices
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        uiEvent.collect { event ->
+            if (event is ActivityDetailUiEvent.SchedulingUpsertSuccess) {
+                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    if (showQuickAdd) {
+        QuickAddDialog(
             onConfirm = { title, time -> 
                 onAddAdHoc(title, time)
-                showAdHocDialog = false
+                showQuickAdd = false
             },
-            onDismiss = { showAdHocDialog = false }
+            onDismiss = { showQuickAdd = false }
         )
     }
 
@@ -68,50 +108,59 @@ fun TodayScreen(
                     val minutes = timePickerState.hour * 60 + timePickerState.minute
                     onAction(moveTargetId!!, "MOVE_CONFIRM:$minutes")
                     moveTargetId = null
-                }) {
-                    Text("Confirmar")
-                }
+                }) { Text("Confirmar") }
             },
             dismissButton = {
-                TextButton(onClick = { moveTargetId = null }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = { moveTargetId = null }) { Text("Cancelar") }
             }
         )
     }
 
-    LaunchedEffect(Unit) {
-        uiEvent.collect { event ->
-            if (event is ActivityDetailUiEvent.SchedulingUpsertSuccess) {
-                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    val fadeEdgeHeight = 80.dp
 
     RoutineScaffold(
         modifier = modifier,
-        topBar = { /* Header handles title */ },
+        topBar = { 
+            TodayHeader(
+                dateText = uiState.dateText,
+                progress = uiState.progress
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = bottomBar
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            // Viewport with Alpha Masking for a premium translucency effect
+            LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(bottom = paddingValues.calculateBottomPadding())
-                    .verticalScroll(rememberScrollState())
+                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                    .drawWithContent {
+                        drawContent()
+                        // Smooth Alpha Mask to fade items before they reach the header
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black),
+                                startY = 0f,
+                                endY = fadeEdgeHeight.toPx()
+                            ),
+                            blendMode = BlendMode.DstIn
+                        )
+                    }
                     .padding(horizontal = RoutineTheme.spacing.marginMobile),
-                verticalArrangement = Arrangement.spacedBy(RoutineTheme.spacing.lg)
+                contentPadding = PaddingValues(top = 16.dp, bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(RoutineTheme.spacing.md)
             ) {
-                TodayHeader(
-                    dateText = uiState.dateText,
-                    progress = uiState.progress
-                )
+                item { TodayNextActivityCard(activity = uiState.nextActivity) }
 
-                TodayNextActivityCard(activity = uiState.nextActivity)
+                val pastCount = uiState.focusItemId?.let { focusId ->
+                    uiState.timelineItems.takeWhile { it.id != focusId }.size
+                } ?: 0
 
-                TodayTimeline(
+                item { PastBoundaryItem(count = pastCount) }
+
+                todayTimelineItems(
                     items = uiState.timelineItems,
                     onAction = { id, type ->
                         if (type == "MOVE_REQUEST") moveTargetId = id
@@ -119,21 +168,38 @@ fun TodayScreen(
                     },
                     onExpandClick = onExpandClick
                 )
-                
-                Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
+            }
+
+            // NOW button (Stays visible on top of the mask)
+            if (showNowButton) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        userScrollDetected = false
+                        coroutineScope.launch {
+                            val targetIndex = uiState.timelineItems.indexOfFirst { it.id == uiState.focusItemId } + 2
+                            if (targetIndex != -1) listState.animateScrollToItem(targetIndex)
+                        }
+                    },
+                    containerColor = RoutineTheme.colors.surface2,
+                    contentColor = RoutineTheme.colors.primary,
+                    modifier = Modifier.align(Alignment.TopCenter).padding(top = 32.dp)
+                ) {
+                    Row(modifier = Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.MyLocation, null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("AHORA", style = RoutineTheme.typography.labelCaps)
+                    }
+                }
             }
 
             FloatingActionButton(
-                onClick = { showAdHocDialog = true },
+                onClick = { showQuickAdd = true },
                 containerColor = RoutineTheme.colors.primary,
                 contentColor = RoutineTheme.colors.onPrimary,
                 shape = RoutineTheme.shapes.pill,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(RoutineTheme.spacing.lg)
-                    .padding(bottom = paddingValues.calculateBottomPadding())
+                modifier = Modifier.align(Alignment.BottomEnd).padding(RoutineTheme.spacing.lg)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Quick Add")
+                Icon(Icons.Default.Add, "Quick Add")
             }
         }
 
@@ -145,54 +211,4 @@ fun TodayScreen(
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AdHocDialog(
-    onConfirm: (String, Int?) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var text by remember { mutableStateOf("") }
-    var useSpecificTime by remember { mutableStateOf(false) }
-    val timePickerState = rememberTimePickerState()
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("¿Qué quieres hacer ahora?") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    placeholder = { Text("Ej: Leer artículo, Meditar...") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = useSpecificTime, onCheckedChange = { useSpecificTime = it })
-                    Text("Definir hora específica", style = RoutineTheme.typography.bodyBase)
-                }
-
-                if (useSpecificTime) {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        TimePicker(state = timePickerState)
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { 
-                val time = if (useSpecificTime) timePickerState.hour * 60 + timePickerState.minute else null
-                onConfirm(text, time) 
-            }, enabled = text.isNotBlank()) {
-                Text("Añadir")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
-    )
 }

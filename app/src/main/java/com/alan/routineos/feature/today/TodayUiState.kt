@@ -10,6 +10,7 @@ data class TodayUiState(
     val progress: TodayProgress = TodayProgress(0, 0),
     val timelineItems: List<TodayTimelineUiModel> = emptyList(),
     val nextActivity: TodayTimelineUiModel? = null,
+    val focusItemId: String? = null,
     val captureSchema: MetadataSchema? = null,
     val captureTargetId: String? = null
 )

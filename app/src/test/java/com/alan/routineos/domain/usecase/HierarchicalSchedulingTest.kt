@@ -34,7 +34,8 @@ class HierarchicalSchedulingTest {
             override fun getAllRules() = flowOf(listOf(rule))
         }
 
-        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val conflictDetector = ConflictDetectorUseCase()
+        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
         val timeline = useCase(date).first()
 
         assertEquals(1, timeline.size)
@@ -69,7 +70,8 @@ class HierarchicalSchedulingTest {
             override fun getAllRules() = flowOf(listOf(ruleParent, ruleChild))
         }
 
-        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val conflictDetector = ConflictDetectorUseCase()
+        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
         val timeline = useCase(date).first()
 
         assertEquals(2, timeline.size)

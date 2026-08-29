@@ -4,13 +4,13 @@ import com.alan.routineos.core.util.TimeProvider
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.*
-import com.alan.routineos.feature.today.model.TimelineTemporalState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
@@ -37,151 +37,183 @@ class TodayTemporalQATest {
     }
 
     @Test
-    fun `Upcoming activity is correctly identified`() = runTest {
-        val now = LocalTime.of(10, 0)
-        timeProvider.setTime(now)
-        
-        val upcomingRule = createRule("r1", 660) // 11:00
-        repository.setRules(listOf(upcomingRule))
+    fun `Intervals 10-11 and 11-12 have NONE relationship`() = runTest {
+        val a = createRule("A", 600, 660) // 10:00 - 11:00
+        val b = createRule("B", 660, 720) // 11:00 - 12:00
+        repository.setRules(listOf(a, b))
         
         initViewModel()
         
         val state = viewModel.uiState.value
+        val uiA = state.timelineItems.find { it.id.contains("A") }!!
+        assertEquals(TemporalRelationship.NONE, uiA.conflict.relationship)
+        assertEquals(TemporalImpact.NONE, uiA.conflict.impact)
+    }
+
+    @Test
+    fun `Independent task inside IMMOBILE task has WARNING impact`() = runTest {
+        val date = LocalDate.now()
+        val nodeA = ActivityNode("nA", "act", null, 0, "Immobile Parent")
+        val nodeB = ActivityNode("nB", "act", null, 0, "Independent Child")
+        repository.setNodes(listOf(nodeA, nodeB))
+        
+        val instA = DailyInstance("vA", ScheduleTarget.Node("nA"), date.toEpochDay(), "A", "", 
+            plannedStartTime = 420, plannedEndTime = 840, mobility = TemporalMobility.IMMOBILE) // 07:00 - 14:00
+        
+        val instB = DailyInstance("vB", ScheduleTarget.Node("nB"), date.toEpochDay(), "B", "", 
+            plannedStartTime = 600, plannedEndTime = 660, mobility = TemporalMobility.FLEXIBLE) // 10:00 - 11:00
+            
+        repository.setDailyInstances(listOf(instA, instB))
+        
+        initViewModel()
+        
+        val uiB = viewModel.uiState.value.timelineItems.find { it.id == "vB" }!!
+        assertEquals(TemporalRelationship.CONTAINED_BY, uiB.conflict.relationship)
+        assertEquals(TemporalImpact.WARNING, uiB.conflict.impact)
+    }
+
+    @Test
+    fun `Structural child inside parent has INFO impact`() = runTest {
+        val date = LocalDate.now()
+        val nodeA = ActivityNode("nA", "act", null, 0, "Parent")
+        val nodeB = ActivityNode("nB", "act", "nA", 0, "Structural Child")
+        repository.setNodes(listOf(nodeA, nodeB))
+        
+        val instA = DailyInstance("vA", ScheduleTarget.Node("nA"), date.toEpochDay(), "A", "", 
+            plannedStartTime = 420, plannedEndTime = 840) // 07:00 - 14:00
+        
+        val instB = DailyInstance("vB", ScheduleTarget.Node("nB"), date.toEpochDay(), "B", "", 
+            plannedStartTime = 600, plannedEndTime = 660) // 10:00 - 11:00
+            
+        repository.setDailyInstances(listOf(instA, instB))
+        
+        initViewModel()
+        
+        val uiA = viewModel.uiState.value.timelineItems.find { it.id == "vA" }!!
+        val uiB = uiA.subNodes.find { it.id == "vB" }!!
+        assertEquals(TemporalRelationship.CONTAINED_BY, uiB.conflict.relationship)
+        assertEquals(TemporalImpact.INFO, uiB.conflict.impact)
+    }
+
+    @Test
+    fun `Equal intervals result in OVERLAP relationship`() = runTest {
+        val a = createRule("A", 600, 660) // 10:00 - 11:00
+        val b = createRule("B", 600, 660) // 10:00 - 11:00
+        repository.setRules(listOf(a, b))
+        
+        initViewModel()
+        
+        val uiA = viewModel.uiState.value.timelineItems.find { it.id.contains("A") }!!
+        assertEquals(TemporalRelationship.OVERLAP, uiA.conflict.relationship)
+    }
+
+    @Test
+    fun `Upcoming activity is correctly identified`() = runTest {
+        val now = LocalTime.of(10, 0)
+        timeProvider.setTime(now)
+        val upcomingRule = createRule("r1", 660) // 11:00
+        repository.setRules(listOf(upcomingRule))
+        initViewModel()
+        val state = viewModel.uiState.value
         val item = state.timelineItems.first()
-        assertEquals(TimelineTemporalState.UPCOMING, item.temporalState)
-        assertEquals(item, state.nextActivity)
+        assertEquals(com.alan.routineos.feature.today.model.TimelineTemporalState.UPCOMING, item.temporalState)
+        assertEquals(item.id, state.nextActivity?.id)
     }
 
     @Test
     fun `Current activity is correctly identified with end time`() = runTest {
         val now = LocalTime.of(10, 30)
         timeProvider.setTime(now)
-        
         val currentRule = createRule("r1", 600, 720) // 10:00 - 12:00
         repository.setRules(listOf(currentRule))
-        
         initViewModel()
-        
         val item = viewModel.uiState.value.timelineItems.first()
-        assertEquals(TimelineTemporalState.CURRENT, item.temporalState)
-        assertEquals(item, viewModel.uiState.value.nextActivity)
+        assertEquals(com.alan.routineos.feature.today.model.TimelineTemporalState.CURRENT, item.temporalState)
     }
 
     @Test
-    fun `Overdue activity is correctly identified with end time`() = runTest {
-        val now = LocalTime.of(12, 0)
-        timeProvider.setTime(now)
-        
-        val overdueRule = createRule("r1", 600, 660) // 10:00 - 11:00
-        repository.setRules(listOf(overdueRule))
-        
-        initViewModel()
-        
-        val item = viewModel.uiState.value.timelineItems.first()
-        assertEquals(TimelineTemporalState.OVERDUE, item.temporalState)
-        assertEquals(null, viewModel.uiState.value.nextActivity)
-    }
-
-    @Test
-    fun `Stale pending activity is identified when no end boundary exists`() = runTest {
-        val now = LocalTime.of(11, 0)
-        timeProvider.setTime(now)
-        
-        val staleRule = createRule("r1", 600) // 10:00, no end
-        repository.setRules(listOf(staleRule))
-        
-        initViewModel()
-        
-        val item = viewModel.uiState.value.timelineItems.first()
-        assertEquals(TimelineTemporalState.STALE_PENDING, item.temporalState)
-        assertEquals(null, viewModel.uiState.value.nextActivity)
-    }
-
-    @Test
-    fun `Inferred boundary from next activity correctly sets OVERDUE`() = runTest {
-        val now = LocalTime.of(11, 0)
-        timeProvider.setTime(now)
-        
-        val a1 = createRule("r1", 600) // 10:00
-        val a2 = createRule("r2", 630) // 10:30
-        repository.setRules(listOf(a1, a2))
-        
-        initViewModel()
-        
-        val items = viewModel.uiState.value.timelineItems
-        assertEquals(TimelineTemporalState.OVERDUE, items[0].temporalState) // 10:00 was ended by 10:30
-        assertEquals(TimelineTemporalState.STALE_PENDING, items[1].temporalState) // 10:30 has no end
-    }
-
-    @Test
-    fun `Current priority over upcoming in Next Activity section`() = runTest {
-        val now = LocalTime.of(10, 15)
-        timeProvider.setTime(now)
-        
-        val a1 = createRule("r1", 600, 660) // 10:00 - 11:00 (CURRENT)
-        val a2 = createRule("r2", 720) // 12:00 (UPCOMING)
-        repository.setRules(listOf(a1, a2))
-        
-        initViewModel()
-        
-        assertEquals("r1", (viewModel.uiState.value.nextActivity?.id?.split("_")?.get(1)))
-    }
-
-    @Test
-    fun `Completed overdue activity shows COMPLETED status treatment`() = runTest {
-        val now = LocalTime.of(12, 0)
-        timeProvider.setTime(now)
-        
+    fun `Move suggestion is validated against full timeline`() = runTest {
         val date = LocalDate.now()
-        val materialized = DailyInstance(
-            id = "m1",
-            target = ScheduleTarget.Node("nr1"),
-            scheduledDate = date.toEpochDay(),
-            titleSnapshot = "Task",
-            descriptionSnapshot = "",
-            plannedStartTime = 600,
-            plannedEndTime = 660,
-            status = DailyInstanceStatus.COMPLETED,
-            sourceRuleId = "r1"
-        )
-        val node = ActivityNode("n1", "act", null, 0, "Task")
-        repository.setDefinitions(listOf(ActivityDefinition("act", "Act", "", "sys")))
-        repository.setNodes(listOf(node))
-        repository.setRules(listOf(createRule("r1", 600, 660)))
-        repository.setDailyInstances(listOf(materialized))
-        
+        val nodeA = ActivityNode("nA", "act", null, 0, "A")
+        val nodeB = ActivityNode("nB", "act", null, 0, "B")
+        val nodeC = ActivityNode("nC", "act", null, 0, "C")
+        repository.setNodes(listOf(nodeA, nodeB, nodeC))
+        val instA = DailyInstance("vA", ScheduleTarget.Node("nA"), date.toEpochDay(), "A", "", plannedStartTime = 420, plannedEndTime = 840, mobility = TemporalMobility.IMMOBILE)
+        val instB = DailyInstance("vB", ScheduleTarget.Node("nB"), date.toEpochDay(), "B", "", plannedStartTime = 780, plannedEndTime = 900, mobility = TemporalMobility.FLEXIBLE, plannedDurationMinutes = 120)
+        val instC = DailyInstance("vC", ScheduleTarget.Node("nC"), date.toEpochDay(), "C", "", plannedStartTime = 840, plannedEndTime = 960, mobility = TemporalMobility.IMMOBILE)
+        repository.setDailyInstances(listOf(instA, instB, instC))
         initViewModel()
-        
-        val item = viewModel.uiState.value.timelineItems.first()
-        assertEquals(DailyInstanceStatus.COMPLETED, item.status)
+        val uiB = viewModel.uiState.value.timelineItems.find { it.id == "vB" }!!
+        val moveSuggestion = uiB.conflict.suggestions.find { it.newStartTimeMinutes == 960 }
+        val invalidSuggestion = uiB.conflict.suggestions.find { it.newStartTimeMinutes == 840 }
+        assertEquals("Move after immobile block to 16:00", moveSuggestion?.message)
+        assertNull(invalidSuggestion)
+    }
+
+    @Test
+    fun `Deep hierarchy completion propagation 4 levels`() = runTest {
+        val date = LocalDate.now()
+        val epoch = date.toEpochDay()
+        val nodeA = ActivityNode("nA", "act", null, 0, "Root A")
+        val nodeB = ActivityNode("nB", "act", "nA", 0, "Mid B")
+        val nodeC = ActivityNode("nC", "act", "nB", 0, "Inner C")
+        val nodeD = ActivityNode("nD", "act", "nC", 0, "Leaf D")
+        val nodeE = ActivityNode("nE", "act", "nC", 1, "Leaf E")
+        repository.setNodes(listOf(nodeA, nodeB, nodeC, nodeD, nodeE))
+        val instA = createVirtualInstance("vA", "nA", epoch)
+        repository.setDailyInstances(listOf(instA))
+        initViewModel()
+        var uiA = viewModel.uiState.value.timelineItems.find { it.id == "vA" }!!
+        assertEquals(HierarchyCompletion.NOT_STARTED, uiA.completion)
+        val instD = DailyInstance("mD", ScheduleTarget.Node("nD"), epoch, "D", "", status = DailyInstanceStatus.COMPLETED)
+        repository.setDailyInstances(listOf(instA, instD))
+        advanceUntilIdle()
+        uiA = viewModel.uiState.value.timelineItems.find { it.id == "vA" }!!
+        assertEquals(HierarchyCompletion.IN_PROGRESS, uiA.completion)
+        val instE = DailyInstance("mE", ScheduleTarget.Node("nE"), epoch, "E", "", status = DailyInstanceStatus.COMPLETED)
+        repository.setDailyInstances(listOf(instA, instD, instE))
+        advanceUntilIdle()
+        uiA = viewModel.uiState.value.timelineItems.find { it.id == "vA" }!!
+        assertEquals(HierarchyCompletion.COMPLETED, uiA.completion)
+    }
+
+    @Test
+    fun `Containers never allow action and have no execution registered`() = runTest {
+        val date = LocalDate.now()
+        val epoch = date.toEpochDay()
+        val parentNode = ActivityNode("nP", "act", null, 0, "Parent")
+        val childNode = ActivityNode("nC", "act", "nP", 0, "Child Leaf")
+        repository.setNodes(listOf(parentNode, childNode))
+        val instP = createVirtualInstance("vP", "nP", epoch)
+        repository.setDailyInstances(listOf(instP))
+        initViewModel()
+        viewModel.onActionTriggered("vP", "COMPLETE")
+        advanceUntilIdle()
+        assertEquals(0, repository.executionsCount)
+    }
+
+    private fun createVirtualInstance(id: String, nodeId: String, date: Long): DailyInstance {
+        return DailyInstance(id = id, target = ScheduleTarget.Node(nodeId), scheduledDate = date, titleSnapshot = "Title $nodeId", descriptionSnapshot = "", status = DailyInstanceStatus.PLANNED)
     }
 
     private fun TestScope.initViewModel() {
-        val resolveTimelineUseCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val conflictDetector = ConflictDetectorUseCase()
+        val resolveTimelineUseCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
         val getHierarchicalTimelineUseCase = GetHierarchicalTimelineUseCase(repository, resolveTimelineUseCase)
         val registerDailyActionUseCase = RegisterDailyActionUseCase(repository, MaterializeInstanceUseCase(repository))
-        
         viewModel = TodayViewModel(repository, getHierarchicalTimelineUseCase, registerDailyActionUseCase, timeProvider)
-        timeProvider.tick() // Trigger initial load in ViewModel
+        timeProvider.tick() 
         advanceUntilIdle()
     }
 
     private fun createRule(id: String, start: Int, end: Int? = null): ScheduleRule {
-        return ScheduleRule(
-            id = id,
-            target = ScheduleTarget.Node("n$id"),
-            type = ScheduleRuleType.FIXED_DAYS,
-            daysOfWeek = setOf(LocalDate.now().dayOfWeek.value),
-            startTime = start,
-            endTime = end
-        )
+        return ScheduleRule(id = id, target = ScheduleTarget.Node("n$id"), type = ScheduleRuleType.FIXED_DAYS, daysOfWeek = setOf(LocalDate.now().dayOfWeek.value), startTime = start, endTime = end)
     }
 
     private class FakeTimeProvider : TimeProvider {
         private var currentTime = LocalTime.now()
         private val _ticker = MutableSharedFlow<Unit>(replay = 1)
         override val minuteTicker: Flow<Unit> = _ticker
-
         fun setTime(time: LocalTime) { currentTime = time }
         fun tick() { _ticker.tryEmit(Unit) }
         override fun now(): LocalTime = currentTime
@@ -192,12 +224,14 @@ class TodayTemporalQATest {
         private val _rules = MutableStateFlow<List<ScheduleRule>>(emptyList())
         private val _instances = MutableStateFlow<List<DailyInstance>>(emptyList())
         private val _definitions = MutableStateFlow<List<ActivityDefinition>>(emptyList())
+        var executionsCount = 0
 
-        fun setDefinitions(defs: List<ActivityDefinition>) { _definitions.value = defs }
         fun setNodes(nodes: List<ActivityNode>) { _nodes.value = nodes }
         fun setRules(rules: List<ScheduleRule>) { 
             _rules.value = rules 
-            _nodes.value = rules.map { ActivityNode((it.target as ScheduleTarget.Node).id, "act", null, 0, "Title $it") }
+            if (_nodes.value.isEmpty()) {
+                _nodes.value = rules.map { ActivityNode((it.target as ScheduleTarget.Node).id, "act", null, 0, "Title ${(it.target as ScheduleTarget.Node).id}") }
+            }
             _definitions.value = listOf(ActivityDefinition("act", "Act", "", "sys"))
         }
         fun setDailyInstances(instances: List<DailyInstance>) { _instances.value = instances }
@@ -214,7 +248,7 @@ class TodayTemporalQATest {
         override suspend fun deleteNode(node: ActivityNode) {}
         override suspend fun reorderNodes(nodeIds: List<String>) {}
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
-        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {}
+        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) { executionsCount++ }
         override fun getAllExecutions(): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyList())

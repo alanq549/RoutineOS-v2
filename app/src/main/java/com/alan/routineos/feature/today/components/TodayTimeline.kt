@@ -9,27 +9,29 @@ import androidx.compose.ui.unit.dp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
-@Composable
-fun TodayTimeline(
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+
+fun LazyListScope.todayTimelineItems(
     items: List<TodayTimelineUiModel>,
     onAction: (String, String) -> Unit,
-    onExpandClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onExpandClick: (String) -> Unit
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        items.forEachIndexed { index, item ->
-            TimelineRow(
-                item = item,
-                isLast = index == items.lastIndex,
-                onAction = onAction,
-                onExpandClick = onExpandClick
-            )
-        }
+    itemsIndexed(
+        items = items,
+        key = { _, item -> item.id }
+    ) { index, item ->
+        TimelineRow(
+            item = item,
+            isLast = index == items.lastIndex,
+            onAction = onAction,
+            onExpandClick = onExpandClick
+        )
     }
 }
 
 @Composable
-private fun TimelineRow(
+fun TimelineRow(
     item: TodayTimelineUiModel,
     isLast: Boolean,
     onAction: (String, String) -> Unit,

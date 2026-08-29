@@ -40,6 +40,23 @@ fun CaptureMetadataSheet(
         }
     }
 
+    // Group fields for the UI to avoid index errors in LazyColumn
+    val groupedRows = remember(operationalFields) {
+        val rows = mutableListOf<List<MetadataField>>()
+        var i = 0
+        while (i < operationalFields.size) {
+            val field = operationalFields[i]
+            if (field.type == MetadataFieldType.NUMBER && i + 1 < operationalFields.size && operationalFields[i + 1].type == MetadataFieldType.NUMBER) {
+                rows.add(listOf(field, operationalFields[i + 1]))
+                i += 2
+            } else {
+                rows.add(listOf(field))
+                i++
+            }
+        }
+        rows
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -68,30 +85,26 @@ fun CaptureMetadataSheet(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f, fill = false)
             ) {
-                // Find numeric fields to potentially group them
-                val fields = operationalFields
-                var i = 0
-                while (i < fields.size) {
-                    val field = fields[i]
-                    if (field.type == MetadataFieldType.NUMBER && i + 1 < fields.size && fields[i + 1].type == MetadataFieldType.NUMBER) {
-                        // Group two numeric fields side-by-side
-                        item {
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(groupedRows) { rowFields ->
+                    if (rowFields.size == 2) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            rowFields.forEach { field ->
                                 Box(modifier = Modifier.weight(1f)) {
-                                    DynamicField(field, capturedValues[field.id] ?: "", { capturedValues[field.id] = it })
-                                }
-                                Box(modifier = Modifier.weight(1f)) {
-                                    val nextField = fields[i + 1]
-                                    DynamicField(nextField, capturedValues[nextField.id] ?: "", { capturedValues[nextField.id] = it })
+                                    DynamicField(
+                                        field = field,
+                                        currentValue = capturedValues[field.id] ?: "",
+                                        onValueChanged = { capturedValues[field.id] = it }
+                                    )
                                 }
                             }
                         }
-                        i += 2
                     } else {
-                        item {
-                            DynamicField(field, capturedValues[field.id] ?: "", { capturedValues[field.id] = it })
-                        }
-                        i++
+                        val field = rowFields[0]
+                        DynamicField(
+                            field = field,
+                            currentValue = capturedValues[field.id] ?: "",
+                            onValueChanged = { capturedValues[field.id] = it }
+                        )
                     }
                 }
             }
@@ -170,7 +183,6 @@ private fun DynamicField(
                 }
             }
             MetadataFieldType.SELECT -> {
-                // Simplified selection: list of chips or buttons
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     field.options?.forEach { option ->
                         val isSelected = currentValue == option

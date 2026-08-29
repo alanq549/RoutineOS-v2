@@ -33,7 +33,8 @@ class TimelineResolutionTest {
             override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
         }
         
-        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val conflictDetector = ConflictDetectorUseCase()
+        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
         val result = useCase(date).first()
 
         assertEquals(1, result.size)
@@ -72,7 +73,8 @@ class TimelineResolutionTest {
             override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
         }
         
-        val useCase = ResolveTimelineUseCase(repository, ConflictDetectorUseCase())
+        val conflictDetector = ConflictDetectorUseCase()
+        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
         val result = useCase(date).first()
 
         // Should only have the materialized one, not the virtual one

@@ -96,7 +96,7 @@ fun PlanningTimeBlock(
                     color = RoutineTheme.colors.onSurface
                 )
                 
-                if (item.hasConflict) {
+                if (item.conflict.hasConflict) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Conflicto detectado",

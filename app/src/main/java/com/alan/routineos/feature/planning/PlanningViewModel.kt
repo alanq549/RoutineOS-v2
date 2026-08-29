@@ -6,6 +6,7 @@ import com.alan.routineos.domain.model.DailyInstanceStatus
 import com.alan.routineos.domain.usecase.ResolveTimelineUseCase
 import com.alan.routineos.domain.usecase.TimelineEntry
 import com.alan.routineos.feature.planning.model.PlanningDay
+import com.alan.routineos.feature.today.model.ConflictUiModel
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -76,7 +77,9 @@ class PlanningViewModel @Inject constructor(
             timeRangeText = startTime,
             status = instance.status,
             isMaterialized = isMaterialized,
-            hasConflict = conflict?.hasConflict ?: false
+            conflict = conflict?.let { 
+                ConflictUiModel(it.hasConflict, it.impact, it.relationship, it.suggestions)
+            } ?: ConflictUiModel(false)
         )
     }
 

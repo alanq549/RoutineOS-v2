@@ -1,6 +1,5 @@
 package com.alan.routineos.feature.today.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -12,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineCard
@@ -32,54 +32,38 @@ fun TodayNextActivityCard(
             text = if (activity.temporalState == TimelineTemporalState.CURRENT) "AHORA MISMO" else "SIGUIENTE",
             style = RoutineTheme.typography.labelCaps,
             color = RoutineTheme.colors.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = RoutineTheme.spacing.md)
+            modifier = Modifier.padding(bottom = 8.dp)
         )
 
         RoutineCard(
             modifier = Modifier.fillMaxWidth(),
-            containerColor = RoutineTheme.colors.surface3
+            containerColor = RoutineTheme.colors.surface2
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                // Radial Gradient Decoration
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(120.dp)
-                        .offset(x = 40.dp, y = (-40).dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    RoutineTheme.colors.primary.copy(alpha = 0.15f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                )
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    val now = LocalTime.now()
+                    val currentMinutes = now.hour * 60 + now.minute
+                    
+                    val startMinutes = activity.timeRangeText.split(":").let { 
+                        if (it.size == 2) it[0].toInt() * 60 + it[1].toInt() else 0 
+                    }
 
-                Row(
-                    modifier = Modifier
-                        .padding(RoutineTheme.spacing.md)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        val now = LocalTime.now()
-                        val currentMinutes = now.hour * 60 + now.minute
-                        
-                        val startMinutes = activity.timeRangeText.split(":").let { 
-                            if (it.size == 2) it[0].toInt() * 60 + it[1].toInt() else 0 
+                    val badgeText = when {
+                        activity.temporalState == TimelineTemporalState.CURRENT -> "EN CURSO"
+                        startMinutes > currentMinutes -> {
+                            val diff = startMinutes - currentMinutes
+                            if (diff < 60) "EN $diff MIN" else "EN ${diff / 60}H ${diff % 60}M"
                         }
+                        else -> "AHORA"
+                    }
 
-                        val badgeText = when {
-                            activity.temporalState == TimelineTemporalState.CURRENT -> "EN CURSO"
-                            startMinutes > currentMinutes -> {
-                                val diff = startMinutes - currentMinutes
-                                if (diff < 60) "EN $diff MIN" else "EN ${diff / 60}H ${diff % 60}M"
-                            }
-                            else -> "AHORA"
-                        }
-
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             color = RoutineTheme.colors.primary.copy(alpha = 0.1f),
                             shape = RoutineTheme.shapes.small
@@ -88,49 +72,42 @@ fun TodayNextActivityCard(
                                 text = badgeText,
                                 style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
                                 color = RoutineTheme.colors.primary,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = activity.title,
-                            style = RoutineTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                            color = RoutineTheme.colors.onSurface
+                            text = activity.timeRangeText,
+                            style = RoutineTheme.typography.dataLarge.copy(fontSize = 12.sp),
+                            color = RoutineTheme.colors.onSurfaceVariant
                         )
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = RoutineTheme.colors.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (activity.subNodes.isNotEmpty()) {
-                                    "${activity.subNodes.first().title} • ${activity.timeRangeText}"
-                                } else activity.timeRangeText,
-                                style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
-                                color = RoutineTheme.colors.onSurfaceVariant
-                            )
-                        }
                     }
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    Text(
+                        text = activity.title,
+                        style = RoutineTheme.typography.bodyBase.copy(fontWeight = FontWeight.Bold),
+                        color = RoutineTheme.colors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
-                    // Play Button
-                    Surface(
-                        onClick = { /* TODO: Start */ },
-                        color = RoutineTheme.colors.primary,
-                        contentColor = RoutineTheme.colors.onPrimary,
-                        shape = RoutineTheme.shapes.medium,
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-                        }
+                // Play Button hidden for now (Pending Timer logic)
+                /*
+                Surface(
+                    onClick = { /* TODO: Start */ },
+                    color = RoutineTheme.colors.primary,
+                    contentColor = RoutineTheme.colors.onPrimary,
+                    shape = RoutineTheme.shapes.small,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Play", modifier = Modifier.size(20.dp))
                     }
                 }
+                */
             }
         }
     }

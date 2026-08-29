@@ -17,7 +17,8 @@ data class TimelineEntry(
  */
 class ResolveTimelineUseCase @Inject constructor(
     private val repository: ActivityRepository,
-    private val conflictDetector: ConflictDetectorUseCase
+    private val conflictDetector: ConflictDetectorUseCase,
+    private val suggestionEngine: SuggestionEngine
 ) {
     operator fun invoke(date: LocalDate): Flow<List<TimelineEntry>> {
         val epochDay = date.toEpochDay()
@@ -30,8 +31,9 @@ class ResolveTimelineUseCase @Inject constructor(
             repository.getDailyInstancesForDate(epochDay)
         ) { definitions, nodes, rules, exceptions, materialized ->
             val entries = mutableListOf<TimelineEntry>()
+            val nodeMap = nodes.associateBy { it.id }
             
-            // Filter out rules for targets that don't exist in the non-deleted sets
+            // Filter out rules for targets that don\u0027t exist
             val validDefIds = definitions.map { it.id }.toSet()
             val validNodeIds = nodes.map { it.id }.toSet()
             
@@ -55,7 +57,7 @@ class ResolveTimelineUseCase @Inject constructor(
             resolveScheduled(date, epochDay, validRules, exceptions, materializedByRule, definitions, nodes, entries)
             resolveAdHoc(validMaterialized, entries)
 
-            detectConflicts(entries)
+            detectConflicts(entries, nodeMap)
         }
     }
 
@@ -81,7 +83,6 @@ class ResolveTimelineUseCase @Inject constructor(
 
     private fun resolveAdHoc(materialized: List<DailyInstance>, entries: MutableList<TimelineEntry>) {
         materialized.filter { it.isAdHoc || it.sourceRuleId == null }.forEach {
-            // Already added in resolveScheduled if it had a sourceRuleId
             if (!entries.any { existing -> it.id == existing.instance.id }) {
                 entries.add(TimelineEntry(it, true))
             }
@@ -141,12 +142,17 @@ class ResolveTimelineUseCase @Inject constructor(
         }
     }
 
-    private fun detectConflicts(entries: List<TimelineEntry>): List<TimelineEntry> {
+    private fun detectConflicts(entries: List<TimelineEntry>, nodeMap: Map<String, ActivityNode>): List<TimelineEntry> {
         val instances = entries.map { it.instance }
-        val conflicts = conflictDetector.detectConflicts(instances)
+        val initialConflicts = conflictDetector.detectConflicts(instances, nodeMap)
         
         return entries.map { entry ->
-            entry.copy(conflict = conflicts[entry.instance.id])
+            val result = initialConflicts[entry.instance.id] ?: ConflictResult(false)
+            val suggestions = if (result.impact == TemporalImpact.WARNING) {
+                suggestionEngine.generateSuggestions(entry.instance, instances, nodeMap)
+            } else emptyList()
+            
+            entry.copy(conflict = result.copy(suggestions = suggestions))
         }.sortedBy { it.instance.plannedStartTime ?: Int.MAX_VALUE }
     }
 }

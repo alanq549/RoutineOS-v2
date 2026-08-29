@@ -55,9 +55,16 @@ object UseCaseModule {
     @Singleton
     fun provideResolveTimelineUseCase(
         repository: ActivityRepository,
-        conflictDetector: ConflictDetectorUseCase
+        conflictDetector: ConflictDetectorUseCase,
+        suggestionEngine: SuggestionEngine
     ): ResolveTimelineUseCase {
-        return ResolveTimelineUseCase(repository, conflictDetector)
+        return ResolveTimelineUseCase(repository, conflictDetector, suggestionEngine)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSuggestionEngine(conflictDetector: ConflictDetectorUseCase): SuggestionEngine {
+        return SuggestionEngine(conflictDetector)
     }
 
     @Provides

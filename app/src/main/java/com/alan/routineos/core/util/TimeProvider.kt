@@ -19,7 +19,10 @@ class DefaultTimeProvider @Inject constructor() : TimeProvider {
     override val minuteTicker: Flow<Unit> = flow {
         emit(Unit) // Initial emission
         while (true) {
-            delay(60_000)
+            val now = LocalTime.now()
+            // Align with the next full minute
+            val millisUntilNextMinute = ((60 - now.second) * 1000L) - (now.nano / 1_000_000L)
+            delay(if (millisUntilNextMinute > 0) millisUntilNextMinute else 60_000L)
             emit(Unit)
         }
     }
