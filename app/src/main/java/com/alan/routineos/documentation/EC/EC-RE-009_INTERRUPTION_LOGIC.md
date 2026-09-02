@@ -10,7 +10,7 @@ depends_on: EC-RE-008
 branch: feature/ec-re-009-interruption-logic
 audit: Pending
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-09-02
 ---
 
 # EC-RE-009: Interruption & Intersection Logic
@@ -35,6 +35,28 @@ Con un timeline funcional (EC-RE-008), el siguiente reto es la gestión de la "d
 - [ ] **Sistema de Impactos**: Definir `INFO`, `WARNING`, `INTERRUPTION_LABEL`.
 - [ ] **Generador de Sugerencias**: Algoritmo para encontrar huecos libres y validarlos preventivamente.
 
+## Decisión UX: Intercepción conectada
+La vista Today empleará el patrón **Split & Connected** para una intercepción. Es la
+opción elegida frente a "Overlay & Layers" y "Smart Suggestions" porque conserva
+el orden cronológico, explica causalidad y no obliga al usuario a interpretar dos
+tarjetas aparentemente independientes.
+
+Una intercepción se representa como un único bloque con tres estados visibles:
+
+1. **Actividad pausada**: identifica la actividad original y su hora de inicio.
+2. **Evento interceptor**: tarjeta ad-hoc indentada, con icono de rayo y acento
+   púrpura; se conecta mediante un riel de impacto y el texto de transición.
+3. **Reanudación**: confirma que la actividad original continúa al terminar el
+   evento, sin inventar una duración ni una hora de reanudación que el motor aún
+   no haya calculado.
+
+El bloque usa un fondo translúcido, sin borde perimetral ni desenfoque. El riel
+discontinuo y las fases en baja opacidad convierten la actividad víctima en contexto;
+la tarjeta ad-hoc púrpura es el único foco accionable. Un solapamiento normal sigue
+siendo una advertencia; sólo un evento ad-hoc o una restricción inmóvil se eleva a
+intercepción. Se evita `blur()` porque una lista de timeline puede contener varios
+bloques y la transparencia conserva tanto rendimiento como legibilidad.
+
 ## Archivos Clave
 - `domain/model/TemporalMobility.kt` (NEW)
 - `domain/model/TemporalImpact.kt` (NEW)
@@ -44,3 +66,5 @@ Con un timeline funcional (EC-RE-008), el siguiente reto es la gestión de la "d
 ## Plan de Verificación
 - **Test de Oro de Interrupciones**: Validar que una "Salida Express" dentro de la Universidad se marque como interrupción pero no mueva la Universidad.
 - **Test de Validación de Sugerencias**: Asegurar que una sugerencia para evitar el Conflicto A no genere un nuevo Conflicto B.
+- **Test de proyección Today**: Comprobar que `ResolveTimelineUseCase` devuelva los
+  conflictos calculados; de lo contrario, la UI no puede agrupar la relación.

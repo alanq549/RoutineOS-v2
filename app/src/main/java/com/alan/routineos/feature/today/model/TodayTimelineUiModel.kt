@@ -26,6 +26,10 @@ data class ConflictUiModel(
     val conflictingTitles: List<String> = emptyList()
 )
 
+data class InterceptionUiModel(
+    val interrupter: TodayTimelineUiModel
+)
+
 /**
  * UI representation of a sub-node step.
  */
@@ -62,5 +66,6 @@ data class TodayTimelineUiModel(
     val completedSubNodesCount: Int = 0,
     val totalSubNodesCount: Int = 0,
     val temporalState: TimelineTemporalState = TimelineTemporalState.UPCOMING,
-    val completion: HierarchyCompletion = HierarchyCompletion.NOT_STARTED
+    val completion: HierarchyCompletion = HierarchyCompletion.NOT_STARTED,
+    val interception: InterceptionUiModel? = null
 )

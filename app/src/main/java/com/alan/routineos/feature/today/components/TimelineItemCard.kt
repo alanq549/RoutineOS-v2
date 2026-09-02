@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -38,6 +39,198 @@ fun TimelineItemCard(
     onAction: (String, String) -> Unit,
     onExpandClick: (String) -> Unit,
     modifier: Modifier = Modifier
+) {
+    if (item.interception != null) {
+        InterceptionContainer(item, item.interception, onAction, onExpandClick, modifier)
+    } else {
+        NormalTimelineCard(item, onAction, onExpandClick, modifier)
+    }
+}
+
+@Composable
+private fun InterceptionContainer(
+    victim: TodayTimelineUiModel,
+    interception: InterceptionUiModel,
+    onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val impactColor = when (victim.conflict.impact) {
+        TemporalImpact.WARNING -> RoutineTheme.colors.error
+        TemporalImpact.INFO -> RoutineTheme.colors.secondary
+        else -> RoutineTheme.colors.primary
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(impactColor.copy(alpha = 0.03f), RoutineTheme.shapes.medium)
+            .padding(top = 12.dp, bottom = 12.dp, end = 8.dp)
+            .drawBehind {
+                val railX = 22.dp.toPx()
+                drawLine(
+                    color = impactColor.copy(alpha = 0.4f),
+                    start = Offset(railX, 38.dp.toPx()),
+                    end = Offset(railX, size.height - 30.dp.toPx()),
+                    strokeWidth = 1.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                )
+            }
+    ) {
+        InterceptionHeader(impactColor)
+        Spacer(modifier = Modifier.height(8.dp))
+        VictimContext(
+            victim = victim,
+            onAction = onAction,
+            onExpandClick = onExpandClick,
+            color = impactColor,
+        )
+        InterceptionTransition("EVENTO ESPONTÁNEO", impactColor)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 28.dp)
+        ) {
+            NormalTimelineCard(
+                item = interception.interrupter,
+                onAction = onAction,
+                onExpandClick = onExpandClick,
+                isInternalInterrupter = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun InterceptionHeader(color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "EVENTO SUPERPUESTO",
+            style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+            color = color
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Tu actividad programada sigue intacta",
+            style = RoutineTheme.typography.bodyBase.copy(fontSize = 11.sp),
+            color = RoutineTheme.colors.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun InterceptionTransition(label: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, top = 6.dp, bottom = 6.dp)
+            .alpha(0.65f),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
+            color = color
+        )
+    }
+}
+
+@Composable
+private fun VictimContext(
+    victim: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
+    color: Color,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 28.dp, top = 4.dp, bottom = 4.dp)
+            .alpha(0.7f)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .width(2.dp)
+                    .height(32.dp)
+                    .background(color.copy(alpha = 0.5f))
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "ACTIVIDAD PROGRAMADA",
+                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
+                    color = color
+                )
+                Text(
+                    text = victim.title,
+                    style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                    color = RoutineTheme.colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (victim.timeRangeText.isNotBlank()) {
+                    Text(
+                        text = victim.timeRangeText,
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
+                        color = RoutineTheme.colors.onSurfaceVariant
+                    )
+                }
+            }
+            if (victim.isExpandable) {
+                val rotation by animateFloatAsState(if (victim.isExpanded) 180f else 0f, label = "victimExpand")
+                IconButton(onClick = { onExpandClick(victim.id) }, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Default.ExpandMore, "Mostrar subpasos", Modifier.rotate(rotation), RoutineTheme.colors.onSurfaceVariant)
+                }
+            }
+        }
+        if (victim.subNodes.isNotEmpty()) {
+            Text(
+                text = "${victim.completedSubNodesCount}/${victim.totalSubNodesCount} completados",
+                style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
+                color = RoutineTheme.colors.onSurfaceVariant,
+                modifier = Modifier.padding(start = 14.dp, top = 4.dp)
+            )
+        }
+        AnimatedVisibility(visible = victim.isExpanded && victim.subNodes.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .padding(start = 14.dp, top = 8.dp)
+                    .drawThreadLine(color.copy(alpha = 0.35f))
+                    .padding(start = 12.dp)
+            ) {
+                victim.subNodes.forEach { subNode ->
+                    SubNodeRow(subNode, onAction)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+        if (victim.contextMetadata.isNotEmpty() || victim.operationalMetadata.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier.padding(start = 14.dp, top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                victim.contextMetadata.forEach { (name, value) ->
+                    MetadataLabel(name, value, isContext = true)
+                }
+                victim.operationalMetadata.forEach { (name, value) ->
+                    MetadataLabel(name, value, isContext = false)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NormalTimelineCard(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    isInternalInterrupter: Boolean = false
 ) {
     val isContainer = item.subNodes.isNotEmpty()
     val isCompleted = item.completion == HierarchyCompletion.COMPLETED
@@ -77,14 +270,15 @@ fun TimelineItemCard(
     RoutineCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = if (isInterrupter) 24.dp else 0.dp)
+            .padding(start = if (isInterrupter || isInternalInterrupter) 12.dp else 0.dp)
             .alpha(cardAlpha),
-        containerColor = if (isInterrupter) RoutineTheme.colors.background.copy(alpha = 0.5f) else Color.Transparent,
+        containerColor = if (isInterrupter || isInternalInterrupter) RoutineTheme.colors.background.copy(alpha = 0.5f) else Color.Transparent,
         border = BorderStroke(
-            width = if (isInterrupter) 1.5.dp else 1.dp,
+            width = if (isInterrupter || isInternalInterrupter) 1.5.dp else 1.dp,
             color = when {
                 isCompleted -> RoutineTheme.colors.border
-                isInterrupter && impactColor != null -> impactColor
+                isInternalInterrupter && item.isAdHoc -> AdHocAccent.copy(alpha = 0.75f)
+                (isInterrupter || isInternalInterrupter) && impactColor != null -> impactColor
                 else -> accentColor.copy(alpha = 0.4f)
             }
         )

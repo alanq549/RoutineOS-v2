@@ -48,8 +48,12 @@ class ConflictDetectorUseCase @Inject constructor() {
                     val rel = determineRelationship(startA, endA, startB, endB)
                     val imp = determineImpact(current, other, rel, nodeMap)
                     
-                    val isInterruption = (imp == TemporalImpact.WARNING && 
-                        (current.mobility == TemporalMobility.IMMOBILE || other.mobility == TemporalMobility.IMMOBILE))
+                    val isInterruption = imp == TemporalImpact.WARNING && (
+                        current.isAdHoc ||
+                            other.isAdHoc ||
+                            current.mobility == TemporalMobility.IMMOBILE ||
+                            other.mobility == TemporalMobility.IMMOBILE
+                        )
                     
                     details.add(ConflictDetail(other.id, rel, imp, isInterruption))
                 }

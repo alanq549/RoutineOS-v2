@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -81,6 +82,35 @@ class TimelineResolutionTest {
         assertEquals(1, result.size)
         assertEquals("Overridden Title", result[0].instance.titleSnapshot)
         assertEquals(true, result[0].isMaterialized)
+    }
+
+    @Test
+    fun `projects an ad hoc interruption conflict into the resolved timeline`() = runTest {
+        val date = LocalDate.of(2023, 10, 23)
+        val university = DailyInstance(
+            id = "university", target = null, scheduledDate = date.toEpochDay(),
+            titleSnapshot = "Universidad", descriptionSnapshot = "",
+            plannedStartTime = 420, plannedEndTime = 600,
+            mobility = TemporalMobility.IMMOBILE
+        )
+        val adHoc = DailyInstance(
+            id = "ad-hoc", target = null, scheduledDate = date.toEpochDay(),
+            titleSnapshot = "Salida Express", descriptionSnapshot = "",
+            plannedStartTime = 480, plannedDurationMinutes = 30, isAdHoc = true
+        )
+        val repository = object : FakeActivityRepository() {
+            override fun getActivityDefinitions() = flowOf(emptyList<ActivityDefinition>())
+            override fun getAllNodes() = flowOf(emptyList<ActivityNode>())
+            override fun getAllRules() = flowOf(emptyList<ScheduleRule>())
+            override fun getAllExceptions() = flowOf(emptyList<ScheduleException>())
+            override fun getDailyInstancesForDate(date: Long) = flowOf(listOf(university, adHoc))
+        }
+
+        val detector = ConflictDetectorUseCase()
+        val result = ResolveTimelineUseCase(repository, detector, SuggestionEngine(detector))(date).first()
+
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.conflict?.details?.any { detail -> detail.isInterruption } == true })
     }
 
     private open class FakeActivityRepository : ActivityRepository {

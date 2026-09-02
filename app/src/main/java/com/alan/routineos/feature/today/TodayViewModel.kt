@@ -105,7 +105,7 @@ class TodayViewModel @Inject constructor(
         val totalTasks = allLeaves.size
         val completedTasks = allLeaves.count { it.instance.status == DailyInstanceStatus.COMPLETED }
 
-        val uiModels = entries.mapIndexed { index, entry ->
+        val initialUiModels = entries.mapIndexed { index, entry ->
             val subNodeModels = entry.children.map { mapToSubNodeUiModel(it, metaMap, entries) }
             val rootTargetId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
             val rootMeta = metaMap[rootTargetId] ?: MetadataSnapshot()
@@ -116,13 +116,39 @@ class TodayViewModel @Inject constructor(
             entry.toUiModel(subNodeModels, rootMeta, expanded.contains(entry.root.instance.id), currentMinutes, nextStartTime, entries)
         }
 
+        // Interception Grouping Logic
+        val finalUiModels = mutableListOf<TodayTimelineUiModel>()
+        val consumedInterrupterIds = mutableSetOf<String>()
+
+        initialUiModels.forEach { model ->
+            if (consumedInterrupterIds.contains(model.id)) return@forEach
+
+            // Check if this model is being interrupted by something in the list
+            val interruption = model.conflict.details.find { it.isInterruption }
+            val interrupter = if (interruption != null) {
+                initialUiModels.find { it.id == interruption.otherInstanceId && it.conflict.isInterrupter }
+            } else null
+
+            if (interrupter != null && !consumedInterrupterIds.contains(interrupter.id)) {
+                finalUiModels.add(model.copy(
+                    interception = InterceptionUiModel(
+                        interrupter = interrupter
+                    )
+                ))
+                consumedInterrupterIds.add(interrupter.id)
+            } else {
+                // An interrupter without a matching victim remains visible on the timeline.
+                finalUiModels.add(model)
+            }
+        }
+
         return TodayUiState(
             isLoading = false,
             dateText = today.format(dateFormatter).uppercase(),
             progress = TodayProgress(completedTasks, totalTasks),
-            timelineItems = uiModels,
-            nextActivity = findNextActivity(uiModels),
-            focusItemId = calculateFocusItemId(uiModels)
+            timelineItems = finalUiModels,
+            nextActivity = findNextActivity(finalUiModels),
+            focusItemId = calculateFocusItemId(finalUiModels)
         )
     }
 
@@ -161,10 +187,7 @@ class TodayViewModel @Inject constructor(
             )
         }
 
-        val interrupter = hasConflict && (
-            current.isAdHoc || 
-            (current.mobility == TemporalMobility.FLEXIBLE && detailUiList.any { it.impact == TemporalImpact.WARNING })
-        )
+        val interrupter = hasConflict && current.isAdHoc
 
         return ConflictUiModel(
             hasConflict = hasConflict,

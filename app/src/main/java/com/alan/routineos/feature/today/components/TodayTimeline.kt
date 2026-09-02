@@ -46,55 +46,23 @@ fun TimelineRow(
     onAction: (String, String) -> Unit,
     onExpandClick: (String) -> Unit
 ) {
-    val isInterrupter = item.conflict.isInterrupter
-    val isVictim = item.conflict.hasConflict && !isInterrupter && item.conflict.impact == TemporalImpact.WARNING
+    val isVictim = item.conflict.hasConflict && !item.conflict.isInterrupter && item.conflict.impact == TemporalImpact.WARNING
     
-    val impactColor = when (item.conflict.impact) {
-        TemporalImpact.WARNING -> RoutineTheme.colors.error
-        TemporalImpact.INFO -> RoutineTheme.colors.secondary
-        else -> null
-    }
-
     Box(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
-                .drawBehind {
-                    val railX = 32.dp.toPx() // Moved rail to make room for time labels
-                    val nodeY = 22.dp.toPx()
-
-                    if (isInterrupter && impactColor != null) {
-                        // Technical Bracket (Elbow)
-                        val cardX = (32 + 24 + 24).dp.toPx() 
-                        
-                        // Horizontal line from rail to card start
-                        drawLine(
-                            color = impactColor.copy(alpha = 0.6f),
-                            start = Offset(railX, nodeY),
-                            end = Offset(cardX - 4.dp.toPx(), nodeY),
-                            strokeWidth = 1.dp.toPx()
-                        )
-                        
-                        // Vertical "connector" line up towards the previous item
-                        drawLine(
-                            color = impactColor.copy(alpha = 0.6f),
-                            start = Offset(railX, nodeY),
-                            end = Offset(railX, 0f),
-                            strokeWidth = 1.dp.toPx()
-                        )
-                    }
-                }
         ) {
-            // Vertical Axis Column (Extended for time markers)
+            // Vertical Axis Column (Simplified: just the rail and nodes)
             Box(
                 modifier = Modifier
                     .width(64.dp)
                     .fillMaxHeight(),
                 contentAlignment = Alignment.TopCenter
             ) {
-                // Time Markers for Dashed Rail
-                if (isVictim) {
+                // Time Markers for Rail
+                if (isVictim || item.interception != null) {
                     val markerStyle = RoutineTheme.typography.labelCaps.copy(
                         fontSize = 9.sp,
                         fontFamily = FontFamily.Monospace,
@@ -107,27 +75,18 @@ fun TimelineRow(
                         style = markerStyle,
                         modifier = Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 14.dp)
                     )
-                    
-                    // End Time (Bottom)
-                    item.endTimeMinutes?.let { end ->
-                        Text(
-                            text = formatMinutes(end),
-                            style = markerStyle,
-                            modifier = Modifier.align(Alignment.BottomStart).padding(start = 4.dp, bottom = 4.dp)
-                        )
-                    }
                 }
 
                 if (!isLast) {
-                    val railColor = if (isVictim) RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f) else RoutineTheme.colors.border
-                    val pathEffect = if (isVictim) PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f) else null
+                    val railColor = RoutineTheme.colors.border
+                    val isDashed = item.temporalState == TimelineTemporalState.OVERDUE || item.temporalState == TimelineTemporalState.STALE_PENDING
+                    val pathEffect = if (isDashed) PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f) else null
 
                     Canvas(modifier = Modifier
                         .padding(top = 24.dp)
                         .width(1.dp)
                         .fillMaxHeight()
                         .align(Alignment.TopCenter)
-                        .offset(x = 0.dp) // Aligned with the node center
                     ) {
                         drawLine(
                             color = railColor,
@@ -153,30 +112,6 @@ fun TimelineRow(
                     onExpandClick = onExpandClick
                 )
             }
-        }
-
-        // Floating Technical Label
-        if (isInterrupter && impactColor != null) {
-            val labelVerb = when {
-                item.conflict.details.any { it.isInterruption } -> "INTERRUMPE"
-                item.conflict.details.firstOrNull()?.relationship == TemporalRelationship.CONTAINS -> "DENTRO DE"
-                else -> "SE CRUZA"
-            }
-            
-            Text(
-                text = "→ $labelVerb",
-                style = RoutineTheme.typography.labelCaps.copy(
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    letterSpacing = 0.5.sp
-                ),
-                color = impactColor,
-                modifier = Modifier
-                    .padding(start = 70.dp, top = 11.dp)
-                    .background(RoutineTheme.colors.background)
-                    .padding(horizontal = 4.dp)
-            )
         }
     }
 }
