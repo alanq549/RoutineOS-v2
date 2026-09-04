@@ -44,7 +44,7 @@ class GoldTestEC008 {
         }
         
         val conflictDetector = ConflictDetectorUseCase()
-        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val result = useCase(date).first()
 
         // 1. Verify only 1 entry exists
@@ -67,7 +67,7 @@ class GoldTestEC008 {
         }
         
         val conflictDetector = ConflictDetectorUseCase()
-        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         
         // Initial state
         val result1 = useCase(date).first()
@@ -89,7 +89,7 @@ class GoldTestEC008 {
             override fun getAllNodes() = flowOf(listOf(ActivityNode("n1", "a1", null, 0, "Node 1")))
         }
 
-        val useCaseWithA = ResolveTimelineUseCase(repositoryWithA, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCaseWithA = ResolveTimelineUseCase(repositoryWithA, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val result2 = useCaseWithA(date).first()
 
         assertEquals(2, result2.size)
@@ -131,7 +131,7 @@ class GoldTestEC008 {
         }
         
         val conflictDetector = ConflictDetectorUseCase()
-        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val result = useCase(date).first()
 
         // 1. Verify only 1 entry (Identity replacement)

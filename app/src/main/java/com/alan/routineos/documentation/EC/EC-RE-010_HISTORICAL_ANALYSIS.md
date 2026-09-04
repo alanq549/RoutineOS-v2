@@ -5,10 +5,10 @@ phase: 5
 priority: High
 effort: Large
 owner: AI Agent
-status: READY
+status: CLOSED
 depends_on: EC-RE-009
 branch: feature/ec-re-010-historical-analysis
-audit: Pending
+audit: PASS
 created: 2026-09-03
 updated: 2026-09-03
 ---
@@ -33,8 +33,21 @@ Tras consolidar el motor de interrupciones (EC-RE-009), el sistema cuenta con un
 - [ ] **Extractor de Tendencias**: Parser de metadatos JSON para campos numéricos históricos.
 - [ ] **Repositorio de Solo Lectura**: Implementación de consultas complejas optimizadas para análisis.
 
-## Definiciones Semánticas
+## Definiciones Semánticas y Métricas
 Ver contrato funcional detallado en: `ec_re_010_functional_contract.artifact.md`.
+
+### Resumen de Fórmulas Core:
+1. **Occurrence Resolution**: Reconstrucción del pasado mediante `Rules + Exceptions + Overrides`.
+2. **Completion Rate**: `completedLeaves / (totalPlannedLeaves - omittedLeaves)`.
+3. **Consistency Score**:
+    - **Puntualidad**: `actualStartTime - effectiveStartTime`. (Actualmente `N/A`).
+    - **Precisión**: `actualDuration - plannedDuration`. (Actualmente `N/A`).
+4. **Focus Index**: Distribución Relativa del Tiempo Ejecutado (Normalizada).
+5. **ExecutionConsistency**: Días con cumplimiento global >= 70%.
+
+## Próximos Pasos Técnicos
+1. Implementar `HistoricalOccurrenceResolver`: Capaz de proyectar el estado de la línea de tiempo para cualquier rango de fechas pasadas.
+2. Motor de Agregación: Filtrado de hojas ejecutables y cálculo de KPIs.
 
 ## Plan de Verificación
 - **Test de Agregación**: Validar que un sistema con 10 hojas en 2 niveles calcule correctamente el `%` global sin doble conteo.

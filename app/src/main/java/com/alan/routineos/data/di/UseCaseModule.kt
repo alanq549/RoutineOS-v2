@@ -53,12 +53,19 @@ object UseCaseModule {
 
     @Provides
     @Singleton
+    fun provideTimelineResolutionEngine(): TimelineResolutionEngine {
+        return TimelineResolutionEngine()
+    }
+
+    @Provides
+    @Singleton
     fun provideResolveTimelineUseCase(
         repository: ActivityRepository,
+        resolutionEngine: TimelineResolutionEngine,
         conflictDetector: ConflictDetectorUseCase,
         suggestionEngine: SuggestionEngine
     ): ResolveTimelineUseCase {
-        return ResolveTimelineUseCase(repository, conflictDetector, suggestionEngine)
+        return ResolveTimelineUseCase(repository, resolutionEngine, conflictDetector, suggestionEngine)
     }
 
     @Provides
@@ -125,5 +132,23 @@ object UseCaseModule {
     @Singleton
     fun provideUnassignActivityFromSystemUseCase(repository: ActivityRepository): UnassignActivityFromSystemUseCase {
         return UnassignActivityFromSystemUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideHistoricalOccurrenceResolver(
+        repository: ActivityRepository,
+        resolutionEngine: TimelineResolutionEngine
+    ): HistoricalOccurrenceResolver {
+        return HistoricalOccurrenceResolver(repository, resolutionEngine)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetHistoryAnalyticsUseCase(
+        repository: ActivityRepository,
+        occurrenceResolver: HistoricalOccurrenceResolver
+    ): GetHistoryAnalyticsUseCase {
+        return GetHistoryAnalyticsUseCase(repository, occurrenceResolver)
     }
 }

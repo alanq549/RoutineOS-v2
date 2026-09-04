@@ -53,7 +53,7 @@ class TodayViewModelTest {
         repository.setRules(listOf(rule))
         
         val conflictDetector = ConflictDetectorUseCase()
-        val resolveTimelineUseCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val resolveTimelineUseCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val getHierarchicalTimelineUseCase = GetHierarchicalTimelineUseCase(repository, resolveTimelineUseCase)
         val registerDailyActionUseCase = RegisterDailyActionUseCase(repository, MaterializeInstanceUseCase(repository))
         

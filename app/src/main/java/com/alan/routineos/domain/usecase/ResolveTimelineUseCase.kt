@@ -14,9 +14,11 @@ data class TimelineEntry(
 
 /**
  * Resolves the timeline for a specific date by merging rules, exceptions, and persisted instances.
+ * Delegated to TimelineResolutionEngine for semantic consistency.
  */
 class ResolveTimelineUseCase @Inject constructor(
     private val repository: ActivityRepository,
+    private val resolutionEngine: TimelineResolutionEngine,
     private val conflictDetector: ConflictDetectorUseCase,
     private val suggestionEngine: SuggestionEngine
 ) {
@@ -30,115 +32,24 @@ class ResolveTimelineUseCase @Inject constructor(
             repository.getAllExceptions(),
             repository.getDailyInstancesForDate(epochDay)
         ) { definitions, nodes, rules, exceptions, materialized ->
-            val entries = mutableListOf<TimelineEntry>()
-            val nodeMap = nodes.associateBy { it.id }
             
-            // Filter out rules for targets that don\u0027t exist
-            val validDefIds = definitions.map { it.id }.toSet()
-            val validNodeIds = nodes.map { it.id }.toSet()
-            
-            val validRules = rules.filter { rule ->
-                when (val target = rule.target) {
-                    is ScheduleTarget.Definition -> validDefIds.contains(target.id)
-                    is ScheduleTarget.Node -> validNodeIds.contains(target.id)
-                }
+            val resolved = resolutionEngine.resolve(
+                date = date,
+                rules = rules,
+                exceptions = exceptions,
+                materialized = materialized,
+                definitions = definitions,
+                nodes = nodes
+            )
+
+            val entries = resolved.map { occ ->
+                TimelineEntry(
+                    instance = occ.instance,
+                    isMaterialized = occ.isMaterialized
+                )
             }
 
-            val validMaterialized = materialized.filter { instance ->
-                val target = instance.target
-                target == null || when (target) {
-                    is ScheduleTarget.Definition -> validDefIds.contains(target.id)
-                    is ScheduleTarget.Node -> validNodeIds.contains(target.id)
-                }
-            }
-
-            val materializedByRule = validMaterialized.associateBy { it.sourceRuleId }
-
-            resolveScheduled(date, epochDay, validRules, exceptions, materializedByRule, definitions, nodes, entries)
-            resolveAdHoc(validMaterialized, entries)
-
-            detectConflicts(entries, nodeMap)
-        }
-    }
-
-    private fun resolveScheduled(
-        date: LocalDate, epochDay: Long,
-        rules: List<ScheduleRule>, exceptions: List<ScheduleException>,
-        materializedByRule: Map<String?, DailyInstance>,
-        definitions: List<ActivityDefinition>, nodes: List<ActivityNode>,
-        entries: MutableList<TimelineEntry>
-    ) {
-        val defMap = definitions.associateBy { it.id }
-        val nodeMap = nodes.associateBy { it.id }
-
-        rules.forEach { rule ->
-            val materialized = materializedByRule[rule.id]
-            if (materialized != null) {
-                entries.add(TimelineEntry(materialized, true))
-            } else if (shouldProjectVirtual(rule, epochDay, date, exceptions)) {
-                entries.add(createVirtualEntry(rule, defMap, nodeMap, epochDay))
-            }
-        }
-    }
-
-    private fun resolveAdHoc(materialized: List<DailyInstance>, entries: MutableList<TimelineEntry>) {
-        materialized.filter { it.isAdHoc || it.sourceRuleId == null }.forEach {
-            if (!entries.any { existing -> it.id == existing.instance.id }) {
-                entries.add(TimelineEntry(it, true))
-            }
-        }
-    }
-
-    private fun shouldProjectVirtual(
-        rule: ScheduleRule, epochDay: Long, date: LocalDate, exceptions: List<ScheduleException>
-    ): Boolean {
-        val ruleExceptions = exceptions.filter { it.scheduleRuleId == rule.id }
-        if (ruleExceptions.any { it.originalDate == epochDay }) return false
-
-        val isFixedToday = rule.type == ScheduleRuleType.FIXED_DAYS && 
-                rule.daysOfWeek.contains(date.dayOfWeek.value)
-        
-        val isMovedToToday = ruleExceptions.any { 
-            it.newDate == epochDay && it.type == ScheduleExceptionType.RESCHEDULED 
-        }
-
-        return isFixedToday || isMovedToToday
-    }
-
-    private fun createVirtualEntry(
-        rule: ScheduleRule, defMap: Map<String, ActivityDefinition>,
-        nodeMap: Map<String, ActivityNode>, epochDay: Long
-    ): TimelineEntry {
-        val (title, desc) = getSnapshotData(rule.target, defMap, nodeMap)
-        return TimelineEntry(
-            instance = DailyInstance(
-                id = "virtual_${rule.id}_$epochDay",
-                target = rule.target,
-                scheduledDate = epochDay,
-                titleSnapshot = title,
-                descriptionSnapshot = desc,
-                plannedStartTime = rule.startTime,
-                plannedEndTime = rule.endTime,
-                plannedDurationMinutes = rule.durationMinutes,
-                status = DailyInstanceStatus.PLANNED,
-                sourceRuleId = rule.id
-            ),
-            isMaterialized = false
-        )
-    }
-
-    private fun getSnapshotData(
-        target: ScheduleTarget, defMap: Map<String, ActivityDefinition>, nodeMap: Map<String, ActivityNode>
-    ): Pair<String, String> {
-        return when(target) {
-            is ScheduleTarget.Definition -> {
-                val def = defMap[target.id]
-                (def?.title ?: "Unknown") to (def?.description ?: "")
-            }
-            is ScheduleTarget.Node -> {
-                val node = nodeMap[target.id]
-                (node?.title ?: "Unknown") to (node?.description ?: "")
-            }
+            detectConflicts(entries, nodes.associateBy { it.id })
         }
     }
 

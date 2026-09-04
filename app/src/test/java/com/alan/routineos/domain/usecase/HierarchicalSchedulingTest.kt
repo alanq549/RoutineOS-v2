@@ -35,7 +35,7 @@ class HierarchicalSchedulingTest {
         }
 
         val conflictDetector = ConflictDetectorUseCase()
-        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val timeline = useCase(date).first()
 
         assertEquals(1, timeline.size)
@@ -71,7 +71,7 @@ class HierarchicalSchedulingTest {
         }
 
         val conflictDetector = ConflictDetectorUseCase()
-        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val timeline = useCase(date).first()
 
         assertEquals(2, timeline.size)

@@ -35,7 +35,7 @@ class TimelineResolutionTest {
         }
         
         val conflictDetector = ConflictDetectorUseCase()
-        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val result = useCase(date).first()
 
         assertEquals(1, result.size)
@@ -75,7 +75,7 @@ class TimelineResolutionTest {
         }
         
         val conflictDetector = ConflictDetectorUseCase()
-        val useCase = ResolveTimelineUseCase(repository, conflictDetector, SuggestionEngine(conflictDetector))
+        val useCase = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), conflictDetector, SuggestionEngine(conflictDetector))
         val result = useCase(date).first()
 
         // Should only have the materialized one, not the virtual one
@@ -107,7 +107,7 @@ class TimelineResolutionTest {
         }
 
         val detector = ConflictDetectorUseCase()
-        val result = ResolveTimelineUseCase(repository, detector, SuggestionEngine(detector))(date).first()
+        val result = ResolveTimelineUseCase(repository, TimelineResolutionEngine(), detector, SuggestionEngine(detector))(date).first()
 
         assertEquals(2, result.size)
         assertTrue(result.all { it.conflict?.details?.any { detail -> detail.isInterruption } == true })
