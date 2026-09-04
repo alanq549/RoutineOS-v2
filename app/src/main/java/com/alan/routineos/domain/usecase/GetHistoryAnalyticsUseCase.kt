@@ -5,11 +5,14 @@ import com.alan.routineos.domain.repository.ActivityRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.*
 import java.time.LocalDate
+import java.time.YearMonth
+import java.time.temporal.WeekFields
+import java.util.*
 import javax.inject.Inject
 
 /**
  * Analytics engine that calculates KPIs based on historical occurrences and executions.
- * Implements strict non-inference policy for missing data.
+ * Implements granular data for high-fidelity UI (Ritmos/Ciclos).
  */
 class GetHistoryAnalyticsUseCase @Inject constructor(
     private val repository: ActivityRepository,
@@ -17,37 +20,186 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
 ) {
 
     suspend fun execute(start: LocalDate, end: LocalDate): HistorySnapshot {
-        val occurrences = occurrenceResolver.resolveRange(start, end)
+        val resolvedOccs = occurrenceResolver.resolveRange(start, end)
         val allNodes = repository.getAllNodes().first()
+        val allDefinitions = repository.getActivityDefinitions().first()
+        val allSystems = repository.getAllSystems().first()
+        
         val leafNodeIds = allNodes.filter { node -> allNodes.none { it.parentId == node.id } }.map { it.id }.toSet()
         
-        // Filter to include only leaf node occurrences or ad-hoc without targets
-        val leafOccurrences = occurrences.filter { occ ->
+        // Enrich occurrences with activity titles for UI grouping
+        val enrichedOccurrences = resolvedOccs.map { occ ->
+            val target = occ.instance.target
+            val activityTitle = if (target is ScheduleTarget.Node) {
+                val node = allNodes.find { it.id == target.id }
+                allDefinitions.find { it.id == node?.activityDefinitionId }?.title
+            } else if (target is ScheduleTarget.Definition) {
+                allDefinitions.find { it.id == target.id }?.title
+            } else null
+            
+            occ.copy(activityTitle = activityTitle)
+        }
+
+        // Metrics are calculated based on leaf nodes (to avoid double counting with parents)
+        // or ad-hoc instances (which are always counted).
+        val metricOccurrences = enrichedOccurrences.filter { occ ->
             val target = occ.instance.target
             target == null || (target is ScheduleTarget.Node && leafNodeIds.contains(target.id))
         }
 
-        val totalOccurrences = leafOccurrences.size
-        val omittedCount = leafOccurrences.count { it.instance.status == DailyInstanceStatus.OMITTED }
-        val completedCount = leafOccurrences.count { it.instance.status == DailyInstanceStatus.COMPLETED }
+        // 1. Daily Stats Breakdown
+        val dailyStatsList = mutableListOf<DailyStats>()
+        var current = start
+        while (!current.isAfter(end)) {
+            val dayMetricOccs = metricOccurrences.filter { it.date == current }
+            val dayAllOccs = enrichedOccurrences.filter { it.date == current }
+            
+            val completed = dayMetricOccs.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+            val omitted = dayMetricOccs.count { it.instance.status == DailyInstanceStatus.OMITTED }
+            val eligible = dayMetricOccs.count { !it.isAdHoc } - omitted
+            val missed = eligible - completed
+            val spontaneous = dayMetricOccs.count { it.isAdHoc }
+
+            dailyStatsList.add(DailyStats(
+                date = current,
+                completionRate = if (eligible > 0) completed.toFloat() / eligible else null,
+                completedCount = completed,
+                omittedCount = omitted,
+                missedCount = missed,
+                spontaneousCount = spontaneous,
+                occurrences = dayAllOccs // Include ALL (containers + leaves) for the UI list
+            ))
+            current = current.plusDays(1)
+        }
+
+        // 2. Weekly Stats Breakdown
+        val weekFields = WeekFields.of(Locale.getDefault())
+        val weeklyStatsList = dailyStatsList.groupBy { 
+            it.date.get(weekFields.weekOfWeekBasedYear())
+        }.map { (_, dayStats) ->
+            val sCompleted = dayStats.sumOf { it.completedCount }
+            val sOmitted = dayStats.sumOf { it.omittedCount }
+            val sTotal = dayStats.sumOf { it.occurrences.filter { occ ->
+                val target = occ.instance.target
+                target == null || (target is ScheduleTarget.Node && leafNodeIds.contains(target.id))
+            }.size }
+            val sEligible = sTotal - sOmitted
+
+            WeeklyStats(
+                startOfWeek = dayStats.minBy { it.date }.date,
+                endOfWeek = dayStats.maxBy { it.date }.date,
+                completionRate = if (sEligible > 0) sCompleted.toFloat() / sEligible else null,
+                dailyStats = dayStats
+            )
+        }
+
+        // 3. Monthly Stats Breakdown
+        val monthlyStatsList = dailyStatsList.groupBy { YearMonth.from(it.date) }.map { (ym, dayStats) ->
+            val mCompleted = dayStats.sumOf { it.completedCount }
+            val mOmitted = dayStats.sumOf { it.omittedCount }
+            val mTotal = dayStats.sumOf { it.occurrences.filter { occ ->
+                val target = occ.instance.target
+                target == null || (target is ScheduleTarget.Node && leafNodeIds.contains(target.id))
+            }.size }
+            val mEligible = mTotal - mOmitted
+            
+            val mWeekly = dayStats.chunked(7).map { weekDays ->
+                val wCompleted = weekDays.sumOf { it.completedCount }
+                val wOmitted = weekDays.sumOf { it.omittedCount }
+                val wTotal = weekDays.sumOf { it.occurrences.filter { occ ->
+                    val target = occ.instance.target
+                    target == null || (target is ScheduleTarget.Node && leafNodeIds.contains(target.id))
+                }.size }
+                val wEligible = wTotal - wOmitted
+                WeeklyStats(
+                    startOfWeek = weekDays.first().date,
+                    endOfWeek = weekDays.last().date,
+                    completionRate = if (wEligible > 0) wCompleted.toFloat() / wEligible else null,
+                    dailyStats = weekDays
+                )
+            }
+
+            MonthlyStats(
+                yearMonth = ym,
+                completionRate = if (mEligible > 0) mCompleted.toFloat() / mEligible else null,
+                weeklyStats = mWeekly
+            )
+        }
+
+        // 4. System Adherence
+        val systemAdherence = allSystems.map { system ->
+            val systemDefIds = allDefinitions.filter { it.systemId == system.id }.map { it.id }.toSet()
+            val systemOccurrences = metricOccurrences.filter { occ ->
+                val target = occ.instance.target
+                if (target is ScheduleTarget.Node) {
+                    val node = allNodes.find { it.id == target.id }
+                    node?.activityDefinitionId != null && systemDefIds.contains(node.activityDefinitionId)
+                } else if (target is ScheduleTarget.Definition) {
+                    systemDefIds.contains(target.id)
+                } else false
+            }
+
+            val sTotal = systemOccurrences.count { !it.isAdHoc }
+            val sCompleted = systemOccurrences.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+            val sOmitted = systemOccurrences.count { it.instance.status == DailyInstanceStatus.OMITTED && !it.isAdHoc }
+            val sEligible = sTotal - sOmitted
+            val sMissed = sEligible - sCompleted
+
+            SystemAdherence(
+                systemId = system.id,
+                systemName = system.title,
+                completionRate = if (sEligible > 0) sCompleted.toFloat() / sEligible else null,
+                omittedRate = if (sTotal > 0) sOmitted.toFloat() / sTotal else null,
+                missedRate = if (sEligible > 0) sMissed.toFloat() / sEligible else null,
+                completedCount = sCompleted,
+                omittedCount = sOmitted,
+                missedCount = sMissed
+            )
+        }
+
+        // 5. Activity Adherence
+        val activityAdherence = allDefinitions.map { definition ->
+            val activityOccurrences = metricOccurrences.filter { occ ->
+                val target = occ.instance.target
+                if (target is ScheduleTarget.Node) {
+                    val node = allNodes.find { it.id == target.id }
+                    node?.activityDefinitionId == definition.id
+                } else if (target is ScheduleTarget.Definition) {
+                    target.id == definition.id
+                } else false
+            }
+
+            val aTotal = activityOccurrences.count { !it.isAdHoc }
+            val aCompleted = activityOccurrences.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+            val aOmitted = activityOccurrences.count { it.instance.status == DailyInstanceStatus.OMITTED && !it.isAdHoc }
+            val aEligible = aTotal - aOmitted
+            val aMissed = aEligible - aCompleted
+            val aSpontaneous = activityOccurrences.count { it.isAdHoc }
+
+            ActivityAdherence(
+                activityId = definition.id,
+                activityTitle = definition.title,
+                completionRate = if (aEligible > 0) aCompleted.toFloat() / aEligible else null,
+                omittedRate = if (aTotal > 0) aOmitted.toFloat() / aTotal else null,
+                missedRate = if (aEligible > 0) aMissed.toFloat() / aEligible else null,
+                spontaneousCount = aSpontaneous,
+                completedCount = aCompleted,
+                omittedCount = aOmitted,
+                missedCount = aMissed
+            )
+        }.filter { it.completedCount > 0 || it.omittedCount > 0 || it.missedCount > 0 }
+
+        // Global Averages (Respecting the requested range strictly)
+        val totalOccurrences = metricOccurrences.count { !it.isAdHoc }
+        val completedCount = metricOccurrences.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+        val omittedCount = metricOccurrences.count { it.instance.status == DailyInstanceStatus.OMITTED && !it.isAdHoc }
         val eligibleCount = totalOccurrences - omittedCount
         val missedCount = eligibleCount - completedCount
-
         val completionRate = if (eligibleCount > 0) completedCount.toFloat() / eligibleCount else null
 
-        // Execution Consistency: Days with >= 70% completion
-        val dailyRates = leafOccurrences.groupBy { it.date }.map { (_, dayOccs) ->
-            val dTotal = dayOccs.size
-            val dOmitted = dayOccs.count { it.instance.status == DailyInstanceStatus.OMITTED }
-            val dCompleted = dayOccs.count { it.instance.status == DailyInstanceStatus.COMPLETED }
-            val dEligible = dTotal - dOmitted
-            if (dEligible > 0) dCompleted.toFloat() / dEligible else null
-        }.filterNotNull()
+        val consistentDays = dailyStatsList.count { it.completionRate != null && it.completionRate >= 0.7f }
+        val consistencyScore = if (dailyStatsList.isNotEmpty()) consistentDays.toFloat() / dailyStatsList.size else null
 
-        val consistentDays = dailyRates.count { it >= 0.7f }
-        val consistencyScore = if (dailyRates.isNotEmpty()) consistentDays.toFloat() / dailyRates.size else null
-
-        // Temporal Metrics & Focus Index (N/A policy - placeholders for future implementation)
         return HistorySnapshot(
             completionRate = completionRate,
             totalOccurrences = totalOccurrences,
@@ -55,8 +207,11 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
             missedCount = missedCount,
             omittedCount = omittedCount,
             executionConsistency = consistencyScore,
-            startDeviationAvgMinutes = null,
-            durationDeviationAvgMinutes = null
+            systemAdherence = systemAdherence,
+            activityAdherence = activityAdherence,
+            dailyStats = dailyStatsList,
+            weeklyStats = weeklyStatsList,
+            monthlyStats = monthlyStatsList
         )
     }
 
@@ -78,7 +233,6 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
             try {
                 val element = jsonParser.parseToJsonElement(exec.metadataJson)
                 val primitive = element.jsonObject[fieldName]?.jsonPrimitive
-                // Try parsing double directly or from content string
                 val value = primitive?.doubleOrNull ?: primitive?.contentOrNull?.toDoubleOrNull()
                 if (value != null) {
                     LocalDate.ofEpochDay(exec.scheduledDate) to value

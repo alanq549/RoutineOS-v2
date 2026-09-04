@@ -26,6 +26,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-008 | Visual Planning & Today Refinement | High | Large | AI Agent | EC-RE-007 | CLOSED | Real data in Planning and visual polish in Today. |
 | EC-RE-009 | Interruption & Intersection Logic | High | Medium | AI Agent | EC-RE-008 | CLOSED | PASS. Handling rigid tasks and spontaneous events with fluid UI. |
 | EC-RE-010 | Historical Analysis & Trends | High | Large | AI Agent | EC-RE-009 | CLOSED | PASS. Analytics engine for KPIs and trends implemented and audited (60 tests). |
+| EC-RE-011 | Intelligence Dashboard | High | Medium | AI Agent | EC-RE-010 | CLOSED | PASS. Visual analytics, weekly rhythm and adherence charts implemented. |
 
 ---
 

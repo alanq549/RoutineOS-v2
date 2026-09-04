@@ -5,11 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,17 +20,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.stats.components.body.BodyLoadCard
-import com.alan.routineos.feature.stats.model.*
+import com.alan.routineos.domain.model.MonthlyStats
+import com.alan.routineos.domain.model.WeeklyStats
+import java.time.LocalDate
+import java.util.*
 
 @Composable
 fun MonthlyCycleView(
-    data: MonthlyCycleData,
-    selectedWeekId: String?,
-    onWeekSelected: (String) -> Unit,
+    monthStats: MonthlyStats,
     modifier: Modifier = Modifier
 ) {
-    val selectedWeek = data.weeks.find { it.id == selectedWeekId } ?: data.weeks.first()
+    var selectedWeekStart by remember { mutableStateOf(monthStats.weeklyStats.lastOrNull()?.startOfWeek) }
+    val selectedWeek = monthStats.weeklyStats.find { it.startOfWeek == selectedWeekStart } ?: monthStats.weeklyStats.lastOrNull()
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -41,55 +39,50 @@ fun MonthlyCycleView(
     ) {
         // Range & Summary
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Icon(Icons.Default.ChevronLeft, contentDescription = null, tint = RoutineTheme.colors.onSurfaceVariant)
-                Text(data.monthName, style = RoutineTheme.typography.headlineMedium, color = RoutineTheme.colors.onSurface)
-                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = RoutineTheme.colors.onSurfaceVariant)
-            }
+            Text(
+                text = monthStats.yearMonth.month.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault()).uppercase(),
+                style = RoutineTheme.typography.headlineMedium, 
+                color = RoutineTheme.colors.onSurface
+            )
         }
 
-        // Main Cycle Chart
+        // Main Cycle Chart (Concentric Rings)
         RoutineCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(260.dp)) {
-                    CycleRingsCanvas(weeks = data.weeks)
+                    CycleRingsCanvas(weeks = monthStats.weeklyStats, selectedWeekStart = selectedWeekStart)
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("${data.completionPercentage}%", style = RoutineTheme.typography.displayLarge.copy(fontSize = 56.sp), color = RoutineTheme.colors.primary)
-                        Text("CUMPLIMIENTO", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant)
+                        Text(
+                            text = monthStats.completionRate?.let { "${(it * 100).toInt()}%" } ?: "0%", 
+                            style = RoutineTheme.typography.displayLarge.copy(fontSize = 56.sp), 
+                            color = RoutineTheme.colors.primary
+                        )
+                        Text("ADHERENCIA", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant)
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(data.activeDaysText, style = RoutineTheme.typography.bodyBase, color = RoutineTheme.colors.onSurface)
-                Text("${selectedWeek.label} seleccionada", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.primary, modifier = Modifier.padding(top = 8.dp))
+                selectedWeek?.let {
+                    Text(
+                        text = "Semana del ${it.startOfWeek.dayOfMonth} seleccionada", 
+                        style = RoutineTheme.typography.labelCaps, 
+                        color = RoutineTheme.colors.primary, 
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
         }
 
-        // Selected Week Metrics & Nav
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(RoutineTheme.spacing.md)) {
-            WeeklySummaryCard(week = selectedWeek, modifier = Modifier.weight(1f))
-            CycleNavigationList(weeks = data.weeks, selectedWeekId = selectedWeekId, onWeekSelected = onWeekSelected, modifier = Modifier.weight(1f))
-        }
-
-        // Body Load
-        selectedWeek.bodyLoad?.let { bodyLoad ->
-            BodyLoadCard(state = bodyLoad)
-        }
-
-        // Outcome Breakdown
-        OutcomeBreakdownSection(metrics = data.outcomeBreakdown)
-
-        // Systems this Month
-        SystemsBreakdownSection(systems = data.systems)
-
-        // Comparison & Insights
-        CycleComparisonCard(comparisons = data.comparison)
-        
-        CycleInsightsSection(insights = data.insights)
+        // Weekly Nav List
+        WeeklyBreakdownList(
+            weeks = monthStats.weeklyStats,
+            selectedWeekStart = selectedWeekStart,
+            onWeekSelected = { selectedWeekStart = it }
+        )
     }
 }
 
 @Composable
-private fun CycleRingsCanvas(weeks: List<CycleWeek>) {
+private fun CycleRingsCanvas(weeks: List<WeeklyStats>, selectedWeekStart: LocalDate?) {
     val strokeWidthDp = 8.dp
     val spacingDp = 16.dp
     
@@ -102,7 +95,8 @@ private fun CycleRingsCanvas(weeks: List<CycleWeek>) {
         
         weeks.asReversed().forEachIndexed { index, week ->
             val radius = baseRadius - (spacingDp.toPx() * index)
-            val sweepAngle = (week.percentage.toFloat() / 100f) * 360f
+            val sweepAngle = (week.completionRate ?: 0f) * 360f
+            val isSelected = week.startOfWeek == selectedWeekStart
             val alpha = if (index == 0) 1f else 0.4f + (0.15f * (3 - index))
 
             // Track
@@ -114,168 +108,49 @@ private fun CycleRingsCanvas(weeks: List<CycleWeek>) {
             )
             // Progress
             drawArc(
-                color = if (week.isSelected) primaryColor else primaryColor.copy(alpha = alpha.coerceIn(0.2f, 0.8f)),
+                color = if (isSelected) primaryColor else primaryColor.copy(alpha = alpha.coerceIn(0.2f, 0.8f)),
                 startAngle = -90f,
                 sweepAngle = sweepAngle,
                 useCenter = false,
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2, radius * 2),
-                style = Stroke(width = if (week.isSelected) strokeWidthDp.toPx() * 1.5f else strokeWidthDp.toPx(), cap = StrokeCap.Round)
+                style = Stroke(width = if (isSelected) strokeWidthDp.toPx() * 1.5f else strokeWidthDp.toPx(), cap = StrokeCap.Round)
             )
         }
     }
 }
 
 @Composable
-private fun WeeklySummaryCard(week: CycleWeek, modifier: Modifier = Modifier) {
-    RoutineCard(modifier = modifier) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(week.label, style = RoutineTheme.typography.headlineMedium)
-                week.comparisonText?.let {
-                    Text(it, style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp), color = RoutineTheme.colors.error)
-                }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            GridMetrics()
-        }
-    }
-}
-
-@Composable
-private fun GridMetrics() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            MetricItem("COMPLETADO", "68%", Modifier.weight(1f))
-            MetricItem("DÍAS ACTIVOS", "6", Modifier.weight(1f))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            MetricItem("CAMBIOS", "3", Modifier.weight(1f))
-            MetricItem("PARCIALES", "2", Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun MetricItem(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Text(label, style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp), color = RoutineTheme.colors.onSurfaceVariant)
-        Text(value, style = RoutineTheme.typography.dataLarge, color = RoutineTheme.colors.primary)
-    }
-}
-
-@Composable
-private fun CycleNavigationList(weeks: List<CycleWeek>, selectedWeekId: String?, onWeekSelected: (String) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun WeeklyBreakdownList(
+    weeks: List<WeeklyStats>,
+    selectedWeekStart: LocalDate?,
+    onWeekSelected: (LocalDate) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         weeks.forEach { week ->
-            val isSelected = week.id == selectedWeekId
+            val isSelected = week.startOfWeek == selectedWeekStart
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoutineTheme.shapes.small)
                     .background(if (isSelected) RoutineTheme.colors.primary.copy(alpha = 0.1f) else RoutineTheme.colors.surface2)
                     .border(1.dp, if (isSelected) RoutineTheme.colors.primary.copy(alpha = 0.3f) else Color.Transparent, RoutineTheme.shapes.small)
-                    .clickable { onWeekSelected(week.id) }
-                    .padding(12.dp),
+                    .clickable { onWeekSelected(week.startOfWeek) }
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(week.label, style = RoutineTheme.typography.bodyBase, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.onSurface)
-                Text("${week.percentage}%", style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp), color = if (isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant)
-            }
-        }
-    }
-}
-
-@Composable
-private fun OutcomeBreakdownSection(metrics: List<StatsSummaryMetric>) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("RESULTADO DEL MES", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.padding(bottom = 16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            metrics.forEach { metric ->
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(RoutineTheme.colors.surface1, RoutineTheme.shapes.small)
-                        .border(1.dp, RoutineTheme.colors.border, RoutineTheme.shapes.small)
-                        .padding(12.dp)
-                ) {
-                    Text(metric.label, style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp), color = RoutineTheme.colors.onSurfaceVariant)
-                    Text(metric.value, style = RoutineTheme.typography.dataLarge, color = RoutineTheme.colors.primary)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SystemsBreakdownSection(systems: List<StatsSystemMetric>) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("SISTEMAS ESTE MES", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.padding(bottom = 16.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            systems.forEach { sys ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(RoutineTheme.colors.surface1, RoutineTheme.shapes.small)
-                        .border(1.dp, RoutineTheme.colors.border, RoutineTheme.shapes.small)
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Icon(
-                            imageVector = if (sys.iconName == "school") Icons.Default.School else if (sys.iconName == "fitness_center") Icons.Default.FitnessCenter else Icons.Default.Terminal,
-                            contentDescription = null,
-                            tint = RoutineTheme.colors.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(sys.title, style = RoutineTheme.typography.bodyBase)
-                    }
-                    Text("${sys.percentage}% · ${sys.details}", style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp), color = RoutineTheme.colors.onSurfaceVariant)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CycleComparisonCard(comparisons: List<StatsComparison>) {
-    RoutineCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Text("TIEMPO PLANIFICADO VS REAL", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(24.dp))
-            comparisons.forEach { comp ->
-                Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(comp.title, style = RoutineTheme.typography.bodyBase)
-                        Text(comp.actualValue, style = if (comp.title == "Real") RoutineTheme.colors.primary.let { RoutineTheme.typography.dataLarge.copy(color = it) } else RoutineTheme.typography.dataLarge.copy(color = RoutineTheme.colors.onSurfaceVariant))
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoutineTheme.shapes.pill).background(RoutineTheme.colors.surface2)) {
-                        Box(modifier = Modifier.fillMaxWidth(comp.percentage).fillMaxHeight().background(RoutineTheme.colors.primary.copy(alpha = if (comp.title == "Planificado") 0.4f else 1f)))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CycleInsightsSection(insights: List<StatsInsight>) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("INSIGHTS DEL CICLO", style = RoutineTheme.typography.labelCaps, color = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.padding(bottom = 16.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            insights.forEach { insight ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(RoutineTheme.colors.surface1, RoutineTheme.shapes.small)
-                        .border(1.dp, RoutineTheme.colors.border, RoutineTheme.shapes.small)
-                        .padding(16.dp)
-                ) {
-                    Text(insight.message, style = RoutineTheme.typography.bodyBase, color = RoutineTheme.colors.onSurface)
-                }
+                Text(
+                    text = "Semana del ${week.startOfWeek.dayOfMonth}", 
+                    style = RoutineTheme.typography.bodyBase, 
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, 
+                    color = if (isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.onSurface
+                )
+                Text(
+                    text = week.completionRate?.let { "${(it * 100).toInt()}%" } ?: "0%", 
+                    style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp), 
+                    color = if (isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
+                )
             }
         }
     }

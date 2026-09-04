@@ -1,7 +1,7 @@
 package com.alan.routineos.feature.stats.model
 
 enum class StatsPeriod {
-    WEEK, MONTH, YEAR
+    DAY, WEEK, MONTH, YEAR
 }
 
 /**

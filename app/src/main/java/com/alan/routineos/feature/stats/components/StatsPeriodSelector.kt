@@ -29,6 +29,12 @@ fun StatsPeriodSelector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         StatsPeriodButton(
+            title = "Día",
+            isSelected = selectedPeriod == StatsPeriod.DAY,
+            onClick = { onPeriodSelected(StatsPeriod.DAY) },
+            modifier = Modifier.weight(1f)
+        )
+        StatsPeriodButton(
             title = "Semana",
             isSelected = selectedPeriod == StatsPeriod.WEEK,
             onClick = { onPeriodSelected(StatsPeriod.WEEK) },
@@ -61,7 +67,7 @@ private fun StatsPeriodButton(
             .clip(RoutineTheme.shapes.pill)
             .background(if (isSelected) RoutineTheme.colors.surface3 else Color.Transparent)
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 16.dp),
+            .padding(vertical = 8.dp, horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
