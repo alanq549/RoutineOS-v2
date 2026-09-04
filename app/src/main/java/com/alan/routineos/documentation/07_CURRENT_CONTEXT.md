@@ -5,17 +5,17 @@ Este documento es la única fuente de verdad sobre lo que está ocurriendo en el
 
 | **Current Branch** | `develop` |
 | **Current Phase** | Fase 5: Execution Intelligence & Analytics |
-| **Current Goal** | Iniciar EC-RE-009: Lógica de Interrupciones |
+| **Current Goal** | Iniciar EC-RE-010: Historical Analysis & Trends |
 | **Current EC** | Ninguna |
-| **Next EC** | [EC-RE-009_INTERRUPTION_LOGIC](./EC/EC-RE-009_INTERRUPTION_LOGIC.md) |
+| **Next EC** | [EC-RE-010: Historical Analysis & Trends](./EC/EC-RE-010_HISTORICAL_ANALYSIS.md) |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/dashboard/` |
-| **Current Sprint** | Sprint 2: Feature Layer |
-| **Last Updated** | 2026-08-16 |
+| **Working Directory** | `domain/usecase/` |
+| **Current Sprint** | Sprint 4: Intelligence Layer |
+| **Last Updated** | 2026-09-03 |
 
 ---
 
 ## Notas Inmediatas
-- **EC-RE-008 Auditada**: Veredicto **PASS**. Se eliminaron los Mocks de Planning y se refinó la UI de Today.
-- **Unificación Temporal**: Planning y Today ahora usan el mismo motor de resolución de reglas reales.
-- El sistema está listo para entrar en la fase de análisis histórico (EC-RE-009).
+- **EC-RE-009 CERRADA**: Rama mergeada en `develop`. El motor de interrupciones es estable.
+- **Contrato EC-RE-010 CONGELADO**: Definiciones matemáticas de cumplimiento, varianza y focus index validadas con ejemplos numéricos.
+- **Preparación**: Listo para iniciar la implementación de la capa analítica en la nueva rama.

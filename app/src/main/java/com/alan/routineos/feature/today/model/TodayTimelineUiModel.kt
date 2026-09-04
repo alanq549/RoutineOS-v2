@@ -37,6 +37,7 @@ data class TodaySubNodeUiModel(
     val id: String,
     val title: String,
     val timeText: String,
+    val startTimeMinutes: Int? = null,
     val status: DailyInstanceStatus,
     val contextMetadata: List<Pair<String, String>> = emptyList(),
     val operationalMetadata: List<Pair<String, String>> = emptyList(),

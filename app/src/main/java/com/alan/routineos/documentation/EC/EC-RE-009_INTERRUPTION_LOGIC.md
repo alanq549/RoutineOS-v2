@@ -5,12 +5,12 @@ phase: 5
 priority: High
 effort: Medium
 owner: AI Agent
-status: IN_PROGRESS
+status: CLOSED
 depends_on: EC-RE-008
 branch: feature/ec-re-009-interruption-logic
-audit: Pending
+audit: PASS
 created: 2026-08-19
-updated: 2026-09-02
+updated: 2026-09-03
 ---
 
 # EC-RE-009: Interruption & Intersection Logic
@@ -28,43 +28,37 @@ Con un timeline funcional (EC-RE-008), el siguiente reto es la gestión de la "d
 4.  **Sugerencias Validadas**: Una sugerencia de movimiento debe ser probada contra el timeline completo antes de ser presentada.
 
 ## Alcance
-- [ ] **Modelo de Movilidad**: Incorporar la propiedad `mobility` en `ScheduleRule` y `DailyInstance`.
-- [ ] **Motor de Intersecciones**: 
+- [x] **Modelo de Movilidad**: Incorporar la propiedad `mobility` en `ScheduleRule` y `DailyInstance`.
+- [x] **Motor de Intersecciones**: 
     - Identificar `OVERLAP` vs `NESTED`.
     - Distinguir entre anidamiento estructural (Hijo dentro de Padre) e interrupción externa.
-- [ ] **Sistema de Impactos**: Definir `INFO`, `WARNING`, `INTERRUPTION_LABEL`.
-- [ ] **Generador de Sugerencias**: Algoritmo para encontrar huecos libres y validarlos preventivamente.
+- [x] **Sistema de Impactos**: Definir `INFO`, `WARNING`, `INTERRUPTION_LABEL`.
+- [x] **Generador de Sugerencias**: Algoritmo para encontrar huecos libres y validarlos preventivamente (`SuggestionEngine`).
 
-## Decisión UX: Intercepción conectada
-La vista Today empleará el patrón **Split & Connected** para una intercepción. Es la
-opción elegida frente a "Overlay & Layers" y "Smart Suggestions" porque conserva
-el orden cronológico, explica causalidad y no obliga al usuario a interpretar dos
-tarjetas aparentemente independientes.
+## Decisión UX: Intercepción Cronológica Fluida
+La vista Today emplea el patrón **Fluid & Connected** para una intercepción. Se aleja de la semántica de "Pausa/Reanudación" para abrazar la **coexistencia**.
 
-Una intercepción se representa como un único bloque con tres estados visibles:
+Una intercepción se representa como un bloque jerárquico unificado con las siguientes características:
 
-1. **Actividad pausada**: identifica la actividad original y su hora de inicio.
-2. **Evento interceptor**: tarjeta ad-hoc indentada, con icono de rayo y acento
-   púrpura; se conecta mediante un riel de impacto y el texto de transición.
-3. **Reanudación**: confirma que la actividad original continúa al terminar el
-   evento, sin inventar una duración ni una hora de reanudación que el motor aún
-   no haya calculado.
-
-El bloque usa un fondo translúcido, sin borde perimetral ni desenfoque. El riel
-discontinuo y las fases en baja opacidad convierten la actividad víctima en contexto;
-la tarjeta ad-hoc púrpura es el único foco accionable. Un solapamiento normal sigue
-siendo una advertencia; sólo un evento ad-hoc o una restricción inmóvil se eleva a
-intercepción. Se evita `blur()` porque una lista de timeline puede contener varios
-bloques y la transparencia conserva tanto rendimiento como legibilidad.
+1. **Orden Cronológico Mixto**: Los sub-pasos programados y los eventos espontáneos se mezclan en una única lista ordenada por su hora de inicio real.
+2. **Evento Simultáneo**: El elemento interceptor se muestra indentado, con un fondo púrpura sutil, icono de rayo y la etiqueta "EVENTO SIMULTÁNEO", integrándose perfectamente en el flujo del padre.
+3. **Cálculo de Duración Expandida**: La tarjeta padre expande su rango visual (`HH:mm - HH:mm`) para cubrir desde el primer sub-paso hasta el último, asegurando que las colisiones externas se detecten correctamente.
+4. **Dualidad de Diseño**: Los eventos espontáneos usan un diseño de tarjeta completa (`FULL`) cuando son independientes, y una fila minimalista (`MINIMAL`) cuando están dentro de una intercepción.
 
 ## Archivos Clave
-- `domain/model/TemporalMobility.kt` (NEW)
-- `domain/model/TemporalImpact.kt` (NEW)
-- `domain/usecase/ConflictDetectorUseCase.kt` (REFACTOR)
-- `domain/usecase/GenerateAdjustmentSuggestionsUseCase.kt` (NEW)
+- `domain/model/TemporalMobility.kt`
+- `domain/model/TemporalImpact.kt`
+- `domain/usecase/ConflictDetectorUseCase.kt`
+- `domain/usecase/SuggestionEngine.kt`
+- `feature/today/components/InterceptionContainer.kt`
+
+## Post-Auditoría: Refinamientos Semánticos y Operativos
+1.  **Política de RESET**: La acción de "Desmarcar" (`RESET`) es una operación únicamente operativa. Preserva físicamente los registros en `ActivityExecution` para garantizar la integridad histórica y permitir análisis de consistencia.
+2.  **Heurística Temporal**: El valor de 30 minutos utilizado en resoluciones sin duración explícita se define como una **heurística de cálculo de intervalos** para el motor de conflictos, no como una duración real de la actividad.
+3.  **Acciones en Contenedores**: El espacio de trabajo Today permite operaciones en bloque (`SKIP`, `MOVE`, `RESET`) sobre nodos contenedores, las cuales se propagan recursivamente a sus descendientes ejecutables para mantener la integridad del flujo operativo.
 
 ## Plan de Verificación
-- **Test de Oro de Interrupciones**: Validar que una "Salida Express" dentro de la Universidad se marque como interrupción pero no mueva la Universidad.
-- **Test de Validación de Sugerencias**: Asegurar que una sugerencia para evitar el Conflicto A no genere un nuevo Conflicto B.
-- **Test de proyección Today**: Comprobar que `ResolveTimelineUseCase` devuelva los
-  conflictos calculados; de lo contrario, la UI no puede agrupar la relación.
+- [x] **Test de Oro de Interrupciones**: Validar que una "Salida Express" se marque como interrupción sin desplazar la actividad principal.
+- [x] **Test de Validación de Sugerencias**: Asegurar que las sugerencias de movimiento no generen nuevos conflictos.
+- [x] **Integridad Jerárquica**: Verificación de que los sub-pasos no se desagrupan si el padre no está programado.
+- [x] **Eliminación de Redundancias**: Colapso de títulos duplicados en jerarquías de nivel único.

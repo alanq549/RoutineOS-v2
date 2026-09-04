@@ -21,7 +21,8 @@ class SuggestionEngine @Inject constructor(
         val start = target.plannedStartTime ?: return emptyList()
         val duration = target.plannedDurationMinutes ?: 30
 
-        // Find relevant immobile blocks or fixed times to jump over
+        // Find relevant immobile blocks or fixed times to jump over.
+        // Uses the 30-min heuristic for interval resolution when explicit bounds are missing.
         val obstacleEndTimes = allInstances
             .filter { it.id != target.id && (it.mobility == TemporalMobility.IMMOBILE || it.plannedStartTime != null) }
             .mapNotNull { 

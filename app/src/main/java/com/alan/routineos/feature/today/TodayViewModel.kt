@@ -106,25 +106,38 @@ class TodayViewModel @Inject constructor(
         val completedTasks = allLeaves.count { it.instance.status == DailyInstanceStatus.COMPLETED }
 
         val initialUiModels = entries.mapIndexed { index, entry ->
-            val subNodeModels = entry.children.map { mapToSubNodeUiModel(it, metaMap, entries) }
+            val nextScheduled = entries.drop(index + 1).find { it.root.instance.plannedStartTime != null }
+            val nextStartTime = nextScheduled?.root?.instance?.plannedStartTime
+            
+            // Sub-node mapping with time inference
+            val subNodeModels = entry.children.mapIndexed { subIndex, child ->
+                val childStartTime = child.root.instance.plannedStartTime ?: run {
+                    val parentStart = entry.root.instance.plannedStartTime
+                    val parentDuration = entry.totalDurationMinutes ?: (entry.children.size * 60)
+                    if (parentStart != null && entry.children.isNotEmpty()) {
+                        parentStart + (parentDuration / entry.children.size) * subIndex
+                    } else parentStart
+                }
+                mapToSubNodeUiModel(child, metaMap, entries, childStartTime)
+            }
+            
             val rootTargetId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
             val rootMeta = metaMap[rootTargetId] ?: MetadataSnapshot()
             
-            val nextScheduled = entries.drop(index + 1).find { it.root.instance.plannedStartTime != null }
-            val nextStartTime = nextScheduled?.root?.instance?.plannedStartTime
-
             entry.toUiModel(subNodeModels, rootMeta, expanded.contains(entry.root.instance.id), currentMinutes, nextStartTime, entries)
         }
 
-        // Interception Grouping Logic
+        // Interception Grouping Logic (Elevated: check if root or ANY subnode is being interrupted)
         val finalUiModels = mutableListOf<TodayTimelineUiModel>()
         val consumedInterrupterIds = mutableSetOf<String>()
 
         initialUiModels.forEach { model ->
             if (consumedInterrupterIds.contains(model.id)) return@forEach
 
-            // Check if this model is being interrupted by something in the list
-            val interruption = model.conflict.details.find { it.isInterruption }
+            // Check if this root model OR any of its descendants are interrupted
+            val allConflicts = collectAllConflicts(model)
+            val interruption = allConflicts.flatMap { it.details }.find { it.isInterruption }
+            
             val interrupter = if (interruption != null) {
                 initialUiModels.find { it.id == interruption.otherInstanceId && it.conflict.isInterrupter }
             } else null
@@ -137,7 +150,6 @@ class TodayViewModel @Inject constructor(
                 ))
                 consumedInterrupterIds.add(interrupter.id)
             } else {
-                // An interrupter without a matching victim remains visible on the timeline.
                 finalUiModels.add(model)
             }
         }
@@ -152,25 +164,52 @@ class TodayViewModel @Inject constructor(
         )
     }
 
+    private fun collectAllConflicts(model: TodayTimelineUiModel): List<ConflictUiModel> {
+        val list = mutableListOf(model.conflict)
+        fun collect(subs: List<TodaySubNodeUiModel>) {
+            subs.forEach { 
+                list.add(it.conflict)
+                collect(it.children)
+            }
+        }
+        collect(model.subNodes)
+        return list
+    }
+
     private fun mapToSubNodeUiModel(
         entry: HierarchicalTimelineEntry, 
         metaMap: Map<String, MetadataSnapshot>,
-        allEntries: List<HierarchicalTimelineEntry>
+        allEntries: List<HierarchicalTimelineEntry>,
+        inferredStartTime: Int? = null
     ): TodaySubNodeUiModel {
         val nodeId = (entry.root.instance.target as? ScheduleTarget.Node)?.id
         val meta = if (nodeId != null) metaMap[nodeId] ?: MetadataSnapshot() else MetadataSnapshot()
         
+        val startTime = entry.root.instance.plannedStartTime ?: inferredStartTime
+        val timeText = startTime?.let { formatMinutes(it) } ?: ""
+
+        val childModels = entry.children.mapIndexed { index, child ->
+            val childStartTime = child.root.instance.plannedStartTime ?: run {
+                val parentDuration = entry.totalDurationMinutes ?: (entry.children.size * 60)
+                if (startTime != null && entry.children.isNotEmpty()) {
+                    startTime + (parentDuration / entry.children.size) * index
+                } else startTime
+            }
+            mapToSubNodeUiModel(child, metaMap, allEntries, childStartTime)
+        }
+        
         return TodaySubNodeUiModel(
             id = entry.root.instance.id,
             title = entry.root.instance.titleSnapshot,
-            timeText = entry.root.instance.plannedStartTime?.let { formatMinutes(it) } ?: "",
+            timeText = timeText,
+            startTimeMinutes = startTime,
             status = entry.root.instance.status,
             contextMetadata = meta.context,
             operationalMetadata = meta.operational,
             completedCount = entry.completedCount,
             totalCount = entry.totalCount,
             completion = entry.completion,
-            children = entry.children.map { mapToSubNodeUiModel(it, metaMap, allEntries) },
+            children = childModels,
             conflict = entry.root.conflict?.toUiModel(allEntries, entry.root.instance) ?: ConflictUiModel(false)
         )
     }
@@ -234,10 +273,18 @@ class TodayViewModel @Inject constructor(
         inferredEndTime: Int?,
         allEntries: List<HierarchicalTimelineEntry>
     ): TodayTimelineUiModel {
-        val start = root.instance.plannedStartTime
-        val duration = root.instance.plannedDurationMinutes
+        val start = root.instance.plannedStartTime ?: effectiveStartTimeMinutes
+        val duration = totalDurationMinutes
         val explicitEnd = root.instance.plannedEndTime ?: if (start != null && duration != null) start + duration else null
         val finalEnd = explicitEnd ?: inferredEndTime
+
+        val timeRange = if (start != null) {
+            if (finalEnd != null && finalEnd > start) {
+                "${formatMinutes(start)} - ${formatMinutes(finalEnd)}"
+            } else {
+                formatMinutes(start)
+            }
+        } else ""
 
         val temporalState = when {
             start != null && currentMinutes < start -> TimelineTemporalState.UPCOMING
@@ -251,7 +298,7 @@ class TodayViewModel @Inject constructor(
             id = root.instance.id,
             title = root.instance.titleSnapshot,
             description = root.instance.descriptionSnapshot,
-            timeRangeText = root.instance.plannedStartTime?.let { formatMinutes(it) } ?: "",
+            timeRangeText = timeRange,
             startTimeMinutes = start,
             endTimeMinutes = finalEnd,
             status = root.instance.status,
@@ -276,19 +323,19 @@ class TodayViewModel @Inject constructor(
                 createStructuralEntry(instanceId.removePrefix("structural_virtual_"))
             } else null
             
-            // Actions only allowed on leaf nodes
-            if (entry == null || entry.children.isNotEmpty()) return@launch
+            if (entry == null) return@launch
 
             when {
-                actionType == "SKIP" -> registerDailyActionUseCase(entry.root, DailyAction.Skip)
-                actionType == "COMPLETE" -> handleCompleteRequest(entry.root)
+                actionType == "SKIP" -> registerDailyActionUseCase(entry, DailyAction.Skip)
+                actionType == "RESET" -> registerDailyActionUseCase(entry, DailyAction.Reset)
+                actionType == "COMPLETE" -> handleCompleteRequest(entry)
                 actionType.startsWith("MOVE_TO:") -> {
                     val minutes = actionType.removePrefix("MOVE_TO:").toInt()
-                    registerDailyActionUseCase(entry.root, DailyAction.Move(minutes))
+                    registerDailyActionUseCase(entry, DailyAction.Move(minutes))
                 }
                 actionType.startsWith("MOVE_CONFIRM") -> {
                     val minutes = actionType.split(":")[1].toInt()
-                    registerDailyActionUseCase(entry.root, DailyAction.Move(minutes))
+                    registerDailyActionUseCase(entry, DailyAction.Move(minutes))
                 }
             }
         }
@@ -312,13 +359,13 @@ class TodayViewModel @Inject constructor(
         )
     }
 
-    private suspend fun handleCompleteRequest(entry: TimelineEntry) {
-        val target = entry.instance.target
+    private suspend fun handleCompleteRequest(entry: HierarchicalTimelineEntry) {
+        val target = entry.root.instance.target
         if (target is ScheduleTarget.Node) {
             val schema = repository.getMetadataSchema(target.id, "NODE").firstOrNull()
             val operationalFields = schema?.fields?.filter { !it.isReadOnly } ?: emptyList()
             if (operationalFields.isNotEmpty()) {
-                _uiState.update { it.copy(captureSchema = schema, captureTargetId = entry.instance.id) }
+                _uiState.update { it.copy(captureSchema = schema, captureTargetId = entry.root.instance.id) }
                 return
             }
         }
@@ -329,7 +376,7 @@ class TodayViewModel @Inject constructor(
     fun onMetadataCaptured(instanceId: String, metadataJson: String) {
         val entry = findEntry(instanceId) ?: return
         viewModelScope.launch {
-            registerDailyActionUseCase(entry.root, DailyAction.Complete(metadataJson))
+            registerDailyActionUseCase(entry, DailyAction.Complete(metadataJson))
             onCloseCapture()
             _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Actividad completada con datos"))
         }
@@ -392,7 +439,7 @@ class TodayViewModel @Inject constructor(
             titleSnapshot = title,
             descriptionSnapshot = "Ad-hoc task",
             plannedStartTime = minutes,
-            plannedDurationMinutes = 30,
+            plannedDurationMinutes = 15,
             status = DailyInstanceStatus.MODIFIED,
             isAdHoc = true
         )

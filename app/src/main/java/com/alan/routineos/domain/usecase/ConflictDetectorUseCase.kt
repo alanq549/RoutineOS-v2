@@ -31,6 +31,10 @@ class ConflictDetectorUseCase @Inject constructor() {
         
         instances.forEach { current ->
             val startA = current.plannedStartTime ?: return@forEach
+            
+            // Temporal Heuristic: If no explicit end or duration is provided, we assume a 30-min 
+            // resolution window for conflict detection. This is NOT a real duration but a 
+            // mathematical anchor for interval resolution.
             val endA = current.plannedEndTime 
                 ?: current.plannedDurationMinutes?.let { startA + it }
                 ?: (startA + 30)
