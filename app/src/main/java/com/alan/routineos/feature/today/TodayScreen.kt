@@ -30,7 +30,14 @@ fun TodayScreen(
     onExpandClick: (String) -> Unit,
     onMetadataCaptured: (String, String) -> Unit,
     onCloseCapture: () -> Unit,
-    onAddAdHoc: (String, Int?) -> Unit,
+    onAddAdHoc: (String, Int?, Int?) -> Unit,
+    onEditSpontaneous: (String) -> Unit,
+    onDismissSpontaneousEditor: () -> Unit,
+    onDeleteInstance: (String) -> Unit,
+    onUpdateInstanceTitle: (String, String) -> Unit,
+    onUpdateInstanceSchedule: (String, Int?, Int?) -> Unit,
+    onConfirmPendingMove: () -> Unit,
+    onCancelPendingMove: () -> Unit,
     uiEvent: SharedFlow<ActivityDetailUiEvent>,
     modifier: Modifier = Modifier,
     bottomBar: @Composable () -> Unit = {}
@@ -86,8 +93,8 @@ fun TodayScreen(
 
     if (showQuickAdd) {
         QuickAddDialog(
-            onConfirm = { title, time -> 
-                onAddAdHoc(title, time)
+            onConfirm = { title, start, end -> 
+                onAddAdHoc(title, start, end)
                 showQuickAdd = false
             },
             onDismiss = { showQuickAdd = false }
@@ -163,8 +170,12 @@ fun TodayScreen(
                 todayTimelineItems(
                     items = uiState.timelineItems,
                     onAction = { id, type ->
-                        if (type == "MOVE_REQUEST") moveTargetId = id
-                        else onAction(id, type)
+                        if (type == "MOVE_REQUEST") {
+                            // If it's ad-hoc, open the structural editor instead of the simple picker
+                            val item = uiState.timelineItems.find { it.id == id }
+                            if (item?.isAdHoc == true) onEditSpontaneous(id)
+                            else moveTargetId = id
+                        } else onAction(id, type)
                     },
                     onExpandClick = onExpandClick
                 )
@@ -203,11 +214,38 @@ fun TodayScreen(
             }
         }
 
+        if (uiState.editingSpontaneousEntry != null) {
+            SpontaneousEditorSheet(
+                entry = uiState.editingSpontaneousEntry,
+                onUpdateTitle = onUpdateInstanceTitle,
+                onUpdateSchedule = onUpdateInstanceSchedule,
+                onDelete = onDeleteInstance,
+                onDismiss = onDismissSpontaneousEditor
+            )
+        }
+
         if (uiState.captureSchema != null && uiState.captureTargetId != null) {
             CaptureMetadataSheet(
                 schema = uiState.captureSchema,
                 onCaptured = { json -> onMetadataCaptured(uiState.captureTargetId, json) },
                 onDismiss = onCloseCapture
+            )
+        }
+
+        if (uiState.pendingMove != null) {
+            ConflictWarningDialog(
+                pendingMove = uiState.pendingMove,
+                onConfirm = onConfirmPendingMove,
+                onDismiss = onCancelPendingMove,
+                onChooseOther = {
+                    val id = uiState.pendingMove.entry.root.instance.id
+                    onCancelPendingMove()
+                    if (uiState.pendingMove.entry.root.instance.isAdHoc) {
+                        onEditSpontaneous(id)
+                    } else {
+                        moveTargetId = id
+                    }
+                }
             )
         }
     }

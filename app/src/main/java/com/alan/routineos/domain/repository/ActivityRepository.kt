@@ -49,6 +49,7 @@ interface ActivityRepository {
     fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>>
     fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>>
     suspend fun upsertDailyInstance(instance: DailyInstance)
+    suspend fun deleteDailyInstance(id: String)
     suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance?
 
     // Metadata Schemas

@@ -19,16 +19,25 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 
+private enum class QuickPickingType { START, END }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickAddDialog(
-    onConfirm: (String, Int?) -> Unit,
+    onConfirm: (String, Int?, Int?) -> Unit,
     onDismiss: () -> Unit
 ) {
     var text by remember { mutableStateOf("") }
     var isScheduleMode by remember { mutableStateOf(false) }
+    
+    // Range State
+    var startTimeMinutes by remember { mutableStateOf<Int?>(null) }
+    var endTimeMinutes by remember { mutableStateOf<Int?>(null) }
+    
+    // Time Picker State
+    var pickingType by remember { mutableStateOf<QuickPickingType?>(null) }
     val timePickerState = rememberTimePickerState()
-    var showTimePicker by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -116,34 +125,6 @@ fun QuickAddDialog(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // CONTEXT & ENERGY (Design Placeholders)
-                Text(
-                    text = "CONTEXTO",
-                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
-                    color = RoutineTheme.colors.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DesignChip("CASA")
-                    DesignChip("TRABAJO")
-                    DesignChip("GYM")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "ENERGÍA",
-                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
-                    color = RoutineTheme.colors.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DesignChip("BAJA")
-                    DesignChip("ALTA")
-                }
-
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // MODE SELECTOR
@@ -166,18 +147,45 @@ fun QuickAddDialog(
                         modifier = Modifier.weight(1f),
                         onClick = { 
                             isScheduleMode = true
-                            showTimePicker = true
+                            if (startTimeMinutes == null) pickingType = QuickPickingType.START
                         }
                     )
                 }
 
                 if (isScheduleMode) {
-                    Text(
-                        text = "Hora: ${formatTime(timePickerState.hour, timePickerState.minute)}",
-                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 12.sp),
-                        color = RoutineTheme.colors.primary,
-                        modifier = Modifier.padding(top = 8.dp).clickable { showTimePicker = true }
-                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        TimeSelectionLink(
+                            label = startTimeMinutes?.let { formatTimeFromMinutes(it) } ?: "Inicio",
+                            isSelected = pickingType == QuickPickingType.START,
+                            onClick = { pickingType = QuickPickingType.START }
+                        )
+                        
+                        Text(
+                            text = "-",
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = RoutineTheme.colors.onSurfaceVariant
+                        )
+
+                        TimeSelectionLink(
+                            label = endTimeMinutes?.let { formatTimeFromMinutes(it) } ?: "Fin",
+                            isSelected = pickingType == QuickPickingType.END,
+                            onClick = { pickingType = QuickPickingType.END }
+                        )
+                    }
+                    
+                    if (errorMessage != null) {
+                        Text(
+                            text = errorMessage!!,
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
+                            color = RoutineTheme.colors.error,
+                            modifier = Modifier.padding(top = 8.dp).align(Alignment.CenterHorizontally)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -185,8 +193,7 @@ fun QuickAddDialog(
                 // PRIMARY ACTION
                 Button(
                     onClick = { 
-                        val time = if (isScheduleMode) timePickerState.hour * 60 + timePickerState.minute else null
-                        onConfirm(text, time) 
+                        onConfirm(text, startTimeMinutes, endTimeMinutes) 
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -196,7 +203,7 @@ fun QuickAddDialog(
                         containerColor = RoutineTheme.colors.primary,
                         contentColor = Color.Black
                     ),
-                    enabled = text.isNotBlank()
+                    enabled = text.isNotBlank() && (!isScheduleMode || startTimeMinutes != null)
                 ) {
                     Text(
                         "Añadir Actividad",
@@ -229,30 +236,70 @@ fun QuickAddDialog(
         }
     }
 
-    if (showTimePicker) {
+    if (pickingType != null) {
         TimePickerDialog(
-            onDismissRequest = { showTimePicker = false },
+            onDismissRequest = { 
+                pickingType = null 
+                errorMessage = null
+            },
             confirmButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text("OK") }
+                TextButton(onClick = {
+                    val minutes = timePickerState.hour * 60 + timePickerState.minute
+                    if (pickingType == QuickPickingType.START) {
+                        startTimeMinutes = minutes
+                        if (endTimeMinutes != null && minutes >= endTimeMinutes!!) {
+                            endTimeMinutes = null
+                        }
+                        errorMessage = null
+                        pickingType = null
+                    } else {
+                        if (startTimeMinutes != null && minutes <= startTimeMinutes!!) {
+                            errorMessage = "La hora de fin debe ser posterior al inicio"
+                        } else {
+                            endTimeMinutes = minutes
+                            errorMessage = null
+                            pickingType = null
+                        }
+                    }
+                }) { Text("OK") }
             }
         ) {
-            TimePicker(state = timePickerState)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                TimePicker(state = timePickerState)
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage!!,
+                        color = RoutineTheme.colors.error,
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun DesignChip(label: String) {
+private fun TimeSelectionLink(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     Surface(
+        onClick = onClick,
         shape = RoundedCornerShape(8.dp),
-        color = RoutineTheme.colors.surface2,
-        border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.3f))
+        color = if (isSelected) RoutineTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent,
+        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.primary) else null
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
-            color = RoutineTheme.colors.onSurfaceVariant
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            style = RoutineTheme.typography.dataLarge.copy(
+                fontSize = 16.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            ),
+            color = if (isSelected) RoutineTheme.colors.primary else RoutineTheme.colors.onSurface
         )
     }
 }
@@ -285,7 +332,11 @@ private fun SelectorOption(
     }
 }
 
-private fun formatTime(h: Int, m: Int): String = "%02d:%02d".format(h, m)
+private fun formatTimeFromMinutes(minutes: Int): String {
+    val h = (minutes / 60) % 24
+    val m = minutes % 60
+    return "%02d:%02d".format(h, m)
+}
 
 @Composable
 fun TimePickerDialog(

@@ -19,5 +19,7 @@ data class DailyInstance(
     val status: DailyInstanceStatus = DailyInstanceStatus.PLANNED,
     val mobility: TemporalMobility = TemporalMobility.FLEXIBLE,
     val sourceRuleId: String? = null,
-    val isAdHoc: Boolean = false
+    val isAdHoc: Boolean = false,
+    val parentInstanceId: String? = null,
+    val backlogId: String? = null
 )

@@ -28,16 +28,24 @@ class ConflictDetectorUseCase @Inject constructor() {
         nodeMap: Map<String, ActivityNode> = emptyMap()
     ): Map<String, ConflictResult> {
         val results = mutableMapOf<String, ConflictResult>()
+        val instanceMap = instances.associateBy { it.id }
         
         instances.forEach { current ->
+            if (hasCycle(current, instanceMap)) {
+                results[current.id] = ConflictResult(
+                    hasConflict = true,
+                    impact = TemporalImpact.WARNING,
+                    details = listOf(ConflictDetail("CYCLE", TemporalRelationship.OVERLAP, TemporalImpact.WARNING, false))
+                )
+                return@forEach
+            }
+
             val startA = current.plannedStartTime ?: return@forEach
             
-            // Temporal Heuristic: If no explicit end or duration is provided, we assume a 30-min 
-            // resolution window for conflict detection. This is NOT a real duration but a 
-            // mathematical anchor for interval resolution.
+            // Point or Range
             val endA = current.plannedEndTime 
                 ?: current.plannedDurationMinutes?.let { startA + it }
-                ?: (startA + 30)
+                ?: (startA + 1) // Treat Point as 1-min interval for overlap check
             
             val details = mutableListOf<ConflictDetail>()
 
@@ -45,12 +53,11 @@ class ConflictDetectorUseCase @Inject constructor() {
                 val startB = other.plannedStartTime ?: return@forEach
                 val endB = other.plannedEndTime
                     ?: other.plannedDurationMinutes?.let { startB + it }
-                    ?: (startB + 30)
+                    ?: (startB + 1)
                 
-                // Overlap check [s, e): s1 < e2 && e1 > s2
                 if (startA < endB && endA > startB) {
                     val rel = determineRelationship(startA, endA, startB, endB)
-                    val imp = determineImpact(current, other, rel, nodeMap)
+                    val imp = determineImpact(current, other, rel, nodeMap, instanceMap)
                     
                     val isInterruption = imp == TemporalImpact.WARNING && (
                         current.isAdHoc ||
@@ -63,6 +70,20 @@ class ConflictDetectorUseCase @Inject constructor() {
                 }
             }
             
+            // Out of Parent Window check
+            current.parentInstanceId?.let { pId ->
+                instanceMap[pId]?.let { parent ->
+                    val pStart = parent.plannedStartTime
+                    val pEnd = parent.plannedEndTime ?: parent.plannedDurationMinutes?.let { pStart?.plus(it) }
+                    
+                    if (pStart != null && pEnd != null) {
+                        if (startA < pStart || endA > pEnd) {
+                            details.add(ConflictDetail(parent.id, TemporalRelationship.OVERLAP, TemporalImpact.WARNING, false))
+                        }
+                    }
+                }
+            }
+
             val worstImpact = details.maxByOrNull { it.impact.ordinal }?.impact ?: TemporalImpact.NONE
             
             results[current.id] = ConflictResult(
@@ -73,6 +94,17 @@ class ConflictDetectorUseCase @Inject constructor() {
         }
         
         return results
+    }
+
+    private fun hasCycle(instance: DailyInstance, map: Map<String, DailyInstance>): Boolean {
+        var current = instance.parentInstanceId
+        val visited = mutableSetOf(instance.id)
+        while (current != null) {
+            if (visited.contains(current)) return true
+            visited.add(current)
+            current = map[current]?.parentInstanceId
+        }
+        return false
     }
 
     private fun determineRelationship(s1: Int, e1: Int, s2: Int, e2: Int): TemporalRelationship {
@@ -89,33 +121,43 @@ class ConflictDetectorUseCase @Inject constructor() {
         current: DailyInstance, 
         other: DailyInstance, 
         rel: TemporalRelationship,
-        nodeMap: Map<String, ActivityNode>
+        nodeMap: Map<String, ActivityNode>,
+        instanceMap: Map<String, DailyInstance>
     ): TemporalImpact {
-        val isStructural = isStructuralChild(current, other, nodeMap) || isStructuralChild(other, current, nodeMap)
+        val currentIsChild = isStructuralChild(current, other, nodeMap, instanceMap)
+        val otherIsChild = isStructuralChild(other, current, nodeMap, instanceMap)
+        val isStructural = currentIsChild || otherIsChild
         
-        // INFO only if there is a real structural relationship and it's a container relationship
-        if (isStructural && (rel == TemporalRelationship.CONTAINS || rel == TemporalRelationship.CONTAINED_BY)) {
+        if (isStructural) {
+            if (currentIsChild && rel != TemporalRelationship.CONTAINED_BY) return TemporalImpact.WARNING
+            if (otherIsChild && rel != TemporalRelationship.CONTAINS) return TemporalImpact.WARNING
             return TemporalImpact.INFO
         }
 
-        // WARNING if they are independent overlaps or one is immobile
-        if (!isStructural) {
-            return TemporalImpact.WARNING
-        }
-
-        return TemporalImpact.NONE
+        return TemporalImpact.WARNING
     }
 
-    private fun isStructuralChild(child: DailyInstance, parent: DailyInstance, nodeMap: Map<String, ActivityNode>): Boolean {
+    private fun isStructuralChild(
+        child: DailyInstance, 
+        parent: DailyInstance, 
+        nodeMap: Map<String, ActivityNode>,
+        instanceMap: Map<String, DailyInstance>
+    ): Boolean {
+        var currentAdHocParentId = child.parentInstanceId
+        while (currentAdHocParentId != null) {
+            if (currentAdHocParentId == parent.id) return true
+            currentAdHocParentId = instanceMap[currentAdHocParentId]?.parentInstanceId
+        }
+
         val childNodeId = (child.target as? ScheduleTarget.Node)?.id ?: return false
         val node = nodeMap[childNodeId] ?: return false
 
         when (val parentTarget = parent.target) {
             is ScheduleTarget.Node -> {
-                var currentParentId = node.parentId
-                while (currentParentId != null) {
-                    if (currentParentId == parentTarget.id) return true
-                    currentParentId = nodeMap[currentParentId]?.parentId
+                var currentId = node.parentId
+                while (currentId != null) {
+                    if (currentId == parentTarget.id) return true
+                    currentId = nodeMap[currentId]?.parentId
                 }
             }
             is ScheduleTarget.Definition -> {

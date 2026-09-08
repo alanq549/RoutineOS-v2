@@ -74,7 +74,7 @@ class SoftDeletePersistenceTest {
         val nodeDeleted = ActivityNodeEntity("n_del", defId, null, 0, "Deleted", isDeleted = true)
         nodeDao.insertNode(nodeDeleted)
         
-        val rule = ScheduleRuleEntity("r1", activityNodeId = "n_del", type = "FIXED_DAYS")
+        val rule = ScheduleRuleEntity("r1", targetId = "n_del", targetType = "NODE", type = "FIXED_DAYS")
         ruleDao.insertRule(rule)
 
         val result = ruleDao.getRulesForNode("n_del").first()
@@ -90,7 +90,15 @@ class SoftDeletePersistenceTest {
         val node = ActivityNodeEntity("n1", defId, null, 0, "Title", isDeleted = true)
         nodeDao.insertNode(node)
         
-        val execution = ActivityExecutionEntity("e1", "n1", scheduledDate = 0L, completedAt = 1000L)
+        val execution = ActivityExecutionEntity(
+            id = "e1", 
+            nodeId = "n1", 
+            scheduledDate = 0L, 
+            completedAt = 1000L,
+            activityIdSnapshot = defId,
+            systemIdSnapshot = null,
+            titleSnapshot = "Title"
+        )
         executionDao.insertExecution(execution)
 
         val result = executionDao.getExecutionsForNode("n1").first()

@@ -118,13 +118,19 @@ class OfflineActivityRepository @Inject constructor(
     }
 
     override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {
+        val node = activityNodeDao.getNodeById(nodeId)?.toDomain()
+        val definition = node?.let { activityDefinitionDao.getActivityDefinitionById(it.activityDefinitionId)?.toDomain() }
+
         val execution = ActivityExecution(
             id = UUID.randomUUID().toString(),
             nodeId = nodeId,
             dailyInstanceId = dailyInstanceId,
             scheduledDate = scheduledDate,
             completedAt = System.currentTimeMillis(),
-            metadataJson = metadataJson
+            metadataJson = metadataJson,
+            activityIdSnapshot = definition?.id ?: "UNKNOWN",
+            systemIdSnapshot = definition?.systemId,
+            titleSnapshot = node?.title ?: "Deleted Activity"
         )
         activityExecutionDao.insertExecution(execution.toEntity())
     }
@@ -235,6 +241,10 @@ class OfflineActivityRepository @Inject constructor(
 
     override suspend fun upsertDailyInstance(instance: DailyInstance) {
         dailyInstanceDao.insertInstance(instance.toEntity())
+    }
+
+    override suspend fun deleteDailyInstance(id: String) {
+        dailyInstanceDao.deleteInstanceById(id)
     }
 
     override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? {

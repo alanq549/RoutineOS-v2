@@ -18,7 +18,14 @@ fun TodayRoute(
         onExpandClick = viewModel::toggleExpand,
         onMetadataCaptured = viewModel::onMetadataCaptured,
         onCloseCapture = viewModel::onCloseCapture,
-        onAddAdHoc = viewModel::onAddAdHoc,
+        onAddAdHoc = { title, start, end -> viewModel.onAddAdHoc(title, start, null, end) },
+        onEditSpontaneous = viewModel::onEditSpontaneous,
+        onDismissSpontaneousEditor = viewModel::onDismissSpontaneousEditor,
+        onDeleteInstance = viewModel::onDeleteInstance,
+        onUpdateInstanceTitle = viewModel::onUpdateInstanceTitle,
+        onUpdateInstanceSchedule = viewModel::onUpdateInstanceSchedule,
+        onConfirmPendingMove = viewModel::onConfirmPendingMove,
+        onCancelPendingMove = viewModel::onCancelPendingMove,
         uiEvent = viewModel.uiEvent,
         bottomBar = bottomBar
     )

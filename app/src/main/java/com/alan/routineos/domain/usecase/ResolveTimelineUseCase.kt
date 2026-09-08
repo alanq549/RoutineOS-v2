@@ -16,13 +16,13 @@ data class TimelineEntry(
  * Resolves the timeline for a specific date by merging rules, exceptions, and persisted instances.
  * Delegated to TimelineResolutionEngine for semantic consistency.
  */
-class ResolveTimelineUseCase @Inject constructor(
+open class ResolveTimelineUseCase @Inject constructor(
     private val repository: ActivityRepository,
     private val resolutionEngine: TimelineResolutionEngine,
     private val conflictDetector: ConflictDetectorUseCase,
     private val suggestionEngine: SuggestionEngine
 ) {
-    operator fun invoke(date: LocalDate): Flow<List<TimelineEntry>> {
+    open operator fun invoke(date: LocalDate): Flow<List<TimelineEntry>> {
         val epochDay = date.toEpochDay()
 
         return combine(

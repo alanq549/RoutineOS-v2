@@ -13,6 +13,18 @@ fun PlanningRoute(
 
     PlanningScreen(
         uiState = uiState,
-        onDaySelected = viewModel::onDaySelected
+        onDaySelected = viewModel::onDaySelected,
+        onAction = viewModel::onActionTriggered,
+        onAddAdHoc = viewModel::onAddAdHoc,
+        onAddFromCatalog = viewModel::onAddFromCatalog,
+        onOpenCatalog = viewModel::onOpenCatalog,
+        onCloseCatalog = viewModel::onCloseCatalog,
+        onDismissSpontaneousEditor = viewModel::onDismissSpontaneousEditor,
+        onUpdateSpontaneousTitle = viewModel::onUpdateSpontaneousTitle,
+        onUpdateSpontaneousSchedule = viewModel::onUpdateSpontaneousSchedule,
+        onDeleteInstance = viewModel::onDeleteInstance,
+        onExpandClick = viewModel::toggleExpand,
+        onConfirmPendingMove = viewModel::onConfirmPendingMove,
+        onCancelPendingMove = viewModel::onCancelPendingMove
     )
 }

@@ -154,6 +154,13 @@ fun NormalTimelineCard(
                         }
                     }
 
+                    // Quick Delete for Spontaneous (Ad-Hoc)
+                    if (item.isAdHoc && !isCompleted && !isOmitted) {
+                        IconButton(onClick = { onAction(item.id, "DELETE_INSTANCE") }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.DeleteOutline, "Borrar", tint = RoutineTheme.colors.error.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
+                        }
+                    }
+
                     Box {
                         IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
                             Icon(Icons.Default.MoreVert, "Acciones", tint = RoutineTheme.colors.onSurfaceVariant)
@@ -162,9 +169,21 @@ fun NormalTimelineCard(
                             if (!isCompleted && !isOmitted) {
                                 RoutineDropdownMenuItem(
                                     text = "Editar",
-                                    onClick = { showMenu = false; onAction(item.id, "MOVE_REQUEST") },
+                                    onClick = { 
+                                        showMenu = false
+                                        if (item.isAdHoc) onAction(item.id, "EDIT_SPONTANEOUS")
+                                        else onAction(item.id, "MOVE_REQUEST") 
+                                    },
                                     icon = Icons.Default.Edit
                                 )
+                                if (item.isAdHoc) {
+                                    RoutineDropdownMenuItem(
+                                        text = "Borrar",
+                                        onClick = { showMenu = false; onAction(item.id, "DELETE_INSTANCE") },
+                                        icon = Icons.Default.Delete,
+                                        iconColor = RoutineTheme.colors.error
+                                    )
+                                }
                                 RoutineDropdownMenuItem(
                                     text = "Omitir",
                                     onClick = { showMenu = false; onAction(item.id, "SKIP") },
@@ -374,7 +393,11 @@ private fun MinimalSpontaneousRow(
                     if (!isCompleted && !isOmitted) {
                         RoutineDropdownMenuItem(
                             text = "Editar",
-                            onClick = { showMenu = false; onAction(item.id, "MOVE_REQUEST") },
+                            onClick = { 
+                                showMenu = false
+                                if (item.isAdHoc) onAction(item.id, "EDIT_SPONTANEOUS")
+                                else onAction(item.id, "MOVE_REQUEST") 
+                            },
                             icon = Icons.Default.Edit
                         )
                         RoutineDropdownMenuItem(

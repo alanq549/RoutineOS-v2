@@ -27,6 +27,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-009 | Interruption & Intersection Logic | High | Medium | AI Agent | EC-RE-008 | CLOSED | PASS. Handling rigid tasks and spontaneous events with fluid UI. |
 | EC-RE-010 | Historical Analysis & Trends | High | Large | AI Agent | EC-RE-009 | CLOSED | PASS. Analytics engine for KPIs and trends implemented and audited (60 tests). |
 | EC-RE-011 | Intelligence Dashboard | High | Medium | AI Agent | EC-RE-010 | CLOSED | PASS. Visual analytics, weekly rhythm and adherence charts implemented. |
+| EC-RE-012 | Planificador (Planner) MVP | High | Large | AI Agent | EC-RE-011 | CLOSED | PASS. Interactive timeline with Move, Skip and Catalog integration. |
 
 ---
 

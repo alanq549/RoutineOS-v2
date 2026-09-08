@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 /**
  * Resolves the daily timeline and organizes it into a recursive hierarchy.
- * Discovers structural nodes to allow manual materialization of sub-steps.
+ * Discovers structural nodes and ad-hoc temporal hierarchies.
  * Calculates completion status derived exclusively from executable leaf nodes.
  */
 class GetHierarchicalTimelineUseCase @Inject constructor(
@@ -39,6 +39,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         val adHocEntries = flatTimeline.filter { it.instance.target == null }
         
         val entryMap = structuralEntries.associateBy { getEntryTargetKey(it) }
+        val adHocMap = adHocEntries.associateBy { it.instance.id }
 
         // 1. Identify all scheduled structural targets and their ancestors
         val allTargetKeysInHierarchy = mutableSetOf<String>()
@@ -55,7 +56,6 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                     currentId = nodeMap[currentId]?.parentId
                 }
                 
-                // Only add Definition as a grouper if it's actually needed
                 val defId = nodeMap[target.id]?.activityDefinitionId
                 if (defId != null) {
                     val definitionKey = "DEF_$defId"
@@ -79,11 +79,12 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
 
         val structuralRoots = rootKeys.mapNotNull { key ->
             val entry = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)
-            entry?.let { buildEntryNode(it, nodeMap, entryMap, allNodes, date, mutableSetOf()) }
+            entry?.let { buildEntryNode(it, nodeMap, entryMap, adHocMap, allNodes, date, mutableSetOf()) }
         }
         
-        // 3. Ad-hoc entries are always roots in the hierarchical view
-        val adHocRoots = adHocEntries.map { createLeaf(it) }
+        // 3. Ad-hoc roots (instances with target == null and parentInstanceId == null)
+        val adHocRoots = adHocEntries.filter { it.instance.parentInstanceId == null }
+            .map { buildEntryNode(it, nodeMap, entryMap, adHocMap, allNodes, date, mutableSetOf()) }
 
         return (structuralRoots + adHocRoots).sortedBy { it.effectiveStartTimeMinutes ?: Int.MAX_VALUE }
     }
@@ -148,59 +149,75 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         entry: TimelineEntry,
         nodeMap: Map<String, ActivityNode>,
         entryMap: Map<String, TimelineEntry>,
+        adHocMap: Map<String, TimelineEntry>,
         allNodes: List<ActivityNode>,
         date: LocalDate,
-        visited: MutableSet<String> // Prevent infinite loops
+        visited: MutableSet<String>
     ): HierarchicalTimelineEntry {
-        val target = entry.instance.target
-        val targetKey = getEntryTargetKey(entry)
+        val targetKey = if (entry.instance.target != null) getEntryTargetKey(entry) else "ADHOC_${entry.instance.id}"
         
-        if (targetKey != "UNKNOWN" && visited.contains(targetKey)) {
-            // Cycle detected, return leaf
-            return createLeaf(entry)
-        }
-        if (targetKey != "UNKNOWN") visited.add(targetKey)
+        if (visited.contains(targetKey)) return createLeaf(entry)
+        visited.add(targetKey)
         
-        // Discover structural children from the global node list
-        val structuralChildren = when (target) {
-            is ScheduleTarget.Node -> allNodes.filter { it.parentId == target.id }
-            is ScheduleTarget.Definition -> allNodes.filter { it.activityDefinitionId == target.id && it.parentId == null }
+        val children = when {
+            entry.instance.target is ScheduleTarget.Node -> {
+                allNodes.filter { it.parentId == entry.instance.target.id }.map { childNode ->
+                    val childKey = "NODE_${childNode.id}"
+                    entryMap[childKey] ?: createVirtualStructuralEntry(childNode, date)
+                }
+            }
+            entry.instance.target is ScheduleTarget.Definition -> {
+                allNodes.filter { it.activityDefinitionId == entry.instance.target.id && it.parentId == null }.map { childNode ->
+                    val childKey = "NODE_${childNode.id}"
+                    entryMap[childKey] ?: createVirtualStructuralEntry(childNode, date)
+                }
+            }
+            entry.instance.target == null -> {
+                adHocMap.values.filter { it.instance.parentInstanceId == entry.instance.id }
+            }
             else -> emptyList()
         }
         
-        val recursiveChildren = structuralChildren.map { childNode ->
-            val childKey = "NODE_${childNode.id}"
-            val childEntry = entryMap[childKey] ?: createVirtualStructuralEntry(childNode, date)
-            buildEntryNode(childEntry, nodeMap, entryMap, allNodes, date, visited.toMutableSet())
+        val recursiveChildren = children.map { childEntry ->
+            buildEntryNode(childEntry, nodeMap, entryMap, adHocMap, allNodes, date, visited.toMutableSet())
         }
 
         return if (recursiveChildren.isEmpty()) {
             createLeaf(entry)
         } else {
-            // CONTAINER NODE: Completion is derived from ALL descendant leaves recursively
             val totalLeaves = recursiveChildren.sumOf { it.totalCount }
             val completedLeaves = recursiveChildren.sumOf { it.completedCount }
             
-            // Effective Start Time: min of own start or children's effective start
+            // Temporal Logic V3:
+            val explicitStart = entry.instance.plannedStartTime
             val childrenStart = recursiveChildren.mapNotNull { it.effectiveStartTimeMinutes }.minOrNull()
-            val effectiveStart = entry.instance.plannedStartTime ?: childrenStart
+            
+            // Rule: Explicit start is immutable.
+            val effectiveStart = explicitStart ?: childrenStart
 
-            // Duration calculation: respect explicit root duration or calculate from children bounds
+            // Duration Logic V3:
             val explicitDuration = entry.instance.plannedDurationMinutes
-            val childrenDuration = if (recursiveChildren.any { it.root.instance.plannedStartTime != null || it.totalDurationMinutes != null }) {
+            val explicitEnd = entry.instance.plannedEndTime
+            
+            // Derivation only if NOT explicit range
+            val childrenDuration = if (recursiveChildren.any { it.effectiveStartTimeMinutes != null || it.totalDurationMinutes != null }) {
                 val start = effectiveStart
                 val maxEnd = recursiveChildren.mapNotNull { child ->
                     val childStart = child.effectiveStartTimeMinutes
-                    val childDur = child.totalDurationMinutes ?: 30
+                    val childDur = child.totalDurationMinutes ?: 0 // Points contribute 0 to range extension
                     if (childStart != null) childStart + childDur else null
                 }.maxOrNull()
                 
-                if (start != null && maxEnd != null) maxEnd - start else recursiveChildren.sumOf { it.totalDurationMinutes ?: 30 }
+                if (start != null && maxEnd != null && maxEnd > start) maxEnd - start else 0
             } else {
-                recursiveChildren.size * 60 // Default fallback for virtual children
+                0
             }
             
-            val totalDuration = explicitDuration ?: childrenDuration
+            val totalDuration = when {
+                explicitEnd != null && explicitStart != null -> explicitEnd - explicitStart
+                explicitDuration != null -> explicitDuration
+                else -> childrenDuration
+            }
 
             val completion = when {
                 completedLeaves == totalLeaves -> HierarchyCompletion.COMPLETED
@@ -213,7 +230,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                 children = recursiveChildren,
                 completedCount = completedLeaves,
                 totalCount = totalLeaves,
-                totalDurationMinutes = totalDuration,
+                totalDurationMinutes = if (totalDuration > 0) totalDuration else null,
                 effectiveStartTimeMinutes = effectiveStart,
                 completion = completion
             )

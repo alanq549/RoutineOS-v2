@@ -20,4 +20,7 @@ interface DailyInstanceDao {
 
     @Delete
     suspend fun deleteInstance(instance: DailyInstanceEntity)
+
+    @Query("DELETE FROM daily_instances WHERE id = :id")
+    suspend fun deleteInstanceById(id: String)
 }

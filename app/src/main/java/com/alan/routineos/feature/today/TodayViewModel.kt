@@ -24,6 +24,8 @@ class TodayViewModel @Inject constructor(
     private val repository: ActivityRepository,
     private val getHierarchicalTimelineUseCase: GetHierarchicalTimelineUseCase,
     private val registerDailyActionUseCase: RegisterDailyActionUseCase,
+    private val distributeChildrenInWindowUseCase: DistributeChildrenInWindowUseCase,
+    private val simulateMoveUseCase: SimulateMoveUseCase,
     private val timeProvider: TimeProvider
 ) : ViewModel() {
 
@@ -52,7 +54,15 @@ class TodayViewModel @Inject constructor(
             combine(nodesFlow, timelineFlow, expandedIds, timeProvider.minuteTicker) { _, entries, expanded, _ ->
                 currentEntries = entries
                 resolveMetadataForEntries(entries).map { metaMap ->
-                    mapToUiState(entries, metaMap, expanded, today, dateFormatter)
+                    mapToUiState(
+                        entries = entries, 
+                        metaMap = metaMap, 
+                        expanded = expanded, 
+                        today = today, 
+                        dateFormatter = dateFormatter,
+                        currentEditing = _uiState.value.editingSpontaneousEntry,
+                        currentSuggestions = _uiState.value.temporalSuggestions
+                    )
                 }
             }.flatMapLatest { it }.collect { newState ->
                 _uiState.value = newState
@@ -96,7 +106,9 @@ class TodayViewModel @Inject constructor(
         metaMap: Map<String, MetadataSnapshot>,
         expanded: Set<String>,
         today: LocalDate,
-        dateFormatter: DateTimeFormatter
+        dateFormatter: DateTimeFormatter,
+        currentEditing: HierarchicalTimelineEntry? = null,
+        currentSuggestions: List<SuggestedTimeWindow> = emptyList()
     ): TodayUiState {
         val now = timeProvider.now()
         val currentMinutes = now.hour * 60 + now.minute
@@ -160,7 +172,9 @@ class TodayViewModel @Inject constructor(
             progress = TodayProgress(completedTasks, totalTasks),
             timelineItems = finalUiModels,
             nextActivity = findNextActivity(finalUiModels),
-            focusItemId = calculateFocusItemId(finalUiModels)
+            focusItemId = calculateFocusItemId(finalUiModels),
+            editingSpontaneousEntry = currentEditing,
+            temporalSuggestions = currentSuggestions
         )
     }
 
@@ -279,7 +293,11 @@ class TodayViewModel @Inject constructor(
         val finalEnd = explicitEnd ?: inferredEndTime
 
         val timeRange = if (start != null) {
-            if (finalEnd != null && finalEnd > start) {
+            val isExplicitPoint = root.instance.plannedStartTime != null && 
+                                root.instance.plannedEndTime == null && 
+                                root.instance.plannedDurationMinutes == null
+            
+            if (!isExplicitPoint && finalEnd != null && finalEnd > start) {
                 "${formatMinutes(start)} - ${formatMinutes(finalEnd)}"
             } else {
                 formatMinutes(start)
@@ -335,10 +353,70 @@ class TodayViewModel @Inject constructor(
                 }
                 actionType.startsWith("MOVE_CONFIRM") -> {
                     val minutes = actionType.split(":")[1].toInt()
-                    registerDailyActionUseCase(entry, DailyAction.Move(minutes))
+                    onAttemptMove(instanceId, minutes)
                 }
+                actionType == "EDIT_SPONTANEOUS" -> onEditSpontaneous(instanceId)
+                actionType == "DELETE_INSTANCE" -> onDeleteInstance(instanceId)
             }
         }
+    }
+
+    private fun onAttemptMove(instanceId: String, newStartTime: Int, newEndTime: Int? = null) {
+        val entry = findEntry(instanceId) ?: return
+        
+        // 1. Collect current instances for simulation
+        val currentInstances = collectAllInstances(currentEntries)
+        
+        // 2. Simulate
+        val conflict = simulateMoveUseCase(
+            currentInstances = currentInstances,
+            targetId = instanceId,
+            newStartTime = newStartTime,
+            newEndTime = newEndTime
+        )
+
+        // 3. Decision
+        if (conflict.impact == TemporalImpact.WARNING) {
+            _uiState.update { it.copy(pendingMove = PendingMove(entry, newStartTime, newEndTime, conflict)) }
+        } else {
+            performMove(entry, newStartTime)
+        }
+    }
+
+    fun onConfirmPendingMove() {
+        val pending = _uiState.value.pendingMove ?: return
+        
+        // If it was an ad-hoc edit through the sheet, it might have an explicit end.
+        // If it was a timeline move, we use the recursive logic.
+        if (pending.entry.root.instance.isAdHoc && pending.newEndTime != null) {
+            performUpdateSchedule(pending.entry, pending.newStartTime, pending.newEndTime)
+        } else {
+            performMove(pending.entry, pending.newStartTime)
+        }
+        onCancelPendingMove()
+    }
+
+    fun onCancelPendingMove() {
+        _uiState.update { it.copy(pendingMove = null) }
+    }
+
+    private fun performMove(entry: HierarchicalTimelineEntry, newStartTime: Int) {
+        viewModelScope.launch {
+            registerDailyActionUseCase(entry, DailyAction.Move(newStartTime))
+            _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Actividad reprogramada"))
+        }
+    }
+
+    private fun collectAllInstances(entries: List<HierarchicalTimelineEntry>): List<DailyInstance> {
+        val list = mutableListOf<DailyInstance>()
+        fun collect(items: List<HierarchicalTimelineEntry>) {
+            items.forEach { 
+                list.add(it.root.instance)
+                collect(it.children)
+            }
+        }
+        collect(entries)
+        return list
     }
 
     private suspend fun createStructuralEntry(nodeId: String): HierarchicalTimelineEntry? {
@@ -429,23 +507,126 @@ class TodayViewModel @Inject constructor(
         return items.last().id
     }
 
-    fun onAddAdHoc(title: String, startTime: Int? = null) {
+    fun onAddAdHoc(
+        title: String,
+        startTime: Int? = null,
+        parentInstanceId: String? = null,
+        endTime: Int? = null
+    ) {
         val today = LocalDate.now()
         val minutes = startTime ?: (LocalTime.now().hour * 60 + LocalTime.now().minute)
+        val duration = if (startTime != null && endTime != null) endTime - startTime else null
+        
         val adHocInstance = DailyInstance(
             id = UUID.randomUUID().toString(),
             target = null,
             scheduledDate = today.toEpochDay(),
             titleSnapshot = title,
             descriptionSnapshot = "Ad-hoc task",
-            plannedStartTime = minutes,
-            plannedDurationMinutes = 15,
+            plannedStartTime = if (startTime == null && endTime == null) null else minutes,
+            plannedEndTime = endTime,
+            plannedDurationMinutes = duration,
             status = DailyInstanceStatus.MODIFIED,
-            isAdHoc = true
+            isAdHoc = true,
+            parentInstanceId = parentInstanceId
         )
         viewModelScope.launch {
             repository.upsertDailyInstance(adHocInstance)
             _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Actividad añadida"))
+        }
+    }
+
+    fun onDistributeChildren(parentInstanceId: String) {
+        val parentEntry = findEntry(parentInstanceId) ?: return
+        val childrenWithoutTime = parentEntry.children
+            .filter { it.root.instance.plannedStartTime == null }
+            .map { it.root.instance }
+
+        if (childrenWithoutTime.isEmpty()) return
+
+        val suggestions = distributeChildrenInWindowUseCase(parentEntry.root.instance, childrenWithoutTime)
+        _uiState.update { it.copy(temporalSuggestions = suggestions) }
+    }
+
+    fun onConfirmDistribution(suggestions: List<SuggestedTimeWindow>) {
+        viewModelScope.launch {
+            suggestions.forEach { suggestion ->
+                val entry = findEntry(suggestion.childId) ?: return@forEach
+                val updatedInstance = entry.root.instance.copy(
+                    plannedStartTime = suggestion.startTimeMinutes,
+                    plannedEndTime = suggestion.endTimeMinutes,
+                    plannedDurationMinutes = suggestion.endTimeMinutes - suggestion.startTimeMinutes,
+                    status = DailyInstanceStatus.MODIFIED
+                )
+                repository.upsertDailyInstance(updatedInstance)
+            }
+            _uiState.update { it.copy(temporalSuggestions = emptyList()) }
+            _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Horarios aplicados"))
+        }
+    }
+
+    fun clearSuggestions() {
+        _uiState.update { it.copy(temporalSuggestions = emptyList()) }
+    }
+
+    fun onEditSpontaneous(id: String) {
+        val entry = findEntry(id) ?: return
+        _uiState.update { it.copy(editingSpontaneousEntry = entry) }
+    }
+
+    fun onDismissSpontaneousEditor() {
+        _uiState.update { it.copy(editingSpontaneousEntry = null) }
+    }
+
+    fun onDeleteInstance(id: String) {
+        viewModelScope.launch {
+            repository.deleteDailyInstance(id)
+            onDismissSpontaneousEditor()
+            _uiEvent.emit(ActivityDetailUiEvent.SchedulingUpsertSuccess("Actividad eliminada"))
+        }
+    }
+
+    fun onUpdateInstanceTitle(id: String, title: String) {
+        val entry = findEntry(id) ?: return
+        val updated = entry.root.instance.copy(titleSnapshot = title)
+        viewModelScope.launch {
+            repository.upsertDailyInstance(updated)
+            if (_uiState.value.editingSpontaneousEntry?.root?.instance?.id == id) {
+                _uiState.update { it.copy(editingSpontaneousEntry = entry.copy(root = entry.root.copy(instance = updated))) }
+            }
+        }
+    }
+
+    fun onUpdateInstanceSchedule(id: String, startTime: Int?, endTime: Int?) {
+        val entry = findEntry(id) ?: return
+        
+        if (startTime != null) {
+            val currentInstances = collectAllInstances(currentEntries)
+            val simulation = simulateMoveUseCase(currentInstances, id, startTime, endTime)
+            
+            if (simulation.impact == TemporalImpact.WARNING) {
+                _uiState.update { it.copy(pendingMove = PendingMove(entry, startTime, endTime, simulation)) }
+                return
+            }
+        }
+        
+        performUpdateSchedule(entry, startTime, endTime)
+    }
+
+    private fun performUpdateSchedule(entry: HierarchicalTimelineEntry, startTime: Int?, endTime: Int?) {
+        val duration = if (startTime != null && endTime != null) endTime - startTime else null
+        val updated = entry.root.instance.copy(
+            plannedStartTime = startTime,
+            plannedEndTime = endTime,
+            plannedDurationMinutes = duration,
+            status = DailyInstanceStatus.MODIFIED
+        )
+        viewModelScope.launch {
+            repository.upsertDailyInstance(updated)
+            // Refresh editor state to prevent UI desync or accidental dismissal
+            if (_uiState.value.editingSpontaneousEntry?.root?.instance?.id == entry.root.instance.id) {
+                _uiState.update { it.copy(editingSpontaneousEntry = entry.copy(root = entry.root.copy(instance = updated))) }
+            }
         }
     }
 }

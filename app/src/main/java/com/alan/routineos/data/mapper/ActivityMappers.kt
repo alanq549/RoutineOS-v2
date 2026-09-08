@@ -58,7 +58,10 @@ fun ActivityExecutionEntity.toDomain(): ActivityExecution {
         dailyInstanceId = dailyInstanceId,
         scheduledDate = scheduledDate,
         completedAt = completedAt,
-        metadataJson = metadataJson
+        metadataJson = metadataJson,
+        activityIdSnapshot = activityIdSnapshot,
+        systemIdSnapshot = systemIdSnapshot,
+        titleSnapshot = titleSnapshot
     )
 }
 
@@ -69,7 +72,10 @@ fun ActivityExecution.toEntity(): ActivityExecutionEntity {
         dailyInstanceId = dailyInstanceId,
         scheduledDate = scheduledDate,
         completedAt = completedAt,
-        metadataJson = metadataJson
+        metadataJson = metadataJson,
+        activityIdSnapshot = activityIdSnapshot,
+        systemIdSnapshot = systemIdSnapshot,
+        titleSnapshot = titleSnapshot
     )
 }
 
@@ -151,7 +157,9 @@ fun DailyInstanceEntity.toDomain(): DailyInstance {
         status = DailyInstanceStatus.valueOf(status),
         mobility = TemporalMobility.valueOf(mobility),
         sourceRuleId = sourceRuleId,
-        isAdHoc = targetType == "AD_HOC"
+        isAdHoc = targetType == "AD_HOC",
+        parentInstanceId = parentInstanceId,
+        backlogId = backlogId
     )
 }
 
@@ -178,7 +186,9 @@ fun DailyInstance.toEntity(): DailyInstanceEntity {
         plannedDurationMinutes = plannedDurationMinutes,
         status = status.name,
         mobility = mobility.name,
-        sourceRuleId = sourceRuleId
+        sourceRuleId = sourceRuleId,
+        parentInstanceId = parentInstanceId,
+        backlogId = backlogId
     )
 }
 
@@ -229,5 +239,63 @@ fun LifeSystem.toEntity(): SystemEntity {
         iconKey = iconKey,
         colorHex = colorHex,
         isArchived = isArchived
+    )
+}
+
+fun BacklogItemEntity.toDomain(): BacklogItem {
+    return BacklogItem(
+        id = id,
+        definitionId = definitionId,
+        title = title,
+        status = BacklogItemStatus.valueOf(status)
+    )
+}
+
+fun BacklogItem.toEntity(): BacklogItemEntity {
+    return BacklogItemEntity(
+        id = id,
+        definitionId = definitionId,
+        title = title,
+        status = status.name
+    )
+}
+
+fun DeadlineEntity.toDomain(): Deadline {
+    return Deadline(
+        id = id,
+        dueAt = dueAt,
+        definitionId = definitionId,
+        backlogId = backlogId,
+        instanceId = instanceId
+    )
+}
+
+fun Deadline.toEntity(): DeadlineEntity {
+    return DeadlineEntity(
+        id = id,
+        dueAt = dueAt,
+        definitionId = definitionId,
+        backlogId = backlogId,
+        instanceId = instanceId
+    )
+}
+
+fun NoteEntity.toDomain(): Note {
+    return Note(
+        id = id,
+        content = content,
+        definitionId = definitionId,
+        backlogId = backlogId,
+        instanceId = instanceId
+    )
+}
+
+fun Note.toEntity(): NoteEntity {
+    return NoteEntity(
+        id = id,
+        content = content,
+        definitionId = definitionId,
+        backlogId = backlogId,
+        instanceId = instanceId
     )
 }

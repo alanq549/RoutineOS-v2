@@ -90,13 +90,14 @@ class RegisterDailyActionUseCase @Inject constructor(
     private suspend fun handleResetRecursive(entry: HierarchicalTimelineEntry) {
         val instance = materializeIfVirtual(entry.root)
         
-        val targetStatus = if (instance.isAdHoc || instance.sourceRuleId == null) {
-            DailyInstanceStatus.MODIFIED 
+        if (instance.sourceRuleId != null) {
+            // Rule Override: Delete the instance to revert to original rule projection
+            repository.deleteDailyInstance(instance.id)
         } else {
-            DailyInstanceStatus.PLANNED
+            // Pure Ad-hoc: Reset status to initial state
+            val targetStatus = DailyInstanceStatus.MODIFIED
+            repository.upsertDailyInstance(instance.copy(status = targetStatus))
         }
-        
-        repository.upsertDailyInstance(instance.copy(status = targetStatus))
 
         // IMPORTANT: Non-destructive RESET. We do NOT delete ActivityExecution records.
         // History analysis will filter based on the final DailyInstance status.

@@ -20,12 +20,15 @@ class HistoricalOccurrenceResolver @Inject constructor(
         val rules = repository.getAllRules().first()
         val exceptions = repository.getAllExceptions().first()
         val materializedRange = repository.getDailyInstancesForDateRange(start.toEpochDay(), end.toEpochDay()).first()
+        val allExecutions = repository.getAllExecutions().first()
 
         val allOccurrences = mutableListOf<ResolvedOccurrence>()
+        val consumedExecutionIds = mutableSetOf<String>()
         
         var current = start
         while (!current.isAfter(end)) {
             val materializedToday = materializedRange.filter { it.scheduledDate == current.toEpochDay() }
+            val executionsToday = allExecutions.filter { it.scheduledDate == current.toEpochDay() }
             
             val resolved = resolutionEngine.resolve(
                 date = current,
@@ -36,10 +39,31 @@ class HistoricalOccurrenceResolver @Inject constructor(
                 nodes = nodes
             )
             
-            allOccurrences.addAll(resolved)
+            val enriched = resolved.map { occ ->
+                // Try to find a matching execution
+                val match = executionsToday.find { exec ->
+                    !consumedExecutionIds.contains(exec.id) && (
+                        exec.dailyInstanceId == occ.instance.id || 
+                        matchBySnapshot(exec, occ.instance)
+                    )
+                }
+                if (match != null) consumedExecutionIds.add(match.id)
+                
+                occ.copy(execution = match)
+            }
+            
+            allOccurrences.addAll(enriched)
             current = current.plusDays(1)
         }
         
         return allOccurrences
+    }
+
+    private fun matchBySnapshot(exec: ActivityExecution, instance: DailyInstance): Boolean {
+        return when (val target = instance.target) {
+            is ScheduleTarget.Node -> exec.nodeId == target.id || exec.titleSnapshot == instance.titleSnapshot
+            is ScheduleTarget.Definition -> exec.activityIdSnapshot == target.id
+            else -> false
+        }
     }
 }
