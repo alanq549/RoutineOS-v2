@@ -18,9 +18,15 @@ interface DailyInstanceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInstance(instance: DailyInstanceEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertInstanceStrict(instance: DailyInstanceEntity)
+
     @Delete
     suspend fun deleteInstance(instance: DailyInstanceEntity)
 
     @Query("DELETE FROM daily_instances WHERE id = :id")
     suspend fun deleteInstanceById(id: String)
+
+    @Query("SELECT * FROM daily_instances WHERE actionProtocol = :protocol")
+    fun getInstancesByProtocol(protocol: String): Flow<List<DailyInstanceEntity>>
 }

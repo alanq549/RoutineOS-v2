@@ -249,7 +249,15 @@ class ActivityDetailViewModel @Inject constructor(
                     repository.deleteExecutionsForNodeOnDate(nodeId, referenceDate)
                     _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso marcado como pendiente", "Deshacer", nodeId))
                 } else {
-                    repository.registerExecution(nodeId, referenceDate, "{}")
+                    val instance = repository.getDailyInstanceByTarget(nodeId, referenceDate)
+                        ?: com.alan.routineos.domain.model.DailyInstance(
+                            id = UUID.randomUUID().toString(),
+                            target = ScheduleTarget.Node(nodeId),
+                            scheduledDate = referenceDate,
+                            titleSnapshot = nodeProjection?.title ?: "",
+                            descriptionSnapshot = ""
+                        )
+                    repository.registerInstanceExecution(instance, "{}")
                     _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso completado", "Deshacer", nodeId))
                 }
             } catch (e: Exception) {

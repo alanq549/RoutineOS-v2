@@ -159,7 +159,11 @@ fun DailyInstanceEntity.toDomain(): DailyInstance {
         sourceRuleId = sourceRuleId,
         isAdHoc = targetType == "AD_HOC",
         parentInstanceId = parentInstanceId,
-        backlogId = backlogId
+        backlogId = backlogId,
+        actionProtocol = ActionProtocol.valueOf(actionProtocol),
+        reminderAbs = reminderAbs,
+        reminderRel = reminderRel,
+        associatedInstanceId = associatedInstanceId
     )
 }
 
@@ -188,7 +192,11 @@ fun DailyInstance.toEntity(): DailyInstanceEntity {
         mobility = mobility.name,
         sourceRuleId = sourceRuleId,
         parentInstanceId = parentInstanceId,
-        backlogId = backlogId
+        backlogId = backlogId,
+        actionProtocol = actionProtocol.name,
+        reminderAbs = reminderAbs,
+        reminderRel = reminderRel,
+        associatedInstanceId = associatedInstanceId
     )
 }
 
@@ -286,7 +294,12 @@ fun NoteEntity.toDomain(): Note {
         content = content,
         definitionId = definitionId,
         backlogId = backlogId,
-        instanceId = instanceId
+        instanceId = instanceId,
+        executionId = executionId,
+        dateSnapshot = dateSnapshot,
+        targetTypeSnapshot = targetTypeSnapshot,
+        targetIdSnapshot = targetIdSnapshot,
+        titleSnapshot = titleSnapshot
     )
 }
 
@@ -296,6 +309,11 @@ fun Note.toEntity(): NoteEntity {
         content = content,
         definitionId = definitionId,
         backlogId = backlogId,
-        instanceId = instanceId
+        instanceId = instanceId,
+        executionId = executionId,
+        dateSnapshot = dateSnapshot ?: 0L, // Should be handled in domain/usecase
+        targetTypeSnapshot = targetTypeSnapshot,
+        targetIdSnapshot = targetIdSnapshot,
+        titleSnapshot = titleSnapshot
     )
 }

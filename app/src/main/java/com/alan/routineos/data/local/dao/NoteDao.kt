@@ -9,6 +9,13 @@ interface NoteDao {
     @Query("SELECT * FROM notes")
     fun getAllNotes(): Flow<List<NoteEntity>>
 
+    @Query("""
+        SELECT * FROM notes 
+        WHERE instanceId = :instanceId 
+        OR (instanceId IS NULL AND dateSnapshot = :date AND titleSnapshot = :title)
+    """)
+    fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<NoteEntity>>
+
     @Upsert
     suspend fun upsertNote(note: NoteEntity)
 

@@ -37,7 +37,12 @@ fun PlanningScreen(
     onUpdateSpontaneousTitle: (String, String) -> Unit,
     onUpdateSpontaneousSchedule: (String, Int?, Int?) -> Unit,
     onDeleteInstance: (String) -> Unit,
+    onUpdateEditorRole: (EditorRole) -> Unit = {},
     onExpandClick: (String) -> Unit,
+    onAddDraftTask: (String) -> Unit = {},
+    onRemoveDraftTask: (String) -> Unit = {},
+    onUpdateDraftNote: (String) -> Unit = {},
+    onUpdateDraftReminder: (Int?, Int?) -> Unit = { _, _ -> },
     onConfirmPendingMove: () -> Unit,
     onCancelPendingMove: () -> Unit,
     modifier: Modifier = Modifier
@@ -182,11 +187,17 @@ fun PlanningScreen(
     if (uiState.editingSpontaneousEntry != null) {
         SpontaneousEditorSheet(
             entry = uiState.editingSpontaneousEntry,
+            role = uiState.editorRole,
             isCreationMode = uiState.isCreatingNewEvent,
             onSaveNew = onSaveNewEvent,
             onUpdateTitle = onUpdateSpontaneousTitle,
             onUpdateSchedule = onUpdateSpontaneousSchedule,
             onDelete = onDeleteInstance,
+            onUpdateRole = onUpdateEditorRole,
+            onAddDraftTask = onAddDraftTask,
+            onRemoveDraftTask = onRemoveDraftTask,
+            onUpdateDraftNote = onUpdateDraftNote,
+            onUpdateDraftReminder = onUpdateDraftReminder,
             onDismiss = onDismissSpontaneousEditor
         )
     }

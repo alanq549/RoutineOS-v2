@@ -5,6 +5,9 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.alan.routineos.data.local.RoutineOSDatabase
+import com.alan.routineos.data.local.MIGRATION_6_7
+import com.alan.routineos.data.local.MIGRATION_7_8
+import com.alan.routineos.data.local.MIGRATION_8_9
 import com.alan.routineos.data.local.dao.*
 import dagger.Module
 import dagger.Provides
@@ -165,7 +168,7 @@ object DatabaseModule {
             RoutineOSDatabase::class.java,
             "routine_db"
         )
-            .addMigrations(MIGRATION_5_6)
+            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
             .fallbackToDestructiveMigration()
             .build()
     }

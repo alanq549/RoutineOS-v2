@@ -6,6 +6,7 @@ import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.model.DailyInstance
 import com.alan.routineos.domain.model.LifeSystem
 import com.alan.routineos.domain.model.MetadataSchema
+import com.alan.routineos.domain.model.Note
 import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleRule
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +25,7 @@ interface ActivityRepository {
     suspend fun reorderNodes(nodeIds: List<String>)
     suspend fun moveNode(nodeId: String, newParentId: String?)
     
-    suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String? = null)
+    suspend fun registerInstanceExecution(instance: DailyInstance, metadataJson: String = "{}")
     fun getAllExecutions(): Flow<List<ActivityExecution>>
     fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>>
     fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>>
@@ -51,6 +52,18 @@ interface ActivityRepository {
     suspend fun upsertDailyInstance(instance: DailyInstance)
     suspend fun deleteDailyInstance(id: String)
     suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance?
+    
+    // Contextual Persistence
+    suspend fun upsertActivityWithContext(
+        instance: DailyInstance, 
+        tasks: List<DailyInstance> = emptyList(), 
+        note: Note? = null
+    ) {}
+
+    // Notes
+    fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<com.alan.routineos.domain.model.Note>>
+    suspend fun upsertNote(note: com.alan.routineos.domain.model.Note)
+    suspend fun deleteNote(note: com.alan.routineos.domain.model.Note)
 
     // Metadata Schemas
     fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?>

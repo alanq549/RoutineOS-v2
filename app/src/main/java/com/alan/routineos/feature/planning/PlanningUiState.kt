@@ -6,6 +6,12 @@ import com.alan.routineos.feature.planning.model.PlanningDay
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 import java.time.LocalDate
 
+enum class EditorRole {
+    ACTIVITY,
+    TASK,
+    REMINDER
+}
+
 data class PlanningUiState(
     val isLoading: Boolean = false,
     val selectedDate: LocalDate = LocalDate.now(),
@@ -16,6 +22,7 @@ data class PlanningUiState(
     val unscheduledItems: List<TodayTimelineUiModel> = emptyList(),
     val exceptions: List<TodayTimelineUiModel> = emptyList(),
     val editingSpontaneousEntry: HierarchicalTimelineEntry? = null,
+    val editorRole: EditorRole = EditorRole.ACTIVITY,
     val isCreatingNewEvent: Boolean = false,
     val pendingMove: com.alan.routineos.domain.model.PendingMove? = null
 )

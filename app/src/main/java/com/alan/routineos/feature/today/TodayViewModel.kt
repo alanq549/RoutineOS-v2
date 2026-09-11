@@ -331,7 +331,26 @@ class TodayViewModel @Inject constructor(
             completedSubNodesCount = completedCount,
             totalSubNodesCount = totalCount,
             temporalState = temporalState,
-            completion = completion
+            completion = completion,
+            actionProtocol = root.instance.actionProtocol,
+            context = if (associatedItems.isNotEmpty() || note != null || root.instance.reminderAbs != null || root.instance.reminderRel != null) {
+                ContextItemsUiModel(
+                    tasks = associatedItems.map { 
+                        AssociatedTaskUiModel(
+                            id = it.root.instance.id,
+                            title = it.root.instance.titleSnapshot,
+                            status = it.root.instance.status,
+                            isCompleted = it.root.instance.status == DailyInstanceStatus.COMPLETED
+                        )
+                    },
+                    reminder = when {
+                        root.instance.reminderAbs != null -> AssociatedReminderUiModel(formatMinutes(root.instance.reminderAbs), false)
+                        root.instance.reminderRel != null -> AssociatedReminderUiModel("${root.instance.reminderRel} min", true, root.instance.reminderRel)
+                        else -> null
+                    },
+                    note = note?.let { AssociatedNoteUiModel(it.id, it.content, "", it.titleSnapshot) }
+                )
+            } else null
         )
     }
 

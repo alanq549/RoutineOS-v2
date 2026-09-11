@@ -68,5 +68,7 @@ data class TodayTimelineUiModel(
     val totalSubNodesCount: Int = 0,
     val temporalState: TimelineTemporalState = TimelineTemporalState.UPCOMING,
     val completion: HierarchyCompletion = HierarchyCompletion.NOT_STARTED,
-    val interception: InterceptionUiModel? = null
+    val actionProtocol: ActionProtocol = ActionProtocol.TIMER,
+    val interception: InterceptionUiModel? = null,
+    val context: ContextItemsUiModel? = null
 )

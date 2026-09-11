@@ -19,9 +19,10 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         return combine(
             repository.getActivityDefinitions(),
             repository.getAllNodes(),
-            resolveTimelineUseCase(date)
-        ) { definitions, allNodes, flatTimeline ->
-            buildRecursiveHierarchy(definitions, allNodes, flatTimeline, date)
+            resolveTimelineUseCase(date),
+            repository.getNotesByQuery(null, date.toEpochDay(), "") // Global/Historical fetch
+        ) { definitions, allNodes, flatTimeline, allNotes ->
+            buildRecursiveHierarchy(definitions, allNodes, flatTimeline, allNotes, date)
         }
     }
 
@@ -29,14 +30,21 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         definitions: List<ActivityDefinition>,
         allNodes: List<ActivityNode>,
         flatTimeline: List<TimelineEntry>,
+        allNotes: List<Note>,
         date: LocalDate
     ): List<HierarchicalTimelineEntry> {
         val nodeMap = allNodes.associateBy { it.id }
         val defMap = definitions.associateBy { it.id }
+        val noteMap = allNotes.groupBy { it.instanceId } // Notes by instanceId
+
+        // Split flatTimeline into structural, ad-hoc, and associated
+        val baseTimeline = flatTimeline.filter { it.instance.associatedInstanceId == null }
+        val associatedItems = flatTimeline.filter { it.instance.associatedInstanceId != null }
         
-        // Split flatTimeline into structural and ad-hoc
-        val structuralEntries = flatTimeline.filter { it.instance.target != null }
-        val adHocEntries = flatTimeline.filter { it.instance.target == null }
+        val associatedMap = associatedItems.groupBy { it.instance.associatedInstanceId }
+
+        val structuralEntries = baseTimeline.filter { it.instance.target != null }
+        val adHocEntries = baseTimeline.filter { it.instance.target == null }
         
         val entryMap = structuralEntries.associateBy { getEntryTargetKey(it) }
         val adHocMap = adHocEntries.associateBy { it.instance.id }
@@ -79,12 +87,12 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
 
         val structuralRoots = rootKeys.mapNotNull { key ->
             val entry = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)
-            entry?.let { buildEntryNode(it, nodeMap, entryMap, adHocMap, allNodes, date, mutableSetOf()) }
+            entry?.let { buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, mutableSetOf()) }
         }
         
         // 3. Ad-hoc roots (instances with target == null and parentInstanceId == null)
         val adHocRoots = adHocEntries.filter { it.instance.parentInstanceId == null }
-            .map { buildEntryNode(it, nodeMap, entryMap, adHocMap, allNodes, date, mutableSetOf()) }
+            .map { buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, mutableSetOf()) }
 
         return (structuralRoots + adHocRoots).sortedBy { it.effectiveStartTimeMinutes ?: Int.MAX_VALUE }
     }
@@ -150,6 +158,8 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         nodeMap: Map<String, ActivityNode>,
         entryMap: Map<String, TimelineEntry>,
         adHocMap: Map<String, TimelineEntry>,
+        associatedMap: Map<String?, List<TimelineEntry>>,
+        allNotes: List<Note>,
         allNodes: List<ActivityNode>,
         date: LocalDate,
         visited: MutableSet<String>
@@ -158,6 +168,13 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         
         if (visited.contains(targetKey)) return createLeaf(entry)
         visited.add(targetKey)
+
+        val associatedEntries = associatedMap[entry.instance.id] ?: emptyList()
+        val associatedRecursive = associatedEntries.map { 
+            buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, visited.toMutableSet())
+        }
+        
+        val instanceNote = allNotes.find { it.instanceId == entry.instance.id }
         
         val children = when {
             entry.instance.target is ScheduleTarget.Node -> {
@@ -179,11 +196,11 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         }
         
         val recursiveChildren = children.map { childEntry ->
-            buildEntryNode(childEntry, nodeMap, entryMap, adHocMap, allNodes, date, visited.toMutableSet())
+            buildEntryNode(childEntry, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, visited.toMutableSet())
         }
 
-        return if (recursiveChildren.isEmpty()) {
-            createLeaf(entry)
+        return if (recursiveChildren.isEmpty() && associatedRecursive.isEmpty()) {
+            createLeaf(entry).copy(note = instanceNote)
         } else {
             val totalLeaves = recursiveChildren.sumOf { it.totalCount }
             val completedLeaves = recursiveChildren.sumOf { it.completedCount }
@@ -225,7 +242,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
             }
 
             val completion = when {
-                completedLeaves == totalLeaves -> HierarchyCompletion.COMPLETED
+                completedLeaves == totalLeaves && totalLeaves > 0 -> HierarchyCompletion.COMPLETED
                 completedLeaves == 0 -> HierarchyCompletion.NOT_STARTED
                 else -> HierarchyCompletion.IN_PROGRESS
             }
@@ -233,6 +250,8 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
             HierarchicalTimelineEntry(
                 root = entry,
                 children = recursiveChildren,
+                associatedItems = associatedRecursive,
+                note = instanceNote,
                 completedCount = completedLeaves,
                 totalCount = totalLeaves,
                 totalDurationMinutes = totalDuration,

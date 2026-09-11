@@ -25,7 +25,12 @@ fun PlanningRoute(
         onUpdateSpontaneousTitle = viewModel::onUpdateSpontaneousTitle,
         onUpdateSpontaneousSchedule = viewModel::onUpdateSpontaneousSchedule,
         onDeleteInstance = viewModel::onDeleteInstance,
+        onUpdateEditorRole = viewModel::onUpdateEditorRole,
         onExpandClick = viewModel::toggleExpand,
+        onAddDraftTask = viewModel::onAddDraftTask,
+        onRemoveDraftTask = viewModel::onRemoveDraftTask,
+        onUpdateDraftNote = viewModel::onUpdateDraftNote,
+        onUpdateDraftReminder = viewModel::onUpdateDraftReminder,
         onConfirmPendingMove = viewModel::onConfirmPendingMove,
         onCancelPendingMove = viewModel::onCancelPendingMove
     )

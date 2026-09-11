@@ -53,7 +53,7 @@ class PlanningEventFlowTest {
         override suspend fun deleteNode(node: ActivityNode) {}
         override suspend fun reorderNodes(nodeIds: List<String>) {}
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
-        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {}
+        override suspend fun registerInstanceExecution(instance: DailyInstance, metadataJson: String) {}
         override fun getAllExecutions(): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyList())
@@ -80,6 +80,16 @@ class PlanningEventFlowTest {
             deletedId = id
         }
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
+        
+        override suspend fun upsertActivityWithContext(instance: DailyInstance, tasks: List<DailyInstance>, note: Note?) {
+            savedInstances.add(instance)
+            savedInstances.addAll(tasks)
+            _instances.update { it + instance + tasks }
+        }
+
+        override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>> = flowOf(emptyList())
+        override suspend fun upsertNote(note: Note) {}
+        override suspend fun deleteNote(note: Note) {}
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
         override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}
@@ -130,6 +140,38 @@ class PlanningEventFlowTest {
         assertEquals("Should have saved exactly one instance", 1, repository.savedInstances.size)
         val saved = repository.savedInstances[0]
         assertEquals("Cena", saved.titleSnapshot)
+    }
+
+    @Test
+    fun `ROLE SWITCH - Changing role preserves context drafts`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        waitReady(viewModel)
+
+        viewModel.onAddEventClick()
+        advanceUntilIdle()
+
+        // 1. Add Note in Activity mode
+        viewModel.onUpdateDraftNote("Important Activity Note")
+        advanceUntilIdle()
+        
+        assertEquals(EditorRole.ACTIVITY, viewModel.uiState.value.editorRole)
+        assertEquals("Important Activity Note", viewModel.uiState.value.editingSpontaneousEntry?.note?.content)
+
+        // 2. Switch to Task mode
+        viewModel.onUpdateEditorRole(EditorRole.TASK)
+        advanceUntilIdle()
+        
+        assertEquals(EditorRole.TASK, viewModel.uiState.value.editorRole)
+        // Context is hidden in Task mode in the sheet UI, but draft should remain in state
+        // Actually, my mapping logic in VM currently enriches the entry based on draft.
+        // Let's check if it still has the note in the HierarchicalTimelineEntry
+        assertEquals("Important Activity Note", viewModel.uiState.value.editingSpontaneousEntry?.note?.content)
+
+        // 3. Switch back to Activity
+        viewModel.onUpdateEditorRole(EditorRole.ACTIVITY)
+        advanceUntilIdle()
+        assertEquals("Important Activity Note", viewModel.uiState.value.editingSpontaneousEntry?.note?.content)
     }
 
     @Test

@@ -12,25 +12,32 @@ import androidx.room.PrimaryKey
             entity = ActivityDefinitionEntity::class,
             parentColumns = ["id"],
             childColumns = ["definitionId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.SET_NULL
         ),
         ForeignKey(
             entity = BacklogItemEntity::class,
             parentColumns = ["id"],
             childColumns = ["backlogId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.SET_NULL
         ),
         ForeignKey(
             entity = DailyInstanceEntity::class,
             parentColumns = ["id"],
             childColumns = ["instanceId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = ActivityExecutionEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["executionId"],
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [
         Index("definitionId"),
         Index("backlogId"),
-        Index("instanceId")
+        Index("instanceId"),
+        Index("executionId")
     ]
 )
 data class NoteEntity(
@@ -39,5 +46,12 @@ data class NoteEntity(
     val content: String,
     val definitionId: String? = null,
     val backlogId: String? = null,
-    val instanceId: String? = null
+    val instanceId: String? = null,
+    val executionId: String? = null,
+    
+    // Historical Context Snapshots
+    val dateSnapshot: Long,
+    val targetTypeSnapshot: String? = null,
+    val targetIdSnapshot: String? = null,
+    val titleSnapshot: String? = null
 )

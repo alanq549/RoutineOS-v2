@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.domain.model.HierarchicalTimelineEntry
+import com.alan.routineos.feature.planning.EditorRole
 
 private enum class PickingType { START, END }
 
@@ -22,11 +23,17 @@ private enum class PickingType { START, END }
 @Composable
 fun SpontaneousEditorSheet(
     entry: HierarchicalTimelineEntry,
+    role: EditorRole = EditorRole.ACTIVITY,
     isCreationMode: Boolean = false,
     onSaveNew: () -> Unit = {},
     onUpdateTitle: (String, String) -> Unit,
     onUpdateSchedule: (String, Int?, Int?) -> Unit,
     onDelete: (String) -> Unit,
+    onUpdateRole: (EditorRole) -> Unit = {},
+    onAddDraftTask: (String) -> Unit = {},
+    onRemoveDraftTask: (String) -> Unit = {},
+    onUpdateDraftNote: (String) -> Unit = {},
+    onUpdateDraftReminder: (Int?, Int?) -> Unit = { _, _ -> },
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -51,6 +58,11 @@ fun SpontaneousEditorSheet(
         }
     }
 
+    // Context UI State
+    var newTaskTitle by remember { mutableStateOf("") }
+    var noteState by remember(entry.note?.id) { mutableStateOf(entry.note?.content ?: "") }
+    var showRoleMenu by remember { mutableStateOf(false) }
+
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -60,7 +72,6 @@ fun SpontaneousEditorSheet(
                     
                     if (pickingType == PickingType.START) {
                         val currentEnd = root.plannedEndTime
-                        // Clear end if new start is after it
                         val finalEnd = if (currentEnd != null && minutes >= currentEnd) null else currentEnd
                         onUpdateSchedule(root.id, minutes, finalEnd)
                         errorMessage = null
@@ -113,7 +124,45 @@ fun SpontaneousEditorSheet(
         ) {
             // Root Header
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.FlashOn, null, tint = Color(0xFFB894E6))
+                Box {
+                    IconButton(onClick = { showRoleMenu = true }) {
+                        Icon(
+                            imageVector = when (role) {
+                                EditorRole.ACTIVITY -> Icons.Default.FlashOn
+                                EditorRole.TASK -> Icons.Default.CheckBox
+                                EditorRole.REMINDER -> Icons.Default.Notifications
+                            },
+                            contentDescription = "Tipo de entrada",
+                            tint = when (role) {
+                                EditorRole.ACTIVITY -> Color(0xFFB894E6)
+                                EditorRole.TASK -> RoutineTheme.colors.primary
+                                EditorRole.REMINDER -> RoutineTheme.colors.secondary
+                            }
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showRoleMenu,
+                        onDismissRequest = { showRoleMenu = false },
+                        containerColor = RoutineTheme.colors.surface2
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Actividad") },
+                            onClick = { onUpdateRole(EditorRole.ACTIVITY); showRoleMenu = false },
+                            leadingIcon = { Icon(Icons.Default.FlashOn, null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Tarea") },
+                            onClick = { onUpdateRole(EditorRole.TASK); showRoleMenu = false },
+                            leadingIcon = { Icon(Icons.Default.CheckBox, null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Recordatorio") },
+                            onClick = { onUpdateRole(EditorRole.REMINDER); showRoleMenu = false },
+                            leadingIcon = { Icon(Icons.Default.Notifications, null) }
+                        )
+                    }
+                }
+                
                 Spacer(modifier = Modifier.width(12.dp))
                 TextField(
                     value = titleState,
@@ -121,7 +170,13 @@ fun SpontaneousEditorSheet(
                         titleState = it
                         onUpdateTitle(root.id, it.text) 
                     },
-                    placeholder = { Text("Título del evento") },
+                    placeholder = { 
+                        Text(when(role) {
+                            EditorRole.ACTIVITY -> "Título del evento"
+                            EditorRole.TASK -> "Título de la tarea"
+                            EditorRole.REMINDER -> "Título del aviso"
+                        }) 
+                    },
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
                         focusedContainerColor = Color.Transparent,
@@ -140,7 +195,7 @@ fun SpontaneousEditorSheet(
 
             SchedulePickerRow(
                 startTime = root.plannedStartTime,
-                endTime = root.plannedEndTime,
+                endTime = if (role == EditorRole.ACTIVITY) root.plannedEndTime else null,
                 onPickStart = { 
                     pickingType = PickingType.START
                     showTimePicker = true
@@ -149,8 +204,105 @@ fun SpontaneousEditorSheet(
                     pickingType = PickingType.END
                     showTimePicker = true
                 },
-                onClear = { onUpdateSchedule(root.id, null, null) }
+                onClear = { onUpdateSchedule(root.id, null, null) },
+                hideEnd = role != EditorRole.ACTIVITY
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider(color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.2f))
+            
+            // CONTEXT SECTION
+            if (role == EditorRole.ACTIVITY) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    "CONTEXTO",
+                    style = RoutineTheme.typography.labelCaps,
+                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Tasks
+                entry.associatedItems.forEach { task ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.RadioButtonUnchecked, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(task.root.instance.titleSnapshot, style = RoutineTheme.typography.bodyBase)
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(onClick = { onRemoveDraftTask(task.root.instance.id) }) {
+                            Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp))
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.primary)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    TextField(
+                        value = newTaskTitle,
+                        onValueChange = { newTaskTitle = it },
+                        placeholder = { Text("Añadir tarea rápida...", fontSize = 14.sp) },
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent
+                        ),
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        textStyle = RoutineTheme.typography.bodyBase
+                    )
+                    if (newTaskTitle.isNotBlank()) {
+                        IconButton(onClick = { 
+                            onAddDraftTask(newTaskTitle)
+                            newTaskTitle = ""
+                        }) {
+                            Icon(Icons.Default.Check, null, tint = RoutineTheme.colors.primary)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (role != EditorRole.REMINDER) {
+                if (role == EditorRole.ACTIVITY) {
+                    // Reminder
+                    ReminderSelector(
+                        abs = root.reminderAbs,
+                        rel = root.reminderRel,
+                        onUpdate = onUpdateDraftReminder
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // Note
+                TextField(
+                    value = noteState,
+                    onValueChange = { 
+                        noteState = it
+                        onUpdateDraftNote(it)
+                    },
+                    placeholder = { Text("Añadir notas...", fontSize = 14.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = RoutineTheme.colors.surface2,
+                        focusedContainerColor = RoutineTheme.colors.surface2,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent
+                    ),
+                    shape = RoutineTheme.shapes.small,
+                    minLines = 3
+                )
+            } else {
+                // In REMINDER mode, we only show absolute time hint if not set
+                if (root.reminderAbs == null) {
+                    Text(
+                        "Define una hora para el recordatorio.",
+                        style = RoutineTheme.typography.bodyBase,
+                        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
+            }
 
             if (isCreationMode) {
                 Spacer(modifier = Modifier.height(32.dp))
@@ -159,13 +311,56 @@ fun SpontaneousEditorSheet(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoutineTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(containerColor = RoutineTheme.colors.primary, contentColor = Color.Black),
-                    enabled = root.titleSnapshot.isNotBlank()
+                    enabled = root.titleSnapshot.isNotBlank() && (role != EditorRole.REMINDER || root.plannedStartTime != null)
                 ) {
-                    Text("Programar Evento", style = RoutineTheme.typography.labelCaps)
+                    Text(
+                        text = when(role) {
+                            EditorRole.ACTIVITY -> "Programar Evento"
+                            EditorRole.TASK -> "Crear Tarea"
+                            EditorRole.REMINDER -> "Crear Recordatorio"
+                        },
+                        style = RoutineTheme.typography.labelCaps
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(48.dp))
+        }
+    }
+}
+
+@Composable
+private fun ReminderSelector(
+    abs: Int?,
+    rel: Int?,
+    onUpdate: (Int?, Int?) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.Notifications, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        AssistChip(
+            onClick = { onUpdate(null, 10) }, // Simplified for MVP: relative 10 min
+            label = { Text("10 min antes") },
+            colors = AssistChipDefaults.assistChipColors(
+                containerColor = if (rel != null) RoutineTheme.colors.primary.copy(alpha = 0.2f) else Color.Transparent,
+                labelColor = if (rel != null) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
+            )
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        AssistChip(
+            onClick = { onUpdate(540, null) }, // Simplified for MVP: Fixed 09:00
+            label = { Text("09:00") },
+            colors = AssistChipDefaults.assistChipColors(
+                containerColor = if (abs != null) RoutineTheme.colors.primary.copy(alpha = 0.2f) else Color.Transparent,
+                labelColor = if (abs != null) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
+            )
+        )
+        
+        if (abs != null || rel != null) {
+            IconButton(onClick = { onUpdate(null, null) }) {
+                Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp))
+            }
         }
     }
 }
@@ -176,7 +371,8 @@ private fun SchedulePickerRow(
     endTime: Int?,
     onPickStart: () -> Unit,
     onPickEnd: () -> Unit,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    hideEnd: Boolean = false
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.Schedule, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(16.dp))
@@ -186,10 +382,12 @@ private fun SchedulePickerRow(
             Text(startTime?.let { formatMinutes(it) } ?: "Hora Inicio", style = RoutineTheme.typography.dataLarge)
         }
         
-        Text("-", color = RoutineTheme.colors.onSurfaceVariant)
-        
-        TextButton(onClick = onPickEnd) {
-            Text(endTime?.let { formatMinutes(it) } ?: "Hora Fin", style = RoutineTheme.typography.dataLarge)
+        if (!hideEnd) {
+            Text("-", color = RoutineTheme.colors.onSurfaceVariant)
+            
+            TextButton(onClick = onPickEnd) {
+                Text(endTime?.let { formatMinutes(it) } ?: "Hora Fin", style = RoutineTheme.typography.dataLarge)
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))

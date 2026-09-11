@@ -25,6 +25,12 @@ import androidx.room.PrimaryKey
             parentColumns = ["id"],
             childColumns = ["sourceRuleId"],
             onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = DailyInstanceEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["associatedInstanceId"],
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [
@@ -34,7 +40,8 @@ import androidx.room.PrimaryKey
         ),
         Index("parentInstanceId"),
         Index("backlogId"),
-        Index("sourceRuleId")
+        Index("sourceRuleId"),
+        Index("associatedInstanceId")
     ]
 )
 data class DailyInstanceEntity(
@@ -52,5 +59,9 @@ data class DailyInstanceEntity(
     val mobility: String = "FLEXIBLE", // IMMOBILE, FLEXIBLE
     val sourceRuleId: String? = null,
     val parentInstanceId: String? = null,
-    val backlogId: String? = null
+    val backlogId: String? = null,
+    val actionProtocol: String = "TIMER",
+    val reminderAbs: Int? = null,
+    val reminderRel: Int? = null,
+    val associatedInstanceId: String? = null
 )

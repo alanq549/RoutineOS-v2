@@ -5,5 +5,10 @@ data class Note(
     val content: String,
     val definitionId: String? = null,
     val backlogId: String? = null,
-    val instanceId: String? = null
+    val instanceId: String? = null,
+    val executionId: String? = null,
+    val dateSnapshot: Long? = null,
+    val targetTypeSnapshot: String? = null,
+    val targetIdSnapshot: String? = null,
+    val titleSnapshot: String? = null
 )

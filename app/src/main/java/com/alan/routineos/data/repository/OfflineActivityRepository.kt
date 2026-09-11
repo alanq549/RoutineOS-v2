@@ -1,5 +1,6 @@
 package com.alan.routineos.data.repository
 
+import com.alan.routineos.data.local.RoutineOSDatabase
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.*
 import com.alan.routineos.data.mapper.toDomain
@@ -9,6 +10,7 @@ import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase
 import com.alan.routineos.domain.usecase.ValidateMetadataSchemaUseCase
 import com.alan.routineos.domain.usecase.ValidateScheduleRuleUseCase
+import androidx.room.withTransaction
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -16,6 +18,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 class OfflineActivityRepository @Inject constructor(
+    private val database: RoutineOSDatabase,
     private val activityDefinitionDao: ActivityDefinitionDao,
     private val activityNodeDao: ActivityNodeDao,
     private val activityExecutionDao: ActivityExecutionDao,
@@ -24,6 +27,9 @@ class OfflineActivityRepository @Inject constructor(
     private val dailyInstanceDao: DailyInstanceDao,
     private val metadataSchemaDao: MetadataSchemaDao,
     private val systemDao: SystemDao,
+    private val noteDao: NoteDao,
+    private val backlogItemDao: BacklogItemDao,
+    private val deadlineDao: DeadlineDao,
     private val validateActivityNodeUseCase: ValidateActivityNodeUseCase,
     private val validateScheduleRuleUseCase: ValidateScheduleRuleUseCase,
     private val validateMetadataSchemaUseCase: ValidateMetadataSchemaUseCase
@@ -117,20 +123,37 @@ class OfflineActivityRepository @Inject constructor(
         activityNodeDao.insertNode(node.toEntity())
     }
 
-    override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {
-        val node = activityNodeDao.getNodeById(nodeId)?.toDomain()
-        val definition = node?.let { activityDefinitionDao.getActivityDefinitionById(it.activityDefinitionId)?.toDomain() }
+    override suspend fun registerInstanceExecution(instance: DailyInstance, metadataJson: String) {
+        val target = instance.target
+        val (defId, systemId) = when {
+            target is ScheduleTarget.Node -> {
+                val node = activityNodeDao.getNodeById(target.id)?.toDomain()
+                val definition = node?.let { activityDefinitionDao.getActivityDefinitionById(it.activityDefinitionId)?.toDomain() }
+                (definition?.id ?: "UNKNOWN") to definition?.systemId
+            }
+            target is ScheduleTarget.Definition -> {
+                val definition = activityDefinitionDao.getActivityDefinitionById(target.id)?.toDomain()
+                (definition?.id ?: "UNKNOWN") to definition?.systemId
+            }
+            instance.backlogId != null -> {
+                "BACKLOG:${instance.backlogId}" to null
+            }
+            else -> {
+                // Identity for pure ad-hoc tasks without backlog source
+                "TASK_AD_HOC" to null
+            }
+        }
 
         val execution = ActivityExecution(
             id = UUID.randomUUID().toString(),
-            nodeId = nodeId,
-            dailyInstanceId = dailyInstanceId,
-            scheduledDate = scheduledDate,
+            nodeId = (target as? ScheduleTarget.Node)?.id,
+            dailyInstanceId = instance.id,
+            scheduledDate = instance.scheduledDate,
             completedAt = System.currentTimeMillis(),
             metadataJson = metadataJson,
-            activityIdSnapshot = definition?.id ?: "UNKNOWN",
-            systemIdSnapshot = definition?.systemId,
-            titleSnapshot = node?.title ?: "Deleted Activity"
+            activityIdSnapshot = defId,
+            systemIdSnapshot = systemId,
+            titleSnapshot = instance.titleSnapshot
         )
         activityExecutionDao.insertExecution(execution.toEntity())
     }
@@ -249,6 +272,45 @@ class OfflineActivityRepository @Inject constructor(
 
     override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? {
         return dailyInstanceDao.getInstanceByTarget(targetId, date)?.toDomain()
+    }
+
+    override suspend fun upsertActivityWithContext(instance: DailyInstance, tasks: List<DailyInstance>, note: Note?) {
+        // Domain Validation: XOR Reminders
+        if (instance.reminderAbs != null && instance.reminderRel != null) {
+            throw IllegalArgumentException("Un aviso no puede ser absoluto y relativo simultáneamente.")
+        }
+        
+        database.withTransaction {
+            // 1. Save Anchor Instance
+            dailyInstanceDao.insertInstance(instance.toEntity())
+            
+            // 2. Save Associated Tasks
+            tasks.forEach { task ->
+                if (task.reminderAbs != null && task.reminderRel != null) {
+                    throw IllegalArgumentException("La tarea ${task.titleSnapshot} tiene avisos duplicados.")
+                }
+                dailyInstanceDao.insertInstance(task.toEntity())
+            }
+            
+            // 3. Save Associated Note (V8 snapshots already included in Note model)
+            note?.let { 
+                noteDao.upsertNote(it.toEntity())
+            }
+        }
+    }
+
+    override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>> {
+        return noteDao.getNotesByQuery(instanceId, date, title).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun upsertNote(note: Note) {
+        noteDao.upsertNote(note.toEntity())
+    }
+
+    override suspend fun deleteNote(note: Note) {
+        noteDao.deleteNote(note.toEntity())
     }
 
     override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> {

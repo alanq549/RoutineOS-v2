@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 8,
-    "identityHash": "0876b1dda4601b93b91f9ace533ae9bf",
+    "version": 9,
+    "identityHash": "640992c3c91b5674a4d5b0fae5ef7588",
     "entities": [
       {
         "tableName": "activity_definitions",
@@ -429,7 +429,7 @@
       },
       {
         "tableName": "daily_instances",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT, `targetType` TEXT NOT NULL, `scheduledDate` INTEGER NOT NULL, `titleSnapshot` TEXT NOT NULL, `descriptionSnapshot` TEXT NOT NULL, `plannedStartTime` INTEGER, `plannedEndTime` INTEGER, `plannedDurationMinutes` INTEGER, `status` TEXT NOT NULL, `mobility` TEXT NOT NULL, `sourceRuleId` TEXT, `parentInstanceId` TEXT, `backlogId` TEXT, `actionProtocol` TEXT NOT NULL, `reminderAbs` INTEGER, `reminderRel` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`parentInstanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`backlogId`) REFERENCES `backlog_items`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`sourceRuleId`) REFERENCES `schedule_rules`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT, `targetType` TEXT NOT NULL, `scheduledDate` INTEGER NOT NULL, `titleSnapshot` TEXT NOT NULL, `descriptionSnapshot` TEXT NOT NULL, `plannedStartTime` INTEGER, `plannedEndTime` INTEGER, `plannedDurationMinutes` INTEGER, `status` TEXT NOT NULL, `mobility` TEXT NOT NULL, `sourceRuleId` TEXT, `parentInstanceId` TEXT, `backlogId` TEXT, `actionProtocol` TEXT NOT NULL, `reminderAbs` INTEGER, `reminderRel` INTEGER, `associatedInstanceId` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`parentInstanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`backlogId`) REFERENCES `backlog_items`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`sourceRuleId`) REFERENCES `schedule_rules`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`associatedInstanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -523,6 +523,11 @@
             "fieldPath": "reminderRel",
             "columnName": "reminderRel",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "associatedInstanceId",
+            "columnName": "associatedInstanceId",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -568,6 +573,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_instances_sourceRuleId` ON `${TABLE_NAME}` (`sourceRuleId`)"
+          },
+          {
+            "name": "index_daily_instances_associatedInstanceId",
+            "unique": false,
+            "columnNames": [
+              "associatedInstanceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_instances_associatedInstanceId` ON `${TABLE_NAME}` (`associatedInstanceId`)"
           }
         ],
         "foreignKeys": [
@@ -599,6 +613,17 @@
             "onUpdate": "NO ACTION",
             "columns": [
               "sourceRuleId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "daily_instances",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "associatedInstanceId"
             ],
             "referencedColumns": [
               "id"
@@ -1022,7 +1047,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0876b1dda4601b93b91f9ace533ae9bf')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '640992c3c91b5674a4d5b0fae5ef7588')"
     ]
   }
 }

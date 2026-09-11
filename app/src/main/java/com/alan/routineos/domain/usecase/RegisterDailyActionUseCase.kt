@@ -33,21 +33,22 @@ class RegisterDailyActionUseCase @Inject constructor(
     }
 
     private suspend fun handleComplete(entry: HierarchicalTimelineEntry, metadataJson: String) {
-        // Completion only allowed on leaf nodes (executable steps)
-        if (entry.children.isNotEmpty()) return
-
+        // Completion allowed on leaf nodes (executable steps) or any Task (CHECK)
+        // Note: Associated tasks are handled as individual entries in this use case
+        if (entry.children.isNotEmpty() && entry.root.instance.actionProtocol == ActionProtocol.TIMER) return
+        
         val instance = materializeIfVirtual(entry.root)
+        
+        // Skip history for NOTIFY (Reminders)
+        if (instance.actionProtocol == ActionProtocol.NOTIFY) {
+            repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.COMPLETED))
+            return
+        }
+
         repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.COMPLETED))
         
-        val target = instance.target
-        if (target is ScheduleTarget.Node) {
-            repository.registerExecution(
-                nodeId = target.id,
-                scheduledDate = instance.scheduledDate,
-                metadataJson = metadataJson,
-                dailyInstanceId = instance.id
-            )
-        }
+        // Register execution for the fact history (Blindaje de Historial CHECK/TIMER)
+        repository.registerInstanceExecution(instance, metadataJson)
     }
 
     private suspend fun handleSkipRecursive(entry: HierarchicalTimelineEntry) {

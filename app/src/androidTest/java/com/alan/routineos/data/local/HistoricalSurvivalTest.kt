@@ -111,7 +111,7 @@ class HistoricalSurvivalTest {
 
     @Test
     fun testIntegrity_NoteAllowsGlobal() = runBlocking {
-        val note = NoteEntity(id = "note_1", content = "Hello world")
+        val note = NoteEntity(id = "note_1", content = "Hello world", dateSnapshot = 0L)
         db.noteDao().upsertNote(note)
         
         val allNotes = db.query("SELECT * FROM notes", null)

@@ -186,6 +186,34 @@ fun PlanningTimeBlock(
                     )
                 }
 
+                // CONTEXT INDICATORS
+                if (item.context != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (item.context.tasks.isNotEmpty()) {
+                            ContextIndicator(
+                                icon = Icons.Default.CheckBox,
+                                text = "${item.context.tasks.size}"
+                            )
+                        }
+                        if (item.context.reminder != null) {
+                            ContextIndicator(
+                                icon = Icons.Default.Notifications,
+                                text = ""
+                            )
+                        }
+                        if (item.context.note != null) {
+                            ContextIndicator(
+                                icon = Icons.Default.Description,
+                                text = ""
+                            )
+                        }
+                    }
+                }
+
                 AnimatedVisibility(visible = item.isExpanded) {
                     if (item.subNodes.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -198,6 +226,29 @@ fun PlanningTimeBlock(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ContextIndicator(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(10.dp),
+            tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
+        )
+        if (text.isNotBlank()) {
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = text,
+                style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
+                color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
+            )
         }
     }
 }
