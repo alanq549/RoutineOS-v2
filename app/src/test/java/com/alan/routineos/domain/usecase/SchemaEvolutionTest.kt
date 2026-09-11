@@ -31,7 +31,7 @@ class SchemaEvolutionTest {
             put("schemaVersion", 1)
             put("values", e1Values)
         }
-        val execution1 = ActivityExecution("e1", "n1", null, 0L, 1000L, e1Metadata.toString())
+        val execution1 = ActivityExecution("e1", "n1", null, 0L, 1000L, e1Metadata.toString(), "act1", null, "Title")
 
         // 3. Update Schema to v2 (Add RPE, Rename Peso)
         val fieldAUpdated = fieldA.copy(name = "Masa") // Renamed display name
@@ -48,7 +48,7 @@ class SchemaEvolutionTest {
             put("schemaVersion", 2)
             put("values", e2Values)
         }
-        val execution2 = ActivityExecution("e2", "n1", null, 0L, 2000L, e2Metadata.toString())
+        val execution2 = ActivityExecution("e2", "n1", null, 0L, 2000L, e2Metadata.toString(), "act1", null, "Title")
 
         // 5. Verification
         // Check Execution 1: Should still have ID 'id-a' with value 15

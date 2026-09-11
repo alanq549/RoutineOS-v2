@@ -57,7 +57,14 @@ class TodayViewModelTest {
         val getHierarchicalTimelineUseCase = GetHierarchicalTimelineUseCase(repository, resolveTimelineUseCase)
         val registerDailyActionUseCase = RegisterDailyActionUseCase(repository, MaterializeInstanceUseCase(repository))
         
-        viewModel = TodayViewModel(repository, getHierarchicalTimelineUseCase, registerDailyActionUseCase, timeProvider)
+        viewModel = TodayViewModel(
+            repository, 
+            getHierarchicalTimelineUseCase, 
+            registerDailyActionUseCase,
+            DistributeChildrenInWindowUseCase(),
+            SimulateMoveUseCase(conflictDetector),
+            timeProvider
+        )
         timeProvider.tick()
         advanceUntilIdle()
 
@@ -113,6 +120,7 @@ class TodayViewModelTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}

@@ -213,10 +213,15 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                 0
             }
             
+            val isExplicitPoint = entry.instance.plannedStartTime != null && 
+                                entry.instance.plannedEndTime == null && 
+                                entry.instance.plannedDurationMinutes == null
+
             val totalDuration = when {
+                isExplicitPoint -> null
                 explicitEnd != null && explicitStart != null -> explicitEnd - explicitStart
                 explicitDuration != null -> explicitDuration
-                else -> childrenDuration
+                else -> if (childrenDuration > 0) childrenDuration else null
             }
 
             val completion = when {
@@ -230,7 +235,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                 children = recursiveChildren,
                 completedCount = completedLeaves,
                 totalCount = totalLeaves,
-                totalDurationMinutes = if (totalDuration > 0) totalDuration else null,
+                totalDurationMinutes = totalDuration,
                 effectiveStartTimeMinutes = effectiveStart,
                 completion = completion
             )

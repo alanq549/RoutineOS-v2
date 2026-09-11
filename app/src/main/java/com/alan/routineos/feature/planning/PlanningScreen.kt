@@ -2,13 +2,10 @@ package com.alan.routineos.feature.planning
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,18 +20,19 @@ import com.alan.routineos.feature.planning.components.PlanningWeekHeader
 import com.alan.routineos.feature.today.components.ConflictWarningDialog
 import com.alan.routineos.feature.today.components.SpontaneousEditorSheet
 import com.alan.routineos.feature.today.components.TimePicker
-import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlanningScreen(
     uiState: PlanningUiState,
     onDaySelected: (String) -> Unit,
+    onPrevWeek: () -> Unit,
+    onNextWeek: () -> Unit,
+    onGoToToday: () -> Unit,
+    onJumpToDate: (java.time.LocalDate) -> Unit,
     onAction: (String, String) -> Unit,
-    onAddAdHoc: (String, Int?, Int?) -> Unit,
-    onAddFromCatalog: (String, Int?, Int?) -> Unit,
-    onOpenCatalog: () -> Unit,
-    onCloseCatalog: () -> Unit,
+    onAddEventClick: () -> Unit,
+    onSaveNewEvent: () -> Unit,
     onDismissSpontaneousEditor: () -> Unit,
     onUpdateSpontaneousTitle: (String, String) -> Unit,
     onUpdateSpontaneousSchedule: (String, Int?, Int?) -> Unit,
@@ -46,6 +44,31 @@ fun PlanningScreen(
 ) {
     var moveTargetId by remember { mutableStateOf<String?>(null) }
     val timePickerState = rememberTimePickerState()
+    
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        val selected = java.time.Instant.ofEpochMilli(it)
+                            .atZone(java.time.ZoneId.of("UTC")) // DatePicker uses UTC
+                            .toLocalDate()
+                        onJumpToDate(selected)
+                    }
+                    showDatePicker = false
+                }) { Text("Ir") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -56,14 +79,18 @@ fun PlanningScreen(
         ) {
             PlanningWeekHeader(
                 days = uiState.weekDays,
-                onDaySelected = onDaySelected
+                weekRangeText = uiState.weekRangeText,
+                onDaySelected = onDaySelected,
+                onPrevWeek = onPrevWeek,
+                onNextWeek = onNextWeek,
+                onRangeClick = { showDatePicker = true }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            PlanningSection(title = "BLOQUES DE RUTINA") {
-                if (uiState.timelineEntries.isEmpty()) {
-                    EmptySectionMessage("Sin actividades programadas")
+            PlanningSection(title = "PLANIFICACIÓN") {
+                if (uiState.timelineEntries.isEmpty() && uiState.unscheduledItems.isEmpty()) {
+                    EmptySectionMessage("Sin eventos programados")
                 } else {
                     uiState.timelineEntries.forEach { entry ->
                         PlanningTimeBlock(
@@ -76,77 +103,87 @@ fun PlanningScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
+                    
+                    if (uiState.unscheduledItems.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "PENDIENTES DEL DÍA",
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
+                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        uiState.unscheduledItems.chunked(2).forEach { rowItems ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                rowItems.forEach { item ->
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        PlanningUnscheduledCard(
+                                            title = item.title,
+                                            description = item.description,
+                                            onClick = { onAction(item.id, "MOVE_REQUEST") }
+                                        )
+                                    }
+                                }
+                                if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
             if (uiState.exceptions.isNotEmpty()) {
-                PlanningSection(title = "EXCEPCIONES") {
+                Spacer(modifier = Modifier.height(32.dp))
+                PlanningSection(title = "AJUSTES DE RUTINA") {
                     uiState.exceptions.forEach { entry ->
                         PlanningExceptionCard(item = entry)
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            PlanningSection(
-                title = "SIN HORARIO",
-                subtitle = "PENDIENTES FLEXIBLES"
-            ) {
-                if (uiState.unscheduledItems.isEmpty()) {
-                    EmptySectionMessage("No hay pendientes flexibles")
-                } else {
-                    uiState.unscheduledItems.chunked(2).forEach { rowItems ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            rowItems.forEach { item ->
-                                Box(modifier = Modifier.weight(1f)) {
-                                    PlanningUnscheduledCard(
-                                        title = item.title,
-                                        description = item.description,
-                                        onClick = { onAction(item.id, "MOVE_REQUEST") }
-                                    )
-                                }
-                            }
-                            if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-            }
         }
 
-        FloatingActionButton(
-            onClick = onOpenCatalog,
-            containerColor = RoutineTheme.colors.primary,
-            contentColor = androidx.compose.ui.graphics.Color.Black,
-            shape = RoutineTheme.shapes.pill,
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(RoutineTheme.spacing.lg)
-                .padding(bottom = 16.dp)
+                .padding(bottom = 16.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(Icons.Default.Add, "Añadir actividad")
-        }
-    }
+            if (!uiState.isShowingToday) {
+                SmallFloatingActionButton(
+                    onClick = onGoToToday,
+                    containerColor = RoutineTheme.colors.secondary,
+                    contentColor = androidx.compose.ui.graphics.Color.Black,
+                    shape = RoutineTheme.shapes.pill
+                ) {
+                    Text(
+                        text = "HOY",
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        style = RoutineTheme.typography.labelCaps
+                    )
+                }
+            }
 
-    if (uiState.isCatalogOpen) {
-        ModalBottomSheet(onDismissRequest = onCloseCatalog) {
-            CatalogBottomSheetContent(
-                activities = uiState.availableActivities,
-                onSelect = { onAddFromCatalog(it, null, null) }
-            )
+            FloatingActionButton(
+                onClick = onAddEventClick,
+                containerColor = RoutineTheme.colors.primary,
+                contentColor = androidx.compose.ui.graphics.Color.Black,
+                shape = RoutineTheme.shapes.pill
+            ) {
+                Icon(Icons.Default.Add, "Nuevo evento")
+            }
         }
     }
 
     if (uiState.editingSpontaneousEntry != null) {
         SpontaneousEditorSheet(
             entry = uiState.editingSpontaneousEntry,
+            isCreationMode = uiState.isCreatingNewEvent,
+            onSaveNew = onSaveNewEvent,
             onUpdateTitle = onUpdateSpontaneousTitle,
             onUpdateSchedule = onUpdateSpontaneousSchedule,
             onDelete = onDeleteInstance,
@@ -182,34 +219,12 @@ fun PlanningScreen(
                 val id = uiState.pendingMove.entry.root.instance.id
                 onCancelPendingMove()
                 if (uiState.pendingMove.entry.root.instance.isAdHoc) {
-                    // Spontaneous editor is already wired in PlanningScreen
                     onAction(id, "EDIT_SPONTANEOUS")
                 } else {
                     moveTargetId = id
                 }
             }
         )
-    }
-}
-
-@Composable
-private fun CatalogBottomSheetContent(
-    activities: List<com.alan.routineos.domain.model.ActivityDefinition>,
-    onSelect: (String) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp).navigationBarsPadding()) {
-        Text("Catálogo de Actividades", style = RoutineTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(activities) { activity ->
-                ListItem(
-                    headlineContent = { Text(activity.title) },
-                    supportingContent = { Text(activity.description) },
-                    leadingContent = { Icon(Icons.Default.LibraryBooks, null) },
-                    modifier = Modifier.clickable { onSelect(activity.id) }
-                )
-            }
-        }
     }
 }
 

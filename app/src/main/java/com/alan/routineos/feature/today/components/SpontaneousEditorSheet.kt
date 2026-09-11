@@ -8,7 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
@@ -20,6 +22,8 @@ private enum class PickingType { START, END }
 @Composable
 fun SpontaneousEditorSheet(
     entry: HierarchicalTimelineEntry,
+    isCreationMode: Boolean = false,
+    onSaveNew: () -> Unit = {},
     onUpdateTitle: (String, String) -> Unit,
     onUpdateSchedule: (String, Int?, Int?) -> Unit,
     onDelete: (String) -> Unit,
@@ -34,6 +38,18 @@ fun SpontaneousEditorSheet(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val root = entry.root.instance
+
+    // Text field state with selection management to avoid cursor jumping bugs
+    var titleState by remember(root.id) { 
+        mutableStateOf(TextFieldValue(text = root.titleSnapshot, selection = TextRange(root.titleSnapshot.length))) 
+    }
+
+    // Sync from external state only if it changes independently (e.g. loading or reset)
+    LaunchedEffect(root.titleSnapshot) {
+        if (titleState.text != root.titleSnapshot) {
+            titleState = titleState.copy(text = root.titleSnapshot, selection = TextRange(root.titleSnapshot.length))
+        }
+    }
 
     if (showTimePicker) {
         AlertDialog(
@@ -100,8 +116,11 @@ fun SpontaneousEditorSheet(
                 Icon(Icons.Default.FlashOn, null, tint = Color(0xFFB894E6))
                 Spacer(modifier = Modifier.width(12.dp))
                 TextField(
-                    value = root.titleSnapshot,
-                    onValueChange = { onUpdateTitle(root.id, it) },
+                    value = titleState,
+                    onValueChange = { 
+                        titleState = it
+                        onUpdateTitle(root.id, it.text) 
+                    },
                     placeholder = { Text("Título del evento") },
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
@@ -132,6 +151,19 @@ fun SpontaneousEditorSheet(
                 },
                 onClear = { onUpdateSchedule(root.id, null, null) }
             )
+
+            if (isCreationMode) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = onSaveNew,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoutineTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(containerColor = RoutineTheme.colors.primary, contentColor = Color.Black),
+                    enabled = root.titleSnapshot.isNotBlank()
+                ) {
+                    Text("Programar Evento", style = RoutineTheme.typography.labelCaps)
+                }
+            }
 
             Spacer(modifier = Modifier.height(48.dp))
         }

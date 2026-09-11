@@ -87,7 +87,18 @@ class HierarchyVerificationTest {
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> {
             return if (completedIds.contains(nodeId)) {
-                flowOf(listOf(ActivityExecution("e1", nodeId, null, scheduledDate, 0L, "{}")))
+                val node = nodes.find { it.id == nodeId }
+                flowOf(listOf(ActivityExecution(
+                    id = "e1",
+                    nodeId = nodeId,
+                    dailyInstanceId = null,
+                    scheduledDate = scheduledDate,
+                    completedAt = 0L,
+                    metadataJson = "{}",
+                    activityIdSnapshot = node?.activityDefinitionId ?: "UNKNOWN",
+                    systemIdSnapshot = null,
+                    titleSnapshot = node?.title ?: "Unknown"
+                )))
             } else {
                 flowOf(emptyList())
             }
@@ -108,6 +119,7 @@ class HierarchyVerificationTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}

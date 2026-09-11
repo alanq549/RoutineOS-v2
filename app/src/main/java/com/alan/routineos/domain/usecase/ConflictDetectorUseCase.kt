@@ -42,42 +42,53 @@ class ConflictDetectorUseCase @Inject constructor() {
 
             val startA = current.plannedStartTime ?: return@forEach
             
-            // Point or Range
-            val endA = current.plannedEndTime 
-                ?: current.plannedDurationMinutes?.let { startA + it }
-                ?: (startA + 1) // Treat Point as 1-min interval for overlap check
+            // V3: A POINT has no duration and does not generate peer overlap with other peers.
+            val isPointA = current.plannedEndTime == null && current.plannedDurationMinutes == null
             
             val details = mutableListOf<ConflictDetail>()
 
-            instances.filter { it.id != current.id }.forEach { other ->
-                val startB = other.plannedStartTime ?: return@forEach
-                val endB = other.plannedEndTime
-                    ?: other.plannedDurationMinutes?.let { startB + it }
-                    ?: (startB + 1)
-                
-                if (startA < endB && endA > startB) {
-                    val rel = determineRelationship(startA, endA, startB, endB)
-                    val imp = determineImpact(current, other, rel, nodeMap, instanceMap)
+            if (!isPointA) {
+                val endA = current.plannedEndTime 
+                    ?: current.plannedDurationMinutes?.let { startA + it }
+                    ?: (startA + 1)
+
+                instances.filter { it.id != current.id }.forEach { other ->
+                    val startB = other.plannedStartTime ?: return@forEach
+                    val isPointB = other.plannedEndTime == null && other.plannedDurationMinutes == null
+                    if (isPointB) return@forEach // Points don't block blocks
+
+                    val endB = other.plannedEndTime
+                        ?: other.plannedDurationMinutes?.let { startB + it }
+                        ?: (startB + 1)
                     
-                    val isInterruption = imp == TemporalImpact.WARNING && (
-                        current.isAdHoc ||
-                            other.isAdHoc ||
-                            current.mobility == TemporalMobility.IMMOBILE ||
-                            other.mobility == TemporalMobility.IMMOBILE
-                        )
-                    
-                    details.add(ConflictDetail(other.id, rel, imp, isInterruption))
+                    if (startA < endB && endA > startB) {
+                        val rel = determineRelationship(startA, endA, startB, endB)
+                        val imp = determineImpact(current, other, rel, nodeMap, instanceMap)
+                        
+                        val isInterruption = imp == TemporalImpact.WARNING && (
+                            current.isAdHoc ||
+                                other.isAdHoc ||
+                                current.mobility == TemporalMobility.IMMOBILE ||
+                                other.mobility == TemporalMobility.IMMOBILE
+                            )
+                        
+                        details.add(ConflictDetail(other.id, rel, imp, isInterruption))
+                    }
                 }
             }
             
-            // Out of Parent Window check
+            // Out of Parent Window check (Applies to both BLOCK and POINT)
+            val endAForParent = current.plannedEndTime 
+                ?: current.plannedDurationMinutes?.let { startA + it }
+                ?: startA // For Point, use start as end
+
             current.parentInstanceId?.let { pId ->
                 instanceMap[pId]?.let { parent ->
                     val pStart = parent.plannedStartTime
                     val pEnd = parent.plannedEndTime ?: parent.plannedDurationMinutes?.let { pStart?.plus(it) }
                     
                     if (pStart != null && pEnd != null) {
-                        if (startA < pStart || endA > pEnd) {
+                        if (startA < pStart || endAForParent > pEnd) {
                             details.add(ConflictDetail(parent.id, TemporalRelationship.OVERLAP, TemporalImpact.WARNING, false))
                         }
                     }

@@ -10,11 +10,12 @@ data class PlanningUiState(
     val isLoading: Boolean = false,
     val selectedDate: LocalDate = LocalDate.now(),
     val weekDays: List<PlanningDay> = emptyList(),
+    val weekRangeText: String = "",
+    val isShowingToday: Boolean = true,
     val timelineEntries: List<TodayTimelineUiModel> = emptyList(),
     val unscheduledItems: List<TodayTimelineUiModel> = emptyList(),
     val exceptions: List<TodayTimelineUiModel> = emptyList(),
     val editingSpontaneousEntry: HierarchicalTimelineEntry? = null,
-    val isCatalogOpen: Boolean = false,
-    val availableActivities: List<ActivityDefinition> = emptyList(),
+    val isCreatingNewEvent: Boolean = false,
     val pendingMove: com.alan.routineos.domain.model.PendingMove? = null
 )

@@ -18,7 +18,7 @@ class SystemStatsCalculationTest {
         val node = ActivityNode("n1", "a1", null, 0, "Push")
         
         val instance = DailyInstance("di1", ScheduleTarget.Node("n1"), 0L, "Snapshot", "")
-        val execution = ActivityExecution("e1", "n1", "di1", 0L, 0L, "{}")
+        val execution = ActivityExecution("e1", "n1", "di1", 0L, 0L, "{}", "a1", "s1", "Push")
 
         val repository = object : FakeActivityRepository() {
             override fun getAllSystems() = flowOf(listOf(system))
@@ -72,6 +72,7 @@ class SystemStatsCalculationTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}

@@ -28,16 +28,21 @@ class HistoryAnalyticsTest {
         }
         
         val materialized = (1..7).map { i ->
-            DailyInstance("inst_$i", ScheduleTarget.Node("leaf"), date.toEpochDay(), "L", "", status = DailyInstanceStatus.COMPLETED, sourceRuleId = "rule_$i")
+            DailyInstance("inst_$i", ScheduleTarget.Node("leaf"), date.toEpochDay(), "L", "", status = DailyInstanceStatus.PLANNED, sourceRuleId = "rule_$i")
         } + listOf(
             DailyInstance("inst_8", ScheduleTarget.Node("leaf"), date.toEpochDay(), "L", "", status = DailyInstanceStatus.OMITTED, sourceRuleId = "rule_8")
         )
+        
+        val executions = (1..7).map { i ->
+            ActivityExecution("exec_$i", "leaf", "inst_$i", date.toEpochDay(), 0L, "{}", "def", null, "Leaf")
+        }
         
         val repository = object : FakeActivityRepository() {
             override fun getActivityDefinitions() = flowOf(definitions)
             override fun getAllNodes() = flowOf(nodes)
             override fun getAllRules() = flowOf(rules)
             override fun getDailyInstancesForDateRange(start: Long, end: Long) = flowOf(materialized)
+            override fun getAllExecutions() = flowOf(executions)
         }
         
         occurrenceResolver = HistoricalOccurrenceResolver(repository, resolutionEngine)
@@ -80,13 +85,19 @@ class HistoryAnalyticsTest {
         val nodes = listOf(ActivityNode("leaf", "def", null, 0, "Leaf"))
         val definitions = listOf(ActivityDefinition("def", "Def", ""))
         val rule = ScheduleRule("r1", ScheduleTarget.Node("leaf"), ScheduleRuleType.FIXED_DAYS, daysOfWeek = setOf(date.dayOfWeek.value))
-        val instance = DailyInstance("i1", ScheduleTarget.Node("leaf"), date.toEpochDay(), "L", "", status = DailyInstanceStatus.COMPLETED, sourceRuleId = "r1")
+        val instance = DailyInstance("i1", ScheduleTarget.Node("leaf"), date.toEpochDay(), "L", "", status = DailyInstanceStatus.PLANNED, sourceRuleId = "r1")
+        
+        val executions = listOf(
+            ActivityExecution("e1", "leaf", "i1", date.toEpochDay(), 0L, "{}", "def", null, "Leaf"),
+            ActivityExecution("e2", "leaf", "i1", date.toEpochDay(), 10L, "{}", "def", null, "Leaf")
+        )
         
         val repository = object : FakeActivityRepository() {
             override fun getActivityDefinitions() = flowOf(definitions)
             override fun getAllNodes() = flowOf(nodes)
             override fun getAllRules() = flowOf(listOf(rule))
             override fun getDailyInstancesForDateRange(start: Long, end: Long) = flowOf(listOf(instance))
+            override fun getAllExecutions() = flowOf(executions)
         }
 
         occurrenceResolver = HistoricalOccurrenceResolver(repository, resolutionEngine)
@@ -101,9 +112,9 @@ class HistoryAnalyticsTest {
     @Test
     fun `getTrendSeries extracts only numeric values from metadata JSON`() = runTest {
         val executions = listOf(
-            ActivityExecution("e1", "n1", null, date.toEpochDay(), 1000L, """{"weight": 80.5, "note": "heavy"}"""),
-            ActivityExecution("e2", "n1", null, date.plusDays(1).toEpochDay(), 2000L, """{"weight": 81.0}"""),
-            ActivityExecution("e3", "n1", null, date.plusDays(2).toEpochDay(), 3000L, """{"weight": "invalid"}""")
+            ActivityExecution("e1", "n1", null, date.toEpochDay(), 1000L, """{"weight": 80.5, "note": "heavy"}""", "act1", null, "Title"),
+            ActivityExecution("e2", "n1", null, date.plusDays(1).toEpochDay(), 2000L, """{"weight": 81.0}""", "act1", null, "Title"),
+            ActivityExecution("e3", "n1", null, date.plusDays(2).toEpochDay(), 3000L, """{"weight": "invalid"}""", "act1", null, "Title")
         )
 
         val repository = object : FakeActivityRepository() {
@@ -181,6 +192,7 @@ class HistoryAnalyticsTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}

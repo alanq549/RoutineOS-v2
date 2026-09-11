@@ -122,6 +122,7 @@ class ReorderNodesTest {
         override suspend fun getInstanceByTarget(targetId: String, date: Long): DailyInstanceEntity? = null
         override suspend fun insertInstance(instance: DailyInstanceEntity) {}
         override suspend fun deleteInstance(instance: DailyInstanceEntity) {}
+        override suspend fun deleteInstanceById(id: String) {}
     }
 
     private class FakeMetadataSchemaDao : MetadataSchemaDao {

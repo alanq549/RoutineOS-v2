@@ -54,19 +54,25 @@ fun PlanningTimeBlock(
                 color = if (isOmitted) RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f) else RoutineTheme.colors.primary
             )
             
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 4.dp)
-                    .width(1.dp)
-                    .height(40.dp)
-                    .background(RoutineTheme.colors.border)
-            )
+            val isBlock = item.endTimeMinutes != null
+            
+            if (isBlock) {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 4.dp)
+                        .width(1.dp)
+                        .height(48.dp)
+                        .background(RoutineTheme.colors.primary.copy(alpha = 0.3f))
+                )
+            } else {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             Icon(
-                imageVector = if (item.isAdHoc) Icons.Default.FlashOn else Icons.Default.Schedule,
+                imageVector = if (item.isAdHoc) Icons.Default.FlashOn else if (isBlock) Icons.Default.Inventory2 else Icons.Default.RadioButtonChecked,
                 contentDescription = null,
-                tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(14.dp)
+                tint = if (isBlock) RoutineTheme.colors.primary else RoutineTheme.colors.secondary,
+                modifier = Modifier.size(if (isBlock) 14.dp else 12.dp)
             )
         }
 

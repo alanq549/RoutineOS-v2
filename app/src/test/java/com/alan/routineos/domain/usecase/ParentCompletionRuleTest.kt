@@ -25,7 +25,7 @@ class ParentCompletionRuleTest {
             override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String) = nodes
             override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> {
                 // Return execution only for Child 1
-                return if (nodeId == "1.1") flowOf(listOf(ActivityExecution("e1", "1.1", null, scheduledDate, 0L, "{}"))) 
+                return if (nodeId == "1.1") flowOf(listOf(ActivityExecution("e1", "1.1", null, scheduledDate, 0L, "{}", "act1", null, "Child 1"))) 
                        else flowOf(emptyList())
             }
         }
@@ -48,7 +48,7 @@ class ParentCompletionRuleTest {
             override fun getNodesForActivityDefinition(activityDefinitionId: String) = flowOf(nodes)
             override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String) = nodes
             override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) = 
-                flowOf(listOf(ActivityExecution("e1", nodeId, null, scheduledDate, 0L, "{}")))
+                flowOf(listOf(ActivityExecution("e1", nodeId, null, scheduledDate, 0L, "{}", "act1", null, "Title")))
         }
         
         val useCase = GetActivityTreeUseCase(repository)
@@ -90,6 +90,7 @@ class ParentCompletionRuleTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
