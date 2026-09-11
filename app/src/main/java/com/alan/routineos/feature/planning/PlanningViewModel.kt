@@ -29,7 +29,7 @@ class PlanningViewModel @Inject constructor(
     private val _expandedIds = MutableStateFlow<Set<String>>(emptySet())
     private val _editingSpontaneousEntry = MutableStateFlow<HierarchicalTimelineEntry?>(null)
     private val _isCreatingNewEvent = MutableStateFlow(false)
-    private val _editorRole = MutableStateFlow(EditorRole.ACTIVITY)
+    private val _editorRole = MutableStateFlow(EditorRole.SPONTANEOUS)
     private val _pendingMove = MutableStateFlow<PendingMove?>(null)
 
     // Context Drafts
@@ -324,9 +324,9 @@ class PlanningViewModel @Inject constructor(
                     _draftReminderRel.value = entry.root.instance.reminderRel
                     
                     _editorRole.value = when (entry.root.instance.actionProtocol) {
-                        ActionProtocol.TIMER -> EditorRole.ACTIVITY
+                        ActionProtocol.TIMER -> if (entry.root.instance.isAdHoc) EditorRole.SPONTANEOUS else EditorRole.SCHEDULED
                         ActionProtocol.CHECK -> EditorRole.TASK
-                        ActionProtocol.NOTIFY -> EditorRole.REMINDER
+                        ActionProtocol.NOTIFY -> EditorRole.SPONTANEOUS // Default to spontaneous for reminders for now
                     }
                     
                     _isCreatingNewEvent.value = false
@@ -443,22 +443,23 @@ class PlanningViewModel @Inject constructor(
         
         val anchor = entry.root.instance.copy(
             actionProtocol = when (role) {
-                EditorRole.ACTIVITY -> ActionProtocol.TIMER
+                EditorRole.SPONTANEOUS -> ActionProtocol.TIMER
+                EditorRole.SCHEDULED -> ActionProtocol.TIMER
                 EditorRole.TASK -> ActionProtocol.CHECK
-                EditorRole.REMINDER -> ActionProtocol.NOTIFY
             },
             reminderAbs = _draftReminderAbs.value,
-            reminderRel = _draftReminderRel.value
+            reminderRel = _draftReminderRel.value,
+            isAdHoc = role == EditorRole.SPONTANEOUS || role == EditorRole.TASK
         )
         if (anchor.titleSnapshot.isBlank()) return
 
-        // Context items only for ACTIVITY
-        val tasks = if (role == EditorRole.ACTIVITY) {
+        // Context items only for ACTIVITY (Spontaneous or Scheduled)
+        val tasks = if (role != EditorRole.TASK) {
             _draftTasks.value.map { it.copy(associatedInstanceId = anchor.id) }
         } else emptyList()
 
         val noteContent = _draftNote.value
-        val note = if (noteContent.isNotBlank() && role != EditorRole.REMINDER) Note(
+        val note = if (noteContent.isNotBlank()) Note(
             id = UUID.randomUUID().toString(),
             content = noteContent,
             instanceId = anchor.id,

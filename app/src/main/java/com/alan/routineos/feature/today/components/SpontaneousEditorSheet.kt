@@ -1,13 +1,24 @@
 package com.alan.routineos.feature.today.components
 
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -19,11 +30,16 @@ import com.alan.routineos.feature.planning.EditorRole
 
 private enum class PickingType { START, END }
 
+private val BrandViolet = Color(0xFFA855F7)
+private val BrandEmerald = Color(0xFF34D399)
+private val DarkSurface = Color(0xFF0D1017)
+private val DarkCard = Color(0xFF171B26)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpontaneousEditorSheet(
     entry: HierarchicalTimelineEntry,
-    role: EditorRole = EditorRole.ACTIVITY,
+    role: EditorRole = EditorRole.SPONTANEOUS,
     isCreationMode: Boolean = false,
     onSaveNew: () -> Unit = {},
     onUpdateTitle: (String, String) -> Unit,
@@ -38,30 +54,24 @@ fun SpontaneousEditorSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Unified Time Picker Logic
     var pickingType by remember { mutableStateOf(PickingType.START) }
     var showTimePicker by remember { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState()
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val root = entry.root.instance
-
-    // Text field state with selection management to avoid cursor jumping bugs
     var titleState by remember(root.id) { 
         mutableStateOf(TextFieldValue(text = root.titleSnapshot, selection = TextRange(root.titleSnapshot.length))) 
     }
 
-    // Sync from external state only if it changes independently (e.g. loading or reset)
     LaunchedEffect(root.titleSnapshot) {
         if (titleState.text != root.titleSnapshot) {
             titleState = titleState.copy(text = root.titleSnapshot, selection = TextRange(root.titleSnapshot.length))
         }
     }
 
-    // Context UI State
     var newTaskTitle by remember { mutableStateOf("") }
     var noteState by remember(entry.note?.id) { mutableStateOf(entry.note?.content ?: "") }
-    var showRoleMenu by remember { mutableStateOf(false) }
 
     if (showTimePicker) {
         AlertDialog(
@@ -69,7 +79,6 @@ fun SpontaneousEditorSheet(
             confirmButton = {
                 TextButton(onClick = {
                     val minutes = timePickerState.hour * 60 + timePickerState.minute
-                    
                     if (pickingType == PickingType.START) {
                         val currentEnd = root.plannedEndTime
                         val finalEnd = if (currentEnd != null && minutes >= currentEnd) null else currentEnd
@@ -119,51 +128,68 @@ fun SpontaneousEditorSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(RoutineTheme.spacing.lg)
+                .padding(horizontal = RoutineTheme.spacing.lg)
+                .padding(bottom = 32.dp)
                 .navigationBarsPadding()
         ) {
-            // Root Header
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box {
-                    IconButton(onClick = { showRoleMenu = true }) {
-                        Icon(
-                            imageVector = when (role) {
-                                EditorRole.ACTIVITY -> Icons.Default.FlashOn
-                                EditorRole.TASK -> Icons.Default.CheckBox
-                                EditorRole.REMINDER -> Icons.Default.Notifications
-                            },
-                            contentDescription = "Tipo de entrada",
-                            tint = when (role) {
-                                EditorRole.ACTIVITY -> Color(0xFFB894E6)
-                                EditorRole.TASK -> RoutineTheme.colors.primary
-                                EditorRole.REMINDER -> RoutineTheme.colors.secondary
-                            }
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showRoleMenu,
-                        onDismissRequest = { showRoleMenu = false },
-                        containerColor = RoutineTheme.colors.surface2
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Actividad") },
-                            onClick = { onUpdateRole(EditorRole.ACTIVITY); showRoleMenu = false },
-                            leadingIcon = { Icon(Icons.Default.FlashOn, null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Tarea") },
-                            onClick = { onUpdateRole(EditorRole.TASK); showRoleMenu = false },
-                            leadingIcon = { Icon(Icons.Default.CheckBox, null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Recordatorio") },
-                            onClick = { onUpdateRole(EditorRole.REMINDER); showRoleMenu = false },
-                            leadingIcon = { Icon(Icons.Default.Notifications, null) }
-                        )
-                    }
+            // HEADER: Role Selector + Actions
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SegmentedRoleSelector(
+                    selectedRole = role,
+                    onRoleSelected = onUpdateRole
+                )
+
+                IconButton(
+                    onClick = { onDelete(root.id) },
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(RoutineTheme.colors.surface2)
+                ) {
+                    Icon(Icons.Default.Delete, "Eliminar", tint = RoutineTheme.colors.error.copy(alpha = 0.8f))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // TITLE INPUT GROUP
+            val accentColor = when (role) {
+                EditorRole.TASK -> BrandEmerald
+                EditorRole.SPONTANEOUS -> BrandViolet
+                EditorRole.SCHEDULED -> BrandEmerald // or Sky
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(DarkSurface)
+                    .border(1.dp, RoutineTheme.colors.border.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(accentColor.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = when (role) {
+                            EditorRole.TASK -> Icons.Default.CheckBox
+                            EditorRole.SPONTANEOUS -> Icons.Default.FlashOn
+                            EditorRole.SCHEDULED -> Icons.Default.Event
+                        },
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
                 
                 Spacer(modifier = Modifier.width(12.dp))
+                
                 TextField(
                     value = titleState,
                     onValueChange = { 
@@ -171,11 +197,15 @@ fun SpontaneousEditorSheet(
                         onUpdateTitle(root.id, it.text) 
                     },
                     placeholder = { 
-                        Text(when(role) {
-                            EditorRole.ACTIVITY -> "Título del evento"
-                            EditorRole.TASK -> "Título de la tarea"
-                            EditorRole.REMINDER -> "Título del aviso"
-                        }) 
+                        Text(
+                            text = when(role) {
+                                EditorRole.TASK -> "Título de la tarea..."
+                                EditorRole.SPONTANEOUS -> "Título del evento inesperado..."
+                                EditorRole.SCHEDULED -> "Título del evento..."
+                            },
+                            fontSize = 15.sp,
+                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
+                        ) 
                     },
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
@@ -183,219 +213,428 @@ fun SpontaneousEditorSheet(
                         unfocusedIndicatorColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent
                     ),
-                    textStyle = RoutineTheme.typography.headlineMedium.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                    textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { onDelete(root.id) }) {
-                    Icon(Icons.Default.Delete, "Eliminar", tint = RoutineTheme.colors.error)
-                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            SchedulePickerRow(
+            // TIME RANGE PICKER
+            TimeRangePicker(
                 startTime = root.plannedStartTime,
-                endTime = if (role == EditorRole.ACTIVITY) root.plannedEndTime else null,
-                onPickStart = { 
-                    pickingType = PickingType.START
-                    showTimePicker = true
-                },
-                onPickEnd = {
-                    pickingType = PickingType.END
-                    showTimePicker = true
-                },
-                onClear = { onUpdateSchedule(root.id, null, null) },
-                hideEnd = role != EditorRole.ACTIVITY
+                endTime = root.plannedEndTime,
+                accentColor = accentColor,
+                onPickStart = { pickingType = PickingType.START; showTimePicker = true },
+                onPickEnd = { pickingType = PickingType.END; showTimePicker = true },
+                hideEnd = role == EditorRole.TASK
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider(color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.2f))
+            HorizontalDivider(color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.1f))
             
-            // CONTEXT SECTION
-            if (role == EditorRole.ACTIVITY) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    "CONTEXTO",
-                    style = RoutineTheme.typography.labelCaps,
-                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Tasks
-                entry.associatedItems.forEach { task ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.RadioButtonUnchecked, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(task.root.instance.titleSnapshot, style = RoutineTheme.typography.bodyBase)
-                        Spacer(modifier = Modifier.weight(1f))
-                        IconButton(onClick = { onRemoveDraftTask(task.root.instance.id) }) {
-                            Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp))
-                        }
+            // DYNAMIC CONTENT (Context, Reminders, Notes)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Context Section (Tasks) - Only for Spontaneous/Scheduled
+                if (role != EditorRole.TASK) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    SectionHeader("Contexto & Tarea Ligada")
+                    
+                    // Task List
+                    entry.associatedItems.forEach { task ->
+                        AssociatedTaskItem(
+                            title = task.root.instance.titleSnapshot,
+                            onRemove = { onRemoveDraftTask(task.root.instance.id) }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
-                }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.primary)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    TextField(
+                    // Add Task Button/Input
+                    QuickAddTaskInput(
                         value = newTaskTitle,
                         onValueChange = { newTaskTitle = it },
-                        placeholder = { Text("Añadir tarea rápida...", fontSize = 14.sp) },
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent
-                        ),
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        textStyle = RoutineTheme.typography.bodyBase
+                        onAdd = { onAddDraftTask(newTaskTitle); newTaskTitle = "" }
                     )
-                    if (newTaskTitle.isNotBlank()) {
-                        IconButton(onClick = { 
-                            onAddDraftTask(newTaskTitle)
-                            newTaskTitle = ""
-                        }) {
-                            Icon(Icons.Default.Check, null, tint = RoutineTheme.colors.primary)
-                        }
-                    }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
 
-            if (role != EditorRole.REMINDER) {
-                if (role == EditorRole.ACTIVITY) {
-                    // Reminder
-                    ReminderSelector(
+                Spacer(modifier = Modifier.height(20.dp))
+                SectionHeader("Recordatorio & Notas")
+                
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
+                    Icon(Icons.Default.Notifications, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    ReminderPills(
                         abs = root.reminderAbs,
                         rel = root.reminderRel,
+                        accentColor = accentColor,
                         onUpdate = onUpdateDraftReminder
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Note
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Note Area
                 TextField(
                     value = noteState,
                     onValueChange = { 
                         noteState = it
                         onUpdateDraftNote(it)
                     },
-                    placeholder = { Text("Añadir notas...", fontSize = 14.sp) },
-                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Añadir notas, motivo de la interrupción...", fontSize = 13.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurface),
                     colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = RoutineTheme.colors.surface2,
-                        focusedContainerColor = RoutineTheme.colors.surface2,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent
                     ),
-                    shape = RoutineTheme.shapes.small,
+                    textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
                     minLines = 3
                 )
-            } else {
-                // In REMINDER mode, we only show absolute time hint if not set
-                if (root.reminderAbs == null) {
-                    Text(
-                        "Define una hora para el recordatorio.",
-                        style = RoutineTheme.typography.bodyBase,
-                        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                }
             }
 
-            if (isCreationMode) {
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(
-                    onClick = onSaveNew,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoutineTheme.shapes.medium,
-                    colors = ButtonDefaults.buttonColors(containerColor = RoutineTheme.colors.primary, contentColor = Color.Black),
-                    enabled = root.titleSnapshot.isNotBlank() && (role != EditorRole.REMINDER || root.plannedStartTime != null)
-                ) {
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // PRIMARY ACTION BUTTON
+            val buttonBrush = Brush.linearGradient(
+                colors = listOf(Color(0xFF9333EA), BrandViolet, Color(0xFFC026D3))
+            )
+            
+            Button(
+                onClick = onSaveNew,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (isCreationMode) buttonBrush else SolidColor(RoutineTheme.colors.surface3)),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White
+                ),
+                enabled = root.titleSnapshot.isNotBlank()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    Icon(
+                        imageVector = when(role) {
+                            EditorRole.TASK -> Icons.Default.Check
+                            else -> Icons.Default.FlashOn
+                        },
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = when(role) {
-                            EditorRole.ACTIVITY -> "Programar Evento"
                             EditorRole.TASK -> "Crear Tarea"
-                            EditorRole.REMINDER -> "Crear Recordatorio"
+                            EditorRole.SPONTANEOUS -> "Registrar Evento Espontáneo"
+                            EditorRole.SCHEDULED -> "Programar Evento"
                         },
-                        style = RoutineTheme.typography.labelCaps
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
 
 @Composable
-private fun ReminderSelector(
+private fun SegmentedRoleSelector(
+    selectedRole: EditorRole,
+    onRoleSelected: (EditorRole) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFF0B0E14))
+            .border(1.dp, Color(0xFF1E2332), RoundedCornerShape(14.dp))
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RoleTab(
+            label = "Tarea",
+            icon = Icons.Default.Check,
+            isSelected = selectedRole == EditorRole.TASK,
+            onClick = { onRoleSelected(EditorRole.TASK) },
+            activeColor = BrandEmerald
+        )
+        RoleTab(
+            label = "Espontáneo",
+            icon = Icons.Default.FlashOn,
+            isSelected = selectedRole == EditorRole.SPONTANEOUS,
+            onClick = { onRoleSelected(EditorRole.SPONTANEOUS) },
+            activeColor = BrandViolet
+        )
+        RoleTab(
+            label = "Evento",
+            icon = Icons.Default.Event,
+            isSelected = selectedRole == EditorRole.SCHEDULED,
+            onClick = { onRoleSelected(EditorRole.SCHEDULED) },
+            activeColor = BrandEmerald
+        )
+    }
+}
+
+@Composable
+private fun RoleTab(
+    label: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    activeColor: Color
+) {
+    val containerColor = if (isSelected) activeColor.copy(alpha = 0.15f) else Color.Transparent
+    val contentColor = if (isSelected) activeColor else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+    val borderModifier = if (isSelected) Modifier.border(1.dp, activeColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp)) else Modifier
+
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(containerColor)
+            .then(borderModifier)
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(icon, null, modifier = Modifier.size(14.dp), tint = contentColor)
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = label,
+            style = RoutineTheme.typography.labelCaps.copy(
+                fontSize = 11.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            ),
+            color = contentColor
+        )
+    }
+}
+
+@Composable
+private fun TimeRangePicker(
+    startTime: Int?,
+    endTime: Int?,
+    accentColor: Color,
+    onPickStart: () -> Unit,
+    onPickEnd: () -> Unit,
+    hideEnd: Boolean
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(DarkCard)
+            .border(1.dp, RoutineTheme.colors.border.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+            .padding(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Schedule, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Rango Temporal", style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp), color = RoutineTheme.colors.onSurfaceVariant)
+            }
+            
+            if (startTime != null && endTime != null && !hideEnd) {
+                Surface(
+                    color = accentColor.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(6.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.3f))
+                ) {
+                    Text(
+                        text = "Duración: ${endTime - startTime} min",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, color = accentColor)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TimeChip(
+                label = "Hora Inicio",
+                time = startTime?.let { formatMinutes(it) } ?: "--:--",
+                onClick = onPickStart,
+                modifier = Modifier.weight(1f)
+            )
+            
+            if (!hideEnd) {
+                Icon(Icons.Default.ArrowForward, null, tint = accentColor.copy(alpha = 0.5f), modifier = Modifier.size(18.dp))
+                
+                TimeChip(
+                    label = "Hora Fin",
+                    time = endTime?.let { formatMinutes(it) } ?: "--:--",
+                    onClick = onPickEnd,
+                    modifier = Modifier.weight(1f),
+                    activeColor = accentColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeChip(
+    label: String,
+    time: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    activeColor: Color = Color.White
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(DarkSurface)
+            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(label, style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp), color = RoutineTheme.colors.onSurfaceVariant)
+        Text(time, style = RoutineTheme.typography.dataLarge.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold), color = activeColor)
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title.uppercase(),
+        style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, letterSpacing = 1.sp),
+        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.padding(horizontal = 4.dp)
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+}
+
+@Composable
+private fun AssociatedTaskItem(title: String, onRemove: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(DarkSurface)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Default.RadioButtonUnchecked, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant)
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(title, style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp))
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(onClick = onRemove, modifier = Modifier.size(20.dp)) {
+            Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp), tint = RoutineTheme.colors.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun QuickAddTaskInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onAdd: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(DarkSurface)
+            .border(1.dp, RoutineTheme.colors.border.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = BrandViolet)
+        Spacer(modifier = Modifier.width(12.dp))
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text("Añadir sub-tarea rápida...", fontSize = 13.sp) },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.Transparent,
+                focusedContainerColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent
+            ),
+            modifier = Modifier.weight(1f),
+            singleLine = true,
+            textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp)
+        )
+        if (value.isNotBlank()) {
+            IconButton(onClick = onAdd) {
+                Icon(Icons.Default.ArrowForward, null, tint = BrandViolet, modifier = Modifier.size(18.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReminderPills(
     abs: Int?,
     rel: Int?,
+    accentColor: Color,
     onUpdate: (Int?, Int?) -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Notifications, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(16.dp))
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        AssistChip(
-            onClick = { onUpdate(null, 10) }, // Simplified for MVP: relative 10 min
-            label = { Text("10 min antes") },
-            colors = AssistChipDefaults.assistChipColors(
-                containerColor = if (rel != null) RoutineTheme.colors.primary.copy(alpha = 0.2f) else Color.Transparent,
-                labelColor = if (rel != null) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
-            )
+    val scrollState = androidx.compose.foundation.rememberScrollState()
+    Row(modifier = Modifier.horizontalScroll(scrollState), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ReminderPill(
+            label = "10 min antes",
+            isSelected = rel == 10,
+            onClick = { onUpdate(null, 10) },
+            accentColor = accentColor
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        AssistChip(
-            onClick = { onUpdate(540, null) }, // Simplified for MVP: Fixed 09:00
-            label = { Text("09:00") },
-            colors = AssistChipDefaults.assistChipColors(
-                containerColor = if (abs != null) RoutineTheme.colors.primary.copy(alpha = 0.2f) else Color.Transparent,
-                labelColor = if (abs != null) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant
-            )
+        ReminderPill(
+            label = "Al momento",
+            isSelected = rel == 0,
+            onClick = { onUpdate(null, 0) },
+            accentColor = accentColor
+        )
+        ReminderPill(
+            label = "09:00",
+            isSelected = abs == 540,
+            onClick = { onUpdate(540, null) },
+            accentColor = accentColor
         )
         
         if (abs != null || rel != null) {
-            IconButton(onClick = { onUpdate(null, null) }) {
-                Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp))
+            IconButton(onClick = { onUpdate(null, null) }, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp), tint = RoutineTheme.colors.onSurfaceVariant)
             }
         }
     }
 }
 
 @Composable
-private fun SchedulePickerRow(
-    startTime: Int?,
-    endTime: Int?,
-    onPickStart: () -> Unit,
-    onPickEnd: () -> Unit,
-    onClear: () -> Unit,
-    hideEnd: Boolean = false
+private fun ReminderPill(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    accentColor: Color
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Schedule, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(16.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        
-        TextButton(onClick = onPickStart) {
-            Text(startTime?.let { formatMinutes(it) } ?: "Hora Inicio", style = RoutineTheme.typography.dataLarge)
-        }
-        
-        if (!hideEnd) {
-            Text("-", color = RoutineTheme.colors.onSurfaceVariant)
-            
-            TextButton(onClick = onPickEnd) {
-                Text(endTime?.let { formatMinutes(it) } ?: "Hora Fin", style = RoutineTheme.typography.dataLarge)
+    Surface(
+        onClick = onClick,
+        color = if (isSelected) accentColor.copy(alpha = 0.15f) else Color(0xFF141722),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) accentColor.copy(alpha = 0.4f) else RoutineTheme.colors.border.copy(alpha = 0.3f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isSelected) {
+                Box(Modifier.size(6.dp).clip(RoundedCornerShape(3.dp)).background(accentColor))
+                Spacer(Modifier.width(8.dp))
             }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        if (startTime != null || endTime != null) {
-            IconButton(onClick = onClear) {
-                Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
-            }
+            Text(label, style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, color = if (isSelected) accentColor else RoutineTheme.colors.onSurfaceVariant))
         }
     }
 }
