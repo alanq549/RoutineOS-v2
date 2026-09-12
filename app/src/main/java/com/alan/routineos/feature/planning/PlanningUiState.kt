@@ -7,9 +7,9 @@ import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 import java.time.LocalDate
 
 enum class EditorRole {
+    EVENT,
     TASK,
-    SPONTANEOUS,
-    SCHEDULED
+    REMINDER
 }
 
 data class PlanningUiState(
@@ -22,7 +22,10 @@ data class PlanningUiState(
     val unscheduledItems: List<TodayTimelineUiModel> = emptyList(),
     val exceptions: List<TodayTimelineUiModel> = emptyList(),
     val editingSpontaneousEntry: HierarchicalTimelineEntry? = null,
-    val editorRole: EditorRole = EditorRole.SPONTANEOUS,
+    val editorRole: EditorRole = EditorRole.EVENT,
+    val definitionsCatalog: List<ActivityDefinition> = emptyList(),
+    val catalogSearchQuery: String = "",
+    val selectedLinkedActivity: ActivityDefinition? = null,
     val isCreatingNewEvent: Boolean = false,
     val pendingMove: com.alan.routineos.domain.model.PendingMove? = null
 )

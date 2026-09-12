@@ -5,10 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.alan.routineos.data.local.entities.DailyInstanceEntity
 import com.alan.routineos.data.local.entities.ActivityExecutionEntity
-import com.alan.routineos.domain.model.ActionProtocol
-import com.alan.routineos.domain.model.DailyInstance
-import com.alan.routineos.domain.model.DailyInstanceStatus
-import com.alan.routineos.domain.model.HierarchicalTimelineEntry
+import com.alan.routineos.data.mapper.toEntity
+import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.usecase.DailyAction
 import com.alan.routineos.domain.usecase.MaterializeInstanceUseCase
 import com.alan.routineos.domain.usecase.RegisterDailyActionUseCase
@@ -114,6 +112,55 @@ class ContextItemsPolymorphismTest {
         val retrievedTask = all.find { it.id == "t1" }
         assertEquals("a1", retrievedTask?.associatedInstanceId)
         assertEquals(2, all.size) // No duplication
+    }
+
+    @Test
+    fun mixed_relationship_case_integrity() = runBlocking {
+        // 1. Setup Definition (Microeconomia)
+        val def = ActivityDefinition("m1", "Microeconomia", "Desc")
+        db.activityDefinitionDao().insertActivityDefinition(def.toEntity())
+        
+        // 2. Setup Anchor (Asesoria)
+        val anchor = createInstance("a1", "Asesoria")
+        repository.upsertDailyInstance(anchor)
+        
+        // 3. Create Task: "Reporte"
+        // Semantically linked to Microeconomia (targetId)
+        // Operatively linked to Asesoria (associatedInstanceId)
+        val task = createInstance("t1", "Reporte").copy(
+            actionProtocol = ActionProtocol.CHECK,
+            target = ScheduleTarget.Definition("m1"),
+            associatedInstanceId = "a1"
+        )
+        repository.upsertDailyInstance(task)
+        
+        // 4. Verify Identity
+        val all = db.dailyInstanceDao().getInstancesForDate(0L).first()
+        val retrieved = all.find { it.id == "t1" }
+        assertEquals("m1", retrieved?.targetId)
+        assertEquals("DEFINITION", retrieved?.targetType)
+        assertEquals("a1", retrieved?.associatedInstanceId)
+        assertEquals("CHECK", retrieved?.actionProtocol)
+    }
+
+    @Test
+    fun unlinking_semantic_axis_preserves_operative_axis() = runBlocking {
+        val anchor = createInstance("a1", "Ancla")
+        repository.upsertDailyInstance(anchor)
+        
+        val task = createInstance("t1", "Task").copy(
+            target = ScheduleTarget.Definition("d1"),
+            associatedInstanceId = "a1"
+        )
+        repository.upsertDailyInstance(task)
+        
+        // Unlink semantic
+        val unlinked = task.copy(target = null)
+        repository.upsertDailyInstance(unlinked)
+        
+        val retrieved = db.dailyInstanceDao().getInstancesForDate(0L).first().find { it.id == "t1" }
+        assertNull(retrieved?.targetId)
+        assertEquals("a1", retrieved?.associatedInstanceId)
     }
 
     private fun createInstance(id: String, title: String) = DailyInstance(

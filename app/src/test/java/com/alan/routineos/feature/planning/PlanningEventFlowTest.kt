@@ -155,7 +155,7 @@ class PlanningEventFlowTest {
         viewModel.onUpdateDraftNote("Important Activity Note")
         advanceUntilIdle()
         
-        assertEquals(EditorRole.ACTIVITY, viewModel.uiState.value.editorRole)
+        assertEquals(EditorRole.EVENT, viewModel.uiState.value.editorRole)
         assertEquals("Important Activity Note", viewModel.uiState.value.editingSpontaneousEntry?.note?.content)
 
         // 2. Switch to Task mode
@@ -168,8 +168,8 @@ class PlanningEventFlowTest {
         // Let's check if it still has the note in the HierarchicalTimelineEntry
         assertEquals("Important Activity Note", viewModel.uiState.value.editingSpontaneousEntry?.note?.content)
 
-        // 3. Switch back to Activity
-        viewModel.onUpdateEditorRole(EditorRole.ACTIVITY)
+        // 3. Switch back to Event
+        viewModel.onUpdateEditorRole(EditorRole.EVENT)
         advanceUntilIdle()
         assertEquals("Important Activity Note", viewModel.uiState.value.editingSpontaneousEntry?.note?.content)
     }

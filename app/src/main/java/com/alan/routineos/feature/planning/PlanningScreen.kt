@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.feature.planning.components.PlanningExceptionCard
 import com.alan.routineos.feature.planning.components.PlanningTimeBlock
 import com.alan.routineos.feature.planning.components.PlanningUnscheduledCard
@@ -38,11 +39,14 @@ fun PlanningScreen(
     onUpdateSpontaneousSchedule: (String, Int?, Int?) -> Unit,
     onDeleteInstance: (String) -> Unit,
     onUpdateEditorRole: (EditorRole) -> Unit = {},
+    onUpdateCatalogSearch: (String) -> Unit = {},
+    onLinkToDefinition: (ActivityDefinition?) -> Unit = {},
     onExpandClick: (String) -> Unit,
     onAddDraftTask: (String) -> Unit = {},
     onRemoveDraftTask: (String) -> Unit = {},
     onUpdateDraftNote: (String) -> Unit = {},
     onUpdateDraftReminder: (Int?, Int?) -> Unit = { _, _ -> },
+    onSetTimeToNow: (String) -> Unit = {},
     onConfirmPendingMove: () -> Unit,
     onCancelPendingMove: () -> Unit,
     modifier: Modifier = Modifier
@@ -194,11 +198,17 @@ fun PlanningScreen(
             onUpdateSchedule = onUpdateSpontaneousSchedule,
             onDelete = onDeleteInstance,
             onUpdateRole = onUpdateEditorRole,
+            onUpdateCatalogSearch = onUpdateCatalogSearch,
+            onLinkToDefinition = onLinkToDefinition,
             onAddDraftTask = onAddDraftTask,
             onRemoveDraftTask = onRemoveDraftTask,
             onUpdateDraftNote = onUpdateDraftNote,
             onUpdateDraftReminder = onUpdateDraftReminder,
-            onDismiss = onDismissSpontaneousEditor
+            onSetTimeToNow = onSetTimeToNow,
+            onDismiss = onDismissSpontaneousEditor,
+            activityCatalog = uiState.definitionsCatalog,
+            catalogSearchQuery = uiState.catalogSearchQuery,
+            selectedDefinition = uiState.selectedLinkedActivity
         )
     }
 

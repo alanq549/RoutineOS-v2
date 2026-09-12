@@ -29,7 +29,7 @@ class PlanningViewModel @Inject constructor(
     private val _expandedIds = MutableStateFlow<Set<String>>(emptySet())
     private val _editingSpontaneousEntry = MutableStateFlow<HierarchicalTimelineEntry?>(null)
     private val _isCreatingNewEvent = MutableStateFlow(false)
-    private val _editorRole = MutableStateFlow(EditorRole.SPONTANEOUS)
+    private val _editorRole = MutableStateFlow(EditorRole.EVENT)
     private val _pendingMove = MutableStateFlow<PendingMove?>(null)
 
     // Context Drafts
@@ -37,6 +37,10 @@ class PlanningViewModel @Inject constructor(
     private val _draftNote = MutableStateFlow<String>("")
     private val _draftReminderAbs = MutableStateFlow<Int?>(null)
     private val _draftReminderRel = MutableStateFlow<Int?>(null)
+
+    // Contextual Linking
+    private val _catalogSearchQuery = MutableStateFlow("")
+    private val _selectedDefinition = MutableStateFlow<ActivityDefinition?>(null)
 
     private var currentEntries = listOf<HierarchicalTimelineEntry>()
 
@@ -51,7 +55,10 @@ class PlanningViewModel @Inject constructor(
         _draftNote,
         _draftReminderAbs,
         _draftReminderRel,
-        _editorRole
+        _editorRole,
+        _catalogSearchQuery,
+        _selectedDefinition,
+        repository.getActivityDefinitions()
     ) { args ->
         val date = args[0] as LocalDate
         val expanded = args[1] as Set<String>
@@ -63,14 +70,23 @@ class PlanningViewModel @Inject constructor(
         val reminderAbs = args[7] as Int?
         val reminderRel = args[8] as Int?
         val role = args[9] as EditorRole
+        val searchQuery = args[10] as String
+        val selectedDef = args[11] as ActivityDefinition?
+        val allDefs = args[12] as List<ActivityDefinition>
 
-        DataPackage(date, expanded, editing, creating, pending, tasks, note, reminderAbs, reminderRel, role)
+        DataPackage(
+            date, expanded, editing, creating, pending, tasks, note, 
+            reminderAbs, reminderRel, role, searchQuery, selectedDef, allDefs
+        )
     }.flatMapLatest { p ->
         getHierarchicalTimelineUseCase(p.date).map { entries ->
             currentEntries = entries
             val scheduled = entries.filter { it.effectiveStartTimeMinutes != null }
             val unscheduled = entries.filter { it.effectiveStartTimeMinutes == null }
             val exceptions = entries.filter { it.root.isMaterialized && it.root.instance.status != DailyInstanceStatus.PLANNED }
+
+            val filteredCatalog = if (p.searchQuery.isBlank()) emptyList() 
+                else p.allDefinitions.filter { it.title.contains(p.searchQuery, ignoreCase = true) }
 
             PlanningUiState(
                 isLoading = false,
@@ -100,6 +116,9 @@ class PlanningViewModel @Inject constructor(
                     )
                 },
                 editorRole = p.role,
+                definitionsCatalog = filteredCatalog,
+                catalogSearchQuery = p.searchQuery,
+                selectedLinkedActivity = p.selectedDef,
                 isCreatingNewEvent = p.creating,
                 pendingMove = p.pending
             )
@@ -120,7 +139,10 @@ class PlanningViewModel @Inject constructor(
         val note: String,
         val reminderAbs: Int?,
         val reminderRel: Int?,
-        val role: EditorRole
+        val role: EditorRole,
+        val searchQuery: String,
+        val selectedDef: ActivityDefinition?,
+        val allDefinitions: List<ActivityDefinition>
     )
 
     private fun generateWeekDays(selected: LocalDate): List<PlanningDay> {
@@ -266,7 +288,7 @@ class PlanningViewModel @Inject constructor(
         _draftNote.value = ""
         _draftReminderAbs.value = null
         _draftReminderRel.value = null
-        _editorRole.value = EditorRole.ACTIVITY
+        _editorRole.value = EditorRole.EVENT
 
         _isCreatingNewEvent.value = true
         _editingSpontaneousEntry.value = tempEntry
@@ -305,6 +327,21 @@ class PlanningViewModel @Inject constructor(
         _draftReminderRel.value = rel
     }
 
+    fun onUpdateCatalogSearch(query: String) {
+        _catalogSearchQuery.value = query
+    }
+
+    fun onLinkToDefinition(definition: ActivityDefinition?) {
+        _selectedDefinition.value = definition
+        _catalogSearchQuery.value = ""
+    }
+
+    fun onSetTimeToNow(id: String) {
+        val now = Calendar.getInstance()
+        val minutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        onUpdateSpontaneousSchedule(id, minutes, null)
+    }
+
     fun onActionTriggered(instanceId: String, actionType: String) {
         val entry = findEntry(instanceId) ?: return
         viewModelScope.launch {
@@ -324,9 +361,21 @@ class PlanningViewModel @Inject constructor(
                     _draftReminderRel.value = entry.root.instance.reminderRel
                     
                     _editorRole.value = when (entry.root.instance.actionProtocol) {
-                        ActionProtocol.TIMER -> if (entry.root.instance.isAdHoc) EditorRole.SPONTANEOUS else EditorRole.SCHEDULED
+                        ActionProtocol.TIMER -> EditorRole.EVENT
                         ActionProtocol.CHECK -> EditorRole.TASK
-                        ActionProtocol.NOTIFY -> EditorRole.SPONTANEOUS // Default to spontaneous for reminders for now
+                        ActionProtocol.NOTIFY -> EditorRole.REMINDER
+                    }
+
+                    // Initialize Selected Definition
+                    val target = entry.root.instance.target
+                    if (target is ScheduleTarget.Definition) {
+                        _selectedDefinition.value = repository.getActivityDefinitionById(target.id)
+                    } else if (target is ScheduleTarget.Node) {
+                        // For nodes, we don't necessarily link to definition in this MVP role, 
+                        // but let's keep it as NULL or find parent def if needed.
+                        _selectedDefinition.value = null
+                    } else {
+                        _selectedDefinition.value = null
                     }
                     
                     _isCreatingNewEvent.value = false
@@ -440,21 +489,23 @@ class PlanningViewModel @Inject constructor(
     fun onSaveNewEvent() {
         val entry = _editingSpontaneousEntry.value ?: return
         val role = _editorRole.value
+        val linkedDef = _selectedDefinition.value
         
         val anchor = entry.root.instance.copy(
+            target = linkedDef?.let { ScheduleTarget.Definition(it.id) } ?: entry.root.instance.target,
             actionProtocol = when (role) {
-                EditorRole.SPONTANEOUS -> ActionProtocol.TIMER
-                EditorRole.SCHEDULED -> ActionProtocol.TIMER
+                EditorRole.EVENT -> ActionProtocol.TIMER
                 EditorRole.TASK -> ActionProtocol.CHECK
+                EditorRole.REMINDER -> ActionProtocol.NOTIFY
             },
             reminderAbs = _draftReminderAbs.value,
             reminderRel = _draftReminderRel.value,
-            isAdHoc = role == EditorRole.SPONTANEOUS || role == EditorRole.TASK
+            isAdHoc = linkedDef == null
         )
         if (anchor.titleSnapshot.isBlank()) return
 
-        // Context items only for ACTIVITY (Spontaneous or Scheduled)
-        val tasks = if (role != EditorRole.TASK) {
+        // Context items only for EVENT
+        val tasks = if (role == EditorRole.EVENT) {
             _draftTasks.value.map { it.copy(associatedInstanceId = anchor.id) }
         } else emptyList()
 
