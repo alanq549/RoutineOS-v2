@@ -28,6 +28,8 @@ fun PlanningRoute(
         onUpdateEditorRole = viewModel::onUpdateEditorRole,
         onUpdateCatalogSearch = viewModel::onUpdateCatalogSearch,
         onLinkToDefinition = viewModel::onLinkToDefinition,
+        onLinkToOccurrence = viewModel::onLinkToOccurrence,
+        onSelectUnifiedResult = viewModel::onSelectUnifiedResult,
         onExpandClick = viewModel::toggleExpand,
         onAddDraftTask = viewModel::onAddDraftTask,
         onRemoveDraftTask = viewModel::onRemoveDraftTask,

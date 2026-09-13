@@ -10,10 +10,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.feature.planning.model.SearchTargetUiModel
+import com.alan.routineos.feature.planning.model.UnifiedLinkingResult
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 import com.alan.routineos.feature.planning.components.PlanningExceptionCard
 import com.alan.routineos.feature.planning.components.PlanningTimeBlock
 import com.alan.routineos.feature.planning.components.PlanningUnscheduledCard
@@ -40,7 +44,9 @@ fun PlanningScreen(
     onDeleteInstance: (String) -> Unit,
     onUpdateEditorRole: (EditorRole) -> Unit = {},
     onUpdateCatalogSearch: (String) -> Unit = {},
-    onLinkToDefinition: (ActivityDefinition?) -> Unit = {},
+    onLinkToDefinition: (SearchTargetUiModel?) -> Unit = {},
+    onLinkToOccurrence: (TodayTimelineUiModel?) -> Unit = {},
+    onSelectUnifiedResult: (UnifiedLinkingResult) -> Unit = {},
     onExpandClick: (String) -> Unit,
     onAddDraftTask: (String) -> Unit = {},
     onRemoveDraftTask: (String) -> Unit = {},
@@ -165,14 +171,14 @@ fun PlanningScreen(
             if (!uiState.isShowingToday) {
                 SmallFloatingActionButton(
                     onClick = onGoToToday,
-                    containerColor = RoutineTheme.colors.secondary,
-                    contentColor = androidx.compose.ui.graphics.Color.Black,
+                    containerColor = RoutineTheme.colors.surface2,
+                    contentColor = RoutineTheme.colors.onSurface,
                     shape = RoutineTheme.shapes.pill
                 ) {
                     Text(
                         text = "HOY",
                         modifier = Modifier.padding(horizontal = 12.dp),
-                        style = RoutineTheme.typography.labelCaps
+                        style = RoutineTheme.typography.labelCaps.copy(fontWeight = FontWeight.Bold)
                     )
                 }
             }
@@ -200,15 +206,18 @@ fun PlanningScreen(
             onUpdateRole = onUpdateEditorRole,
             onUpdateCatalogSearch = onUpdateCatalogSearch,
             onLinkToDefinition = onLinkToDefinition,
+            onLinkToOccurrence = onLinkToOccurrence,
+            onSelectUnifiedResult = onSelectUnifiedResult,
             onAddDraftTask = onAddDraftTask,
             onRemoveDraftTask = onRemoveDraftTask,
             onUpdateDraftNote = onUpdateDraftNote,
             onUpdateDraftReminder = onUpdateDraftReminder,
             onSetTimeToNow = onSetTimeToNow,
             onDismiss = onDismissSpontaneousEditor,
-            activityCatalog = uiState.definitionsCatalog,
+            unifiedCatalog = uiState.unifiedCatalog,
             catalogSearchQuery = uiState.catalogSearchQuery,
-            selectedDefinition = uiState.selectedLinkedActivity
+            selectedDefinition = uiState.selectedSemanticTarget,
+            selectedOccurrence = uiState.selectedContextualOccurrence
         )
     }
 

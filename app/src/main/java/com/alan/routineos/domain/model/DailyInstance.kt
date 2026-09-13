@@ -9,8 +9,7 @@ enum class DailyInstanceStatus {
 
 enum class ActionProtocol {
     TIMER,
-    CHECK,
-    NOTIFY
+    CHECK
 }
 
 data class DailyInstance(

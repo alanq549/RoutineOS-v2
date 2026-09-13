@@ -6,6 +6,8 @@ import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.domain.usecase.*
 import com.alan.routineos.feature.planning.model.PlanningDay
+import com.alan.routineos.feature.planning.model.SearchTargetUiModel
+import com.alan.routineos.feature.planning.model.UnifiedLinkingResult
 import com.alan.routineos.feature.today.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +42,8 @@ class PlanningViewModel @Inject constructor(
 
     // Contextual Linking
     private val _catalogSearchQuery = MutableStateFlow("")
-    private val _selectedDefinition = MutableStateFlow<ActivityDefinition?>(null)
+    private val _selectedSemanticTarget = MutableStateFlow<SearchTargetUiModel?>(null)
+    private val _selectedContextualOccurrence = MutableStateFlow<TodayTimelineUiModel?>(null)
 
     private var currentEntries = listOf<HierarchicalTimelineEntry>()
 
@@ -57,8 +60,10 @@ class PlanningViewModel @Inject constructor(
         _draftReminderRel,
         _editorRole,
         _catalogSearchQuery,
-        _selectedDefinition,
-        repository.getActivityDefinitions()
+        _selectedSemanticTarget,
+        _selectedContextualOccurrence,
+        repository.getActivityDefinitions(),
+        repository.getAllNodes()
     ) { args ->
         val date = args[0] as LocalDate
         val expanded = args[1] as Set<String>
@@ -70,13 +75,16 @@ class PlanningViewModel @Inject constructor(
         val reminderAbs = args[7] as Int?
         val reminderRel = args[8] as Int?
         val role = args[9] as EditorRole
-        val searchQuery = args[10] as String
-        val selectedDef = args[11] as ActivityDefinition?
-        val allDefs = args[12] as List<ActivityDefinition>
+        val linkingQuery = args[10] as String
+        val selectedSemantic = args[11] as SearchTargetUiModel?
+        val selectedContextual = args[12] as TodayTimelineUiModel?
+        val allDefs = args[13] as List<ActivityDefinition>
+        val allNodes = args[14] as List<ActivityNode>
 
         DataPackage(
             date, expanded, editing, creating, pending, tasks, note, 
-            reminderAbs, reminderRel, role, searchQuery, selectedDef, allDefs
+            reminderAbs, reminderRel, role, linkingQuery, selectedSemantic,
+            selectedContextual, allDefs, allNodes
         )
     }.flatMapLatest { p ->
         getHierarchicalTimelineUseCase(p.date).map { entries ->
@@ -85,8 +93,28 @@ class PlanningViewModel @Inject constructor(
             val unscheduled = entries.filter { it.effectiveStartTimeMinutes == null }
             val exceptions = entries.filter { it.root.isMaterialized && it.root.instance.status != DailyInstanceStatus.PLANNED }
 
-            val filteredCatalog = if (p.searchQuery.isBlank()) emptyList() 
-                else p.allDefinitions.filter { it.title.contains(p.searchQuery, ignoreCase = true) }
+            val allUiTimelineModels = (scheduled + unscheduled).map { it.toUiModel(p.expanded.contains(it.root.instance.id)) }
+
+            val unifiedCatalog: List<UnifiedLinkingResult> = if (p.linkingQuery.isBlank()) emptyList() 
+            else {
+                val matchesDefs = p.allDefinitions
+                    .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
+                    .map { UnifiedLinkingResult.SemanticDefinition(it.id, it.title, it.description) }
+                
+                val matchesNodes = p.allNodes
+                    .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
+                    .map { node ->
+                        val parentDef = p.allDefinitions.find { it.id == node.activityDefinitionId }
+                        UnifiedLinkingResult.SemanticNode(node.id, node.title, parentDef?.title)
+                    }
+
+                val matchesOccurrences = allUiTimelineModels
+                    .filter { it.id != p.editing?.root?.instance?.id }
+                    .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
+                    .map { UnifiedLinkingResult.ContextualOccurrence(it) }
+                
+                matchesDefs + matchesNodes + matchesOccurrences
+            }
 
             PlanningUiState(
                 isLoading = false,
@@ -116,9 +144,10 @@ class PlanningViewModel @Inject constructor(
                     )
                 },
                 editorRole = p.role,
-                definitionsCatalog = filteredCatalog,
-                catalogSearchQuery = p.searchQuery,
-                selectedLinkedActivity = p.selectedDef,
+                unifiedCatalog = unifiedCatalog,
+                catalogSearchQuery = p.linkingQuery,
+                selectedSemanticTarget = p.selectedSemantic,
+                selectedContextualOccurrence = p.selectedContextual,
                 isCreatingNewEvent = p.creating,
                 pendingMove = p.pending
             )
@@ -140,9 +169,11 @@ class PlanningViewModel @Inject constructor(
         val reminderAbs: Int?,
         val reminderRel: Int?,
         val role: EditorRole,
-        val searchQuery: String,
-        val selectedDef: ActivityDefinition?,
-        val allDefinitions: List<ActivityDefinition>
+        val linkingQuery: String,
+        val selectedSemantic: SearchTargetUiModel?,
+        val selectedContextual: TodayTimelineUiModel?,
+        val allDefinitions: List<ActivityDefinition>,
+        val allNodes: List<ActivityNode>
     )
 
     private fun generateWeekDays(selected: LocalDate): List<PlanningDay> {
@@ -211,6 +242,11 @@ class PlanningViewModel @Inject constructor(
             completedSubNodesCount = completedCount,
             totalSubNodesCount = totalCount,
             actionProtocol = root.instance.actionProtocol,
+            itemType = when {
+                root.instance.actionProtocol == ActionProtocol.TIMER -> PlanningItemType.ACTIVITY
+                root.instance.reminderAbs != null || root.instance.reminderRel != null -> PlanningItemType.REMINDER
+                else -> PlanningItemType.TASK
+            },
             conflict = root.conflict?.let { 
                 ConflictUiModel(
                     hasConflict = it.hasConflict, 
@@ -331,9 +367,28 @@ class PlanningViewModel @Inject constructor(
         _catalogSearchQuery.value = query
     }
 
-    fun onLinkToDefinition(definition: ActivityDefinition?) {
-        _selectedDefinition.value = definition
+    fun onLinkToDefinition(target: SearchTargetUiModel?) {
+        _selectedSemanticTarget.value = target
         _catalogSearchQuery.value = ""
+    }
+
+    fun onLinkToOccurrence(occurrence: TodayTimelineUiModel?) {
+        _selectedContextualOccurrence.value = occurrence
+        _catalogSearchQuery.value = ""
+    }
+
+    fun onSelectUnifiedResult(result: UnifiedLinkingResult) {
+        when (result) {
+            is UnifiedLinkingResult.SemanticDefinition -> {
+                onLinkToDefinition(SearchTargetUiModel(result.id, result.title, null, ScheduleTarget.Definition(result.id)))
+            }
+            is UnifiedLinkingResult.SemanticNode -> {
+                onLinkToDefinition(SearchTargetUiModel(result.id, result.title, result.parentTitle, ScheduleTarget.Node(result.id)))
+            }
+            is UnifiedLinkingResult.ContextualOccurrence -> {
+                onLinkToOccurrence(result.item)
+            }
+        }
     }
 
     fun onSetTimeToNow(id: String) {
@@ -363,19 +418,29 @@ class PlanningViewModel @Inject constructor(
                     _editorRole.value = when (entry.root.instance.actionProtocol) {
                         ActionProtocol.TIMER -> EditorRole.EVENT
                         ActionProtocol.CHECK -> EditorRole.TASK
-                        ActionProtocol.NOTIFY -> EditorRole.REMINDER
                     }
 
-                    // Initialize Selected Definition
+                    // Initialize Selected Definition (Semantic Target)
                     val target = entry.root.instance.target
                     if (target is ScheduleTarget.Definition) {
-                        _selectedDefinition.value = repository.getActivityDefinitionById(target.id)
+                        val def = repository.getActivityDefinitionById(target.id)
+                        _selectedSemanticTarget.value = def?.let { SearchTargetUiModel(it.id, it.title, null, ScheduleTarget.Definition(it.id)) }
                     } else if (target is ScheduleTarget.Node) {
-                        // For nodes, we don't necessarily link to definition in this MVP role, 
-                        // but let's keep it as NULL or find parent def if needed.
-                        _selectedDefinition.value = null
+                        val node = repository.getNodeById(target.id)
+                        val parentDef = node?.let { repository.getActivityDefinitionById(it.activityDefinitionId) }
+                        _selectedSemanticTarget.value = node?.let { SearchTargetUiModel(it.id, it.title, parentDef?.title, ScheduleTarget.Node(it.id)) }
                     } else {
-                        _selectedDefinition.value = null
+                        _selectedSemanticTarget.value = null
+                    }
+
+                    // Initialize Selected Contextual Occurrence
+                    val assocId = entry.root.instance.associatedInstanceId
+                    if (assocId != null) {
+                        // Find the occurrence UI model in currentEntries to populate it
+                        val assocEntry = findEntry(assocId)
+                        _selectedContextualOccurrence.value = assocEntry?.toUiModel(false)
+                    } else {
+                        _selectedContextualOccurrence.value = null
                     }
                     
                     _isCreatingNewEvent.value = false
@@ -489,18 +554,20 @@ class PlanningViewModel @Inject constructor(
     fun onSaveNewEvent() {
         val entry = _editingSpontaneousEntry.value ?: return
         val role = _editorRole.value
-        val linkedDef = _selectedDefinition.value
+        val linkedSemantic = _selectedSemanticTarget.value
+        val linkedOccurrence = _selectedContextualOccurrence.value
         
         val anchor = entry.root.instance.copy(
-            target = linkedDef?.let { ScheduleTarget.Definition(it.id) } ?: entry.root.instance.target,
+            target = linkedSemantic?.target ?: entry.root.instance.target,
+            associatedInstanceId = linkedOccurrence?.id ?: entry.root.instance.associatedInstanceId,
             actionProtocol = when (role) {
                 EditorRole.EVENT -> ActionProtocol.TIMER
                 EditorRole.TASK -> ActionProtocol.CHECK
-                EditorRole.REMINDER -> ActionProtocol.NOTIFY
+                EditorRole.REMINDER -> ActionProtocol.CHECK // Default to CHECK for Reminder role, but pure reminder is metadata
             },
             reminderAbs = _draftReminderAbs.value,
             reminderRel = _draftReminderRel.value,
-            isAdHoc = linkedDef == null
+            isAdHoc = linkedSemantic == null
         )
         if (anchor.titleSnapshot.isBlank()) return
 

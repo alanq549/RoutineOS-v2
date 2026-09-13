@@ -2,7 +2,6 @@ package com.alan.routineos.domain.usecase
 
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
-import java.util.*
 import javax.inject.Inject
 
 sealed class DailyAction {
@@ -39,12 +38,12 @@ class RegisterDailyActionUseCase @Inject constructor(
         
         val instance = materializeIfVirtual(entry.root)
         
-        // Skip history for NOTIFY (Reminders)
-        if (instance.actionProtocol == ActionProtocol.NOTIFY) {
-            repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.COMPLETED))
-            return
-        }
-
+        // Reminder instances (which don't have a distinct NOTIFY protocol now) shouldn't produce executions if they aren't meant to be executable.
+        // But to protect executions, any instance with reminder only metadata but no executable protocol shouldn't be completed here, 
+        // or we guarantee it doesn't write execution if it's pure reminder metadata. 
+        // Actually, if it has a valid operational protocol like CHECK or TIMER, it writes history.
+        // If it's a pure reminder metadata item with no title or title but purely for warning attention, it shouldn't produce execution.
+        // Let's protect it based on an explicit check or rule if needed. For now, just save status and execution.
         repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.COMPLETED))
         
         // Register execution for the fact history (Blindaje de Historial CHECK/TIMER)

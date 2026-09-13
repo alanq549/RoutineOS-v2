@@ -17,7 +17,10 @@ data class RoutineColorScheme(
     val error: Color,
     val onPrimary: Color,
     val onSurface: Color,
-    val onSurfaceVariant: Color
+    val onSurfaceVariant: Color,
+    val roleEvent: Color = Color(0xFF34D399),
+    val roleTask: Color = Color(0xFFA855F7),
+    val roleReminder: Color = Color(0xFFF87171)
 )
 
 val DarkRoutineColorScheme = RoutineColorScheme(

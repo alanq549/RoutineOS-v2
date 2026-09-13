@@ -11,6 +11,7 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import com.alan.routineos.feature.planning.model.SearchTargetUiModel
 import java.time.LocalDate
 import java.util.*
 
@@ -35,20 +36,20 @@ class PlanningEventFlowTest {
         val savedInstances = mutableListOf<DailyInstance>()
         var deletedId: String? = null
         
-        private val _definitions = MutableStateFlow<List<ActivityDefinition>>(emptyList())
-        private val _nodes = MutableStateFlow<List<ActivityNode>>(emptyList())
+        val _definitions = MutableStateFlow<List<ActivityDefinition>>(emptyList())
+        val _nodes = MutableStateFlow<List<ActivityNode>>(emptyList())
         private val _rules = MutableStateFlow<List<ScheduleRule>>(emptyList())
-        private val _instances = MutableStateFlow<List<DailyInstance>>(emptyList())
+        val _instances = MutableStateFlow<List<DailyInstance>>(emptyList())
         private val _exceptions = MutableStateFlow<List<ScheduleException>>(emptyList())
 
         override fun getActivityDefinitions(): Flow<List<ActivityDefinition>> = _definitions
         override fun getAllNodes(): Flow<List<ActivityNode>> = _nodes
-        override suspend fun getActivityDefinitionById(id: String): ActivityDefinition? = null
+        override suspend fun getActivityDefinitionById(id: String): ActivityDefinition? = _definitions.value.find { it.id == id }
         override suspend fun upsertActivityDefinition(activityDefinition: ActivityDefinition) {}
         override suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition) {}
         override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> = _nodes
         override suspend fun getNodesListForActivityDefinition(activityDefinitionId: String): List<ActivityNode> = emptyList()
-        override suspend fun getNodeById(id: String): ActivityNode? = null
+        override suspend fun getNodeById(id: String): ActivityNode? = _nodes.value.find { it.id == id }
         override suspend fun upsertNode(node: ActivityNode) {}
         override suspend fun deleteNode(node: ActivityNode) {}
         override suspend fun reorderNodes(nodeIds: List<String>) {}
@@ -184,4 +185,186 @@ class PlanningEventFlowTest {
         advanceUntilIdle()
         assertEquals("target_id", repository.deletedId)
     }
+
+    @Test
+    fun `SAVE - Mixed Case - CHECK + DEFINITION + OCCURRENCE coexistence`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        
+        repository._definitions.value = listOf(ActivityDefinition("m1", "Microeconomia", ""))
+        val anchorInstance = createInstance("a1", "Asesoria")
+        repository.upsertDailyInstance(anchorInstance)
+        waitReady(viewModel)
+
+        viewModel.onAddEventClick()
+        advanceUntilIdle()
+        val tempId = viewModel.uiState.value.editingSpontaneousEntry!!.root.instance.id
+
+        // 1. Set Title & Role Task (CHECK)
+        viewModel.onUpdateSpontaneousTitle(tempId, "Subir reporte")
+        viewModel.onUpdateEditorRole(EditorRole.TASK)
+        
+        // 2. Set Semantic Target (Microeconomia)
+        viewModel.onLinkToDefinition(SearchTargetUiModel("m1", "Microeconomia", null, ScheduleTarget.Definition("m1")))
+        
+        // 3. Set Contextual Occurrence (Asesoria)
+        viewModel.onLinkToOccurrence(anchorInstance.toUiModelTest())
+        advanceUntilIdle()
+
+        viewModel.onSaveNewEvent()
+        advanceUntilIdle()
+
+        val saved = repository.savedInstances.last()
+        assertEquals("Subir reporte", saved.titleSnapshot)
+        assertEquals(ScheduleTarget.Definition("m1"), saved.target)
+        assertEquals("a1", saved.associatedInstanceId)
+        assertEquals(ActionProtocol.CHECK, saved.actionProtocol)
+    }
+
+    @Test
+    fun `EDIT - Reconstructs both semantic target and contextual association correctly`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        
+        // 1. Setup existing definitions and occurrences
+        val def = ActivityDefinition("d1", "Materia", "")
+        repository._definitions.value = listOf(def)
+        
+        val anchor = createInstance("a1", "Ocurrencia")
+        repository._instances.value = listOf(anchor)
+        
+        // 2. Setup Task with both links
+        val existingTask = createInstance("t1", "Tarea Mixta").copy(
+            actionProtocol = ActionProtocol.CHECK,
+            target = ScheduleTarget.Definition("d1"),
+            associatedInstanceId = "a1"
+        )
+        repository._instances.update { it + existingTask }
+        waitReady(viewModel)
+
+        // 3. Trigger EDIT
+        viewModel.onActionTriggered("t1", "EDIT_SPONTANEOUS")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Materia", state.selectedSemanticTarget?.title)
+        assertEquals("Ocurrencia", state.selectedContextualOccurrence?.title)
+
+        // 4. Modify ONLY Semantic Target (clear it)
+        viewModel.onLinkToDefinition(null)
+        advanceUntilIdle()
+        
+        viewModel.onSaveNewEvent()
+        advanceUntilIdle()
+
+        // 5. Verify: Target is null, but Association is preserved
+        val saved = repository.savedInstances.last()
+        assertNull("Target should be cleared", saved.target)
+        assertEquals("a1", saved.associatedInstanceId)
+    }
+
+    @Test
+    fun `HIERARCHY - Multiple instances for same target should all coexist without overwriting`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        // 1. Setup Activity Definition
+        val def = ActivityDefinition("d1", "Universidad", "")
+        repository._definitions.value = listOf(def)
+
+        // 2. Create Task (CHECK) at 12:00 and Reminder (CHECK) at 22:00 for the same definition
+        val task = createInstance("t1", "Tarea 12pm").copy(
+            actionProtocol = ActionProtocol.CHECK,
+            target = ScheduleTarget.Definition("d1"),
+            plannedStartTime = 720 // 12:00
+        )
+        val reminder = createInstance("r1", "Recordatorio 10pm").copy(
+            actionProtocol = ActionProtocol.CHECK, // Reminders currently use CHECK/TIMER roles
+            target = ScheduleTarget.Definition("d1"),
+            plannedStartTime = 1320 // 22:00
+        )
+        
+        repository._instances.value = listOf(task, reminder)
+        waitReady(viewModel)
+
+        // 3. Verify both exist in timeline entries
+        val timeline = viewModel.uiState.value.timelineEntries
+        
+        // They should both be present as independent entries because they are at root level 
+        // (or mapped as such by the use case if they share a target)
+        val matches = timeline.filter { it.title == "Tarea 12pm" || it.title == "Recordatorio 10pm" }
+        assertEquals("Both instances for the same target should be visible", 2, matches.size)
+        
+        val titles = matches.map { it.title }.toSet()
+        assertTrue(titles.contains("Tarea 12pm"))
+        assertTrue(titles.contains("Recordatorio 10pm"))
+    }
+
+    @Test
+    fun `HIERARCHY - Task linked to Activity should NOT inherit its structural children`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        // 1. Setup Activity with steps
+        val def = ActivityDefinition("d1", "Leg Day", "")
+        repository._definitions.value = listOf(def)
+        repository._nodes.value = listOf(
+            ActivityNode("n1", "d1", null, 0, "Squats")
+        )
+
+        // 2. Create Task linked to Leg Day
+        val task = createInstance("t1", "Test Task").copy(
+            actionProtocol = ActionProtocol.CHECK,
+            target = ScheduleTarget.Definition("d1")
+        )
+        repository._instances.value = listOf(task)
+        waitReady(viewModel)
+
+        // 3. Verify task exists but has NO children
+        val entry = viewModel.uiState.value.timelineEntries.find { it.id == "t1" }
+        assertNotNull(entry)
+        assertTrue("Task should not have structural sub-nodes", entry!!.subNodes.isEmpty())
+        assertFalse("Task should not be expandable", entry.isExpandable)
+    }
+
+    @Test
+    fun `HIERARCHY - Ad-hoc item with no links should be strictly independent`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        // 1. Setup an Activity
+        repository._definitions.value = listOf(ActivityDefinition("d1", "University", ""))
+        
+        // 2. Create Ad-hoc Reminder (target=null, associated=null)
+        val reminder = createInstance("r1", "Brush Teeth").copy(
+            actionProtocol = ActionProtocol.CHECK,
+            target = null,
+            associatedInstanceId = null
+        )
+        repository._instances.value = listOf(reminder)
+        waitReady(viewModel)
+
+        // 3. Verify it's a root element and not grouped
+        val timeline = viewModel.uiState.value.timelineEntries
+        assertEquals(1, timeline.size)
+        assertEquals("Brush Teeth", timeline[0].title)
+    }
+
+    private fun createInstance(id: String, title: String) = DailyInstance(
+        id = id,
+        target = null,
+        scheduledDate = LocalDate.now().toEpochDay(),
+        titleSnapshot = title,
+        descriptionSnapshot = "",
+        status = DailyInstanceStatus.PLANNED,
+        actionProtocol = ActionProtocol.TIMER
+    )
+
+    private fun DailyInstance.toUiModelTest() = com.alan.routineos.feature.today.model.TodayTimelineUiModel(
+        id = id,
+        title = titleSnapshot,
+        timeRangeText = "",
+        status = status,
+        isMaterialized = true
+    )
 }

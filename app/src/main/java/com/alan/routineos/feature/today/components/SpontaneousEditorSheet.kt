@@ -14,7 +14,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -24,14 +23,15 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.HierarchicalTimelineEntry
+import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.feature.planning.EditorRole
+import com.alan.routineos.feature.planning.model.SearchTargetUiModel
+import com.alan.routineos.feature.planning.model.UnifiedLinkingResult
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
 private enum class PickingType { START, END }
 
-private val BrandViolet = Color(0xFFA855F7)
-private val BrandEmerald = Color(0xFF34D399)
 private val DarkSurface = Color(0xFF0D1017)
 private val DarkCard = Color(0xFF171B26)
 
@@ -47,16 +47,19 @@ fun SpontaneousEditorSheet(
     onDelete: (String) -> Unit,
     onUpdateRole: (EditorRole) -> Unit = {},
     onUpdateCatalogSearch: (String) -> Unit = {},
-    onLinkToDefinition: (ActivityDefinition?) -> Unit = {},
+    onLinkToDefinition: (SearchTargetUiModel?) -> Unit = {},
+    onLinkToOccurrence: (TodayTimelineUiModel?) -> Unit = {},
+    onSelectUnifiedResult: (UnifiedLinkingResult) -> Unit = {},
     onAddDraftTask: (String) -> Unit = {},
     onRemoveDraftTask: (String) -> Unit = {},
     onUpdateDraftNote: (String) -> Unit = {},
     onUpdateDraftReminder: (Int?, Int?) -> Unit = { _, _ -> },
     onSetTimeToNow: (String) -> Unit = {},
     onDismiss: () -> Unit,
-    activityCatalog: List<ActivityDefinition> = emptyList(),
+    unifiedCatalog: List<UnifiedLinkingResult> = emptyList(),
     catalogSearchQuery: String = "",
-    selectedDefinition: ActivityDefinition? = null
+    selectedDefinition: SearchTargetUiModel? = null,
+    selectedOccurrence: TodayTimelineUiModel? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -175,12 +178,12 @@ fun SpontaneousEditorSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // TITLE INPUT GROUP
-            val accentColor = when (role) {
-                EditorRole.TASK -> BrandEmerald
-                EditorRole.EVENT -> BrandViolet
-                EditorRole.REMINDER -> BrandEmerald
-            }
+    // TITLE INPUT GROUP
+    val accentColor = when (role) {
+        EditorRole.TASK -> RoutineTheme.colors.roleTask
+        EditorRole.EVENT -> RoutineTheme.colors.roleEvent
+        EditorRole.REMINDER -> RoutineTheme.colors.roleReminder
+    }
 
             Row(
                 modifier = Modifier
@@ -191,38 +194,26 @@ fun SpontaneousEditorSheet(
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (role == EditorRole.TASK) {
-                    Checkbox(
-                        checked = false, 
-                        onCheckedChange = { /* Prevent direct completion in planning sheet */ },
-                        colors = CheckboxDefaults.colors(
-                            uncheckedColor = accentColor.copy(alpha = 0.6f),
-                            checkedColor = accentColor
-                        ),
-                        modifier = Modifier.padding(start = 4.dp)
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(accentColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = when (role) {
+                            EditorRole.EVENT -> Icons.Default.Event
+                            EditorRole.REMINDER -> Icons.Default.Notifications
+                            EditorRole.TASK -> Icons.Default.CheckCircle
+                        },
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(20.dp)
                     )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(accentColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = when (role) {
-                                EditorRole.EVENT -> Icons.Default.Event
-                                EditorRole.REMINDER -> Icons.Default.Notifications
-                                else -> Icons.Default.CheckBox
-                            },
-                            contentDescription = null,
-                            tint = accentColor,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 }
                 
-                Spacer(modifier = Modifier.width(if (role == EditorRole.TASK) 8.dp else 12.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 
                 TextField(
                     value = titleState,
@@ -252,81 +243,82 @@ fun SpontaneousEditorSheet(
                 )
             }
 
-            // CONTEXTUAL LINKER (Catalog Search)
+            // UNIFIED LINKING SELECTOR
             AnimatedVisibility(visible = role == EditorRole.TASK || role == EditorRole.REMINDER) {
-                Column(modifier = Modifier.padding(top = 12.dp)) {
-                    if (selectedDefinition != null) {
-                        Surface(
-                            color = accentColor.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.2f)),
-                            modifier = Modifier.fillMaxWidth()
+                Column(modifier = Modifier.padding(top = 16.dp)) {
+                    // Selection Chips
+                    if (selectedDefinition != null || selectedOccurrence != null) {
+                        FlowRow(
+                            modifier = Modifier.padding(bottom = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.Link, null, tint = accentColor, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Vinculado a: ${selectedDefinition.title}",
-                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, color = accentColor),
-                                    modifier = Modifier.weight(1f)
+                            selectedDefinition?.let {
+                                LinkChip(
+                                    title = it.title,
+                                    subtitle = it.subtitle ?: "Actividad",
+                                    icon = if (it.target is ScheduleTarget.Node) Icons.Default.AccountTree else Icons.Default.Tag,
+                                    accentColor = accentColor,
+                                    onClear = { onLinkToDefinition(null) }
                                 )
-                                IconButton(onClick = { 
-                                    onLinkToDefinition(null)
-                                    searchQueryState = TextFieldValue("")
-                                }, modifier = Modifier.size(24.dp)) {
-                                    Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp), tint = RoutineTheme.colors.onSurfaceVariant)
-                                }
+                            }
+                            selectedOccurrence?.let {
+                                LinkChip(
+                                    title = it.title,
+                                    subtitle = it.timeRangeText,
+                                    icon = Icons.Default.Event,
+                                    accentColor = accentColor,
+                                    onClear = { onLinkToOccurrence(null) }
+                                )
                             }
                         }
-                    } else {
-                        TextField(
-                            value = searchQueryState,
-                            onValueChange = { 
-                                searchQueryState = it
-                                onUpdateCatalogSearch(it.text) 
-                            },
-                            placeholder = { Text("Vincular a actividad (materia, rutina...)", fontSize = 13.sp) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(DarkSurface),
-                            colors = TextFieldDefaults.colors(
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent
-                            ),
-                            leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant) },
-                            textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
-                            singleLine = true
-                        )
-                        
-                        if (activityCatalog.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Surface(
-                                color = DarkSurface,
-                                shape = RoundedCornerShape(12.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.1f)),
-                                modifier = Modifier.fillMaxWidth().heightIn(max = 120.dp)
-                            ) {
-                                LazyColumn(contentPadding = PaddingValues(4.dp)) {
-                                    items(activityCatalog) { def ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable { onLinkToDefinition(def) }
-                                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(BrandEmerald))
-                                            Spacer(modifier = Modifier.width(12.dp))
-                                            Text(def.title, style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp))
-                                        }
-                                    }
+                    }
+
+                    // Unified Input
+                    TextField(
+                        value = searchQueryState,
+                        onValueChange = { 
+                            searchQueryState = it
+                            onUpdateCatalogSearch(it.text) 
+                        },
+                        placeholder = { Text("Relacionado con...", fontSize = 13.sp) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(DarkSurface),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent
+                        ),
+                        leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant) },
+                        textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
+                        singleLine = true
+                    )
+                    
+                    if (unifiedCatalog.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            color = DarkSurface,
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.1f)),
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp)
+                        ) {
+                            LazyColumn(contentPadding = PaddingValues(4.dp)) {
+                                // 1. ACTIVITIES / STRUCTURE
+                                val semanticItems = unifiedCatalog.filter { it is UnifiedLinkingResult.SemanticDefinition || it is UnifiedLinkingResult.SemanticNode }
+                                if (semanticItems.isNotEmpty()) {
+                                    item { ResultHeader("ACTIVIDADES / ESTRUCTURA") }
+                                    items(semanticItems) { item -> UnifiedResultRow(item, accentColor) { onSelectUnifiedResult(it); searchQueryState = TextFieldValue("") } }
+                                }
+
+                                // 2. OCCURRENCES
+                                val occurrences = unifiedCatalog.filterIsInstance<UnifiedLinkingResult.ContextualOccurrence>()
+                                if (occurrences.isNotEmpty()) {
+                                    item { ResultHeader("OCURRENCIAS") }
+                                    items(occurrences) { item -> UnifiedResultRow(item, accentColor) { onSelectUnifiedResult(it); searchQueryState = TextFieldValue("") } }
                                 }
                             }
                         }
@@ -362,16 +354,16 @@ fun SpontaneousEditorSheet(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // Add Task Input
-                    QuickAddTaskInput(
-                        value = newTaskTitle,
-                        onValueChange = { newTaskTitle = it },
-                        onAdd = { 
-                            onAddDraftTask(newTaskTitle)
-                            newTaskTitle = "" 
-                        },
-                        accentColor = accentColor
-                    )
+            // Add Task Input
+            QuickAddTaskInput(
+                value = newTaskTitle,
+                onValueChange = { newTaskTitle = it },
+                onAdd = { 
+                    onAddDraftTask(newTaskTitle)
+                    newTaskTitle = "" 
+                },
+                accentColor = accentColor
+            )
                 }
             }
 
@@ -418,22 +410,23 @@ fun SpontaneousEditorSheet(
             Spacer(modifier = Modifier.height(32.dp))
 
             // PRIMARY ACTION BUTTON
-            val buttonBrush = when (role) {
-                EditorRole.EVENT -> Brush.linearGradient(colors = listOf(Color(0xFF9333EA), BrandViolet, Color(0xFFC026D3)))
-                else -> SolidColor(BrandEmerald)
+            val buttonColor = when (role) {
+                EditorRole.EVENT -> RoutineTheme.colors.roleEvent
+                EditorRole.TASK -> RoutineTheme.colors.roleTask
+                EditorRole.REMINDER -> RoutineTheme.colors.roleReminder
             }
             
             Button(
                 onClick = onSaveNew,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(58.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (isCreationMode) buttonBrush else SolidColor(RoutineTheme.colors.surface3)),
+                    .height(58.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = if (role == EditorRole.EVENT) Color.White else Color.Black
+                    containerColor = if (isCreationMode) buttonColor else RoutineTheme.colors.surface3,
+                    contentColor = if (role == EditorRole.TASK) Color.White else Color.Black,
+                    disabledContainerColor = RoutineTheme.colors.surface2,
+                    disabledContentColor = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
                 ),
                 enabled = root.titleSnapshot.isNotBlank()
             ) {
@@ -480,21 +473,21 @@ private fun SegmentedRoleSelector(
             icon = Icons.Default.Check,
             isSelected = selectedRole == EditorRole.TASK,
             onClick = { onRoleSelected(EditorRole.TASK) },
-            activeColor = BrandEmerald
+            activeColor = RoutineTheme.colors.roleTask
         )
         RoleTab(
             label = "Evento",
             icon = Icons.Default.Event,
             isSelected = selectedRole == EditorRole.EVENT,
             onClick = { onRoleSelected(EditorRole.EVENT) },
-            activeColor = BrandViolet
+            activeColor = RoutineTheme.colors.roleEvent
         )
         RoleTab(
             label = "Recordatorio",
             icon = Icons.Default.Notifications,
             isSelected = selectedRole == EditorRole.REMINDER,
             onClick = { onRoleSelected(EditorRole.REMINDER) },
-            activeColor = BrandEmerald
+            activeColor = RoutineTheme.colors.roleReminder
         )
     }
 }
@@ -609,7 +602,7 @@ private fun TimeRangePicker(
                         .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
                         .background(DarkSurface)
-                        .border(1.dp, BrandEmerald.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                        .border(1.dp, accentColor.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
                         .clickable { onSetTimeToNow() }
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                     contentAlignment = Alignment.CenterStart
@@ -617,9 +610,9 @@ private fun TimeRangePicker(
                     Column {
                         Text("Atajo", style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp), color = RoutineTheme.colors.onSurfaceVariant)
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Ahora mismo", style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium), color = BrandEmerald)
+                            Text("Ahora mismo", style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium), color = accentColor)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Box(Modifier.size(6.dp).clip(RoundedCornerShape(3.dp)).background(BrandEmerald))
+                            Box(Modifier.size(6.dp).clip(RoundedCornerShape(3.dp)).background(accentColor))
                         }
                     }
                 }
@@ -779,6 +772,83 @@ private fun ReminderPill(
                 Spacer(Modifier.width(8.dp))
             }
             Text(label, style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, color = if (isSelected) accentColor else RoutineTheme.colors.onSurfaceVariant))
+        }
+    }
+}
+
+@Composable
+private fun LinkChip(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    onClear: () -> Unit
+) {
+    Surface(
+        color = accentColor.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, null, tint = accentColor, modifier = Modifier.size(14.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(title, style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accentColor))
+                Text(subtitle, style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)))
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(onClick = onClear, modifier = Modifier.size(18.dp)) {
+                Icon(Icons.Default.Close, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultHeader(text: String) {
+    Text(
+        text = text,
+        style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.Bold),
+        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f),
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+    )
+}
+
+@Composable
+private fun UnifiedResultRow(
+    item: UnifiedLinkingResult,
+    accentColor: Color,
+    onClick: (UnifiedLinkingResult) -> Unit
+) {
+    val (title, subtitle, icon) = when (item) {
+        is UnifiedLinkingResult.SemanticDefinition -> Triple(item.title, item.description ?: "Actividad", Icons.Default.Tag)
+        is UnifiedLinkingResult.SemanticNode -> Triple(item.title, item.parentTitle ?: "Estructura", Icons.Default.AccountTree)
+        is UnifiedLinkingResult.ContextualOccurrence -> Triple(item.title, item.item.timeRangeText, Icons.Default.Event)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(item) }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(accentColor.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = accentColor.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(title, style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium))
+            Text(subtitle, style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)))
         }
     }
 }

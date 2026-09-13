@@ -54,8 +54,22 @@ fun NormalTimelineCard(
         return
     }
 
+    when (item.itemType) {
+        PlanningItemType.ACTIVITY -> FullActivityCard(item, onAction, onExpandClick, modifier)
+        PlanningItemType.TASK -> CompactTaskCard(item, onAction, modifier)
+        PlanningItemType.REMINDER -> LightweightReminderCard(item, onAction, modifier)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FullActivityCard(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val isContainer = item.subNodes.isNotEmpty()
-    val isNotify = item.actionProtocol == ActionProtocol.NOTIFY
     val isCompleted = item.completion == HierarchyCompletion.COMPLETED
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
     val isOverdue = item.temporalState == TimelineTemporalState.OVERDUE
@@ -87,8 +101,6 @@ fun NormalTimelineCard(
     } else {
         SolidColor(RoutineTheme.colors.surface1)
     }
-
-    var showMenu by remember { mutableStateOf(false) }
 
     RoutineCard(
         modifier = modifier
@@ -127,14 +139,13 @@ fun NormalTimelineCard(
                     Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = when {
-                                isNotify -> Icons.Default.NotificationsActive
                                 isCompleted -> Icons.Default.CheckCircle
                                 isOverdue -> Icons.Default.History
                                 item.isAdHoc -> Icons.Default.FlashOn
                                 else -> Icons.Default.Schedule
                             },
                             contentDescription = null,
-                            tint = if (isNotify) RoutineTheme.colors.secondary else if (isOverdue) OverdueAccent else accentColor,
+                            tint = if (isOverdue) OverdueAccent else accentColor,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -165,45 +176,7 @@ fun NormalTimelineCard(
                         }
                     }
 
-                    Box {
-                        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.MoreVert, "Acciones", tint = RoutineTheme.colors.onSurfaceVariant)
-                        }
-                        RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                            if (!isCompleted && !isOmitted && !isNotify) {
-                                RoutineDropdownMenuItem(
-                                    text = "Editar",
-                                    onClick = { 
-                                        showMenu = false
-                                        if (item.isAdHoc) onAction(item.id, "EDIT_SPONTANEOUS")
-                                        else onAction(item.id, "MOVE_REQUEST") 
-                                    },
-                                    icon = Icons.Default.Edit
-                                )
-                                if (item.isAdHoc) {
-                                    RoutineDropdownMenuItem(
-                                        text = "Borrar",
-                                        onClick = { showMenu = false; onAction(item.id, "DELETE_INSTANCE") },
-                                        icon = Icons.Default.Delete,
-                                        iconColor = RoutineTheme.colors.error
-                                    )
-                                }
-                                RoutineDropdownMenuItem(
-                                    text = "Omitir",
-                                    onClick = { showMenu = false; onAction(item.id, "SKIP") },
-                                    icon = Icons.Default.Block,
-                                    iconColor = RoutineTheme.colors.onSurfaceVariant
-                                )
-                            } else {
-                                RoutineDropdownMenuItem(
-                                    text = "Desmarcar",
-                                    onClick = { showMenu = false; onAction(item.id, "RESET") },
-                                    icon = Icons.AutoMirrored.Filled.Undo,
-                                    iconColor = RoutineTheme.colors.secondary
-                                )
-                            }
-                        }
-                    }
+                    ActionMenu(item, isCompleted, isOmitted) { id, action -> onAction(id, action) }
                 }
 
                 // PROGRESS
@@ -308,86 +281,11 @@ fun NormalTimelineCard(
 
                 // CONTEXT FOOTER (Associated Items)
                 if (item.context != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 26.dp),
-                        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.15f)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    Column(modifier = Modifier.padding(start = 26.dp)) {
-                        // Associated Tasks
-                        item.context.tasks.forEach { task ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = if (task.isCompleted) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
-                                    contentDescription = null,
-                                    tint = if (task.isCompleted) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f),
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .clickable(!isCompleted && !isOmitted) { 
-                                            onAction(task.id, if (task.isCompleted) "RESET" else "COMPLETE") 
-                                        }
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = task.title,
-                                    style = RoutineTheme.typography.bodyBase.copy(
-                                        fontSize = 13.sp,
-                                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null
-                                    ),
-                                    color = if (task.isCompleted) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface
-                                )
-                            }
-                        }
-
-                        // Reminder & Note Row
-                        if (item.context.reminder != null || item.context.note != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                item.context.reminder?.let { reminder ->
-                                    AssistChip(
-                                        onClick = { },
-                                        label = { Text(reminder.formattedTime, fontSize = 10.sp) },
-                                        leadingIcon = { Icon(Icons.Default.Notifications, null, Modifier.size(10.dp)) },
-                                        colors = AssistChipDefaults.assistChipColors(
-                                            containerColor = RoutineTheme.colors.secondary.copy(alpha = 0.1f),
-                                            labelColor = RoutineTheme.colors.secondary
-                                        ),
-                                        border = null,
-                                        modifier = Modifier.height(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                }
-                                
-                                item.context.note?.let { note ->
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.StickyNote2, 
-                                        null, 
-                                        modifier = Modifier.size(14.dp), 
-                                        tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = note.content,
-                                        style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp),
-                                        color = RoutineTheme.colors.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    ContextFooter(item, isCompleted, isOmitted, onAction)
                 }
 
                 // FOOTER: Action "COMPLETE"
-                if (!isCompleted && !isOmitted && !isContainer && !isNotify) {
+                if (!isCompleted && !isOmitted && !isContainer) {
                     Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
                         Button(
                             onClick = { onAction(item.id, "COMPLETE") },
@@ -405,6 +303,232 @@ fun NormalTimelineCard(
 }
 
 @Composable
+private fun CompactTaskCard(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isCompleted = item.status == DailyInstanceStatus.COMPLETED
+    val isOmitted = item.status == DailyInstanceStatus.OMITTED
+    val accentColor = RoutineTheme.colors.roleTask
+    
+    RoutineCard(
+        modifier = modifier.fillMaxWidth(),
+        containerColor = RoutineTheme.colors.surface2.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { onAction(item.id, if (isCompleted) "RESET" else "COMPLETE") },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                    contentDescription = null,
+                    tint = if (isCompleted) RoutineTheme.colors.primary else accentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.title,
+                    style = RoutineTheme.typography.bodyBase.copy(
+                        fontSize = 16.sp, 
+                        fontWeight = FontWeight.SemiBold,
+                        textDecoration = if (isCompleted) TextDecoration.LineThrough else null
+                    ),
+                    color = if (isCompleted) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface
+                )
+                if (item.timeRangeText.isNotBlank()) {
+                    Text(
+                        text = item.timeRangeText,
+                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
+                        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
+            ActionMenu(item, isCompleted, isOmitted) { id, action -> onAction(id, action) }
+        }
+    }
+}
+
+@Composable
+private fun LightweightReminderCard(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isOmitted = item.status == DailyInstanceStatus.OMITTED
+    val accentColor = RoutineTheme.colors.roleReminder
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = accentColor.copy(alpha = 0.05f),
+        shape = RoutineTheme.shapes.small,
+        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.15f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Notifications, null, tint = accentColor, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.title,
+                    style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                    color = RoutineTheme.colors.onSurface
+                )
+                Text(
+                    text = item.timeRangeText,
+                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
+                    color = accentColor.copy(alpha = 0.8f)
+                )
+            }
+            ActionMenu(item, false, isOmitted) { id, action -> onAction(id, action) }
+        }
+    }
+}
+
+@Composable
+private fun ActionMenu(
+    item: TodayTimelineUiModel,
+    isCompleted: Boolean,
+    isOmitted: Boolean,
+    onAction: (String, String) -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.MoreVert, "Acciones", tint = RoutineTheme.colors.onSurfaceVariant)
+        }
+        RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+            if (!isCompleted && !isOmitted) {
+                RoutineDropdownMenuItem(
+                    text = "Editar",
+                    onClick = { 
+                        showMenu = false
+                        if (item.isAdHoc) onAction(item.id, "EDIT_SPONTANEOUS")
+                        else onAction(item.id, "MOVE_REQUEST") 
+                    },
+                    icon = Icons.Default.Edit
+                )
+                if (item.isAdHoc) {
+                    RoutineDropdownMenuItem(
+                        text = "Borrar",
+                        onClick = { showMenu = false; onAction(item.id, "DELETE_INSTANCE") },
+                        icon = Icons.Default.Delete,
+                        iconColor = RoutineTheme.colors.error
+                    )
+                }
+                RoutineDropdownMenuItem(
+                    text = "Omitir",
+                    onClick = { showMenu = false; onAction(item.id, "SKIP") },
+                    icon = Icons.Default.Block,
+                    iconColor = RoutineTheme.colors.onSurfaceVariant
+                )
+            } else {
+                RoutineDropdownMenuItem(
+                    text = "Desmarcar",
+                    onClick = { showMenu = false; onAction(item.id, "RESET") },
+                    icon = Icons.AutoMirrored.Filled.Undo,
+                    iconColor = RoutineTheme.colors.secondary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContextFooter(
+    item: TodayTimelineUiModel,
+    isCompleted: Boolean,
+    isOmitted: Boolean,
+    onAction: (String, String) -> Unit
+) {
+    Spacer(modifier = Modifier.height(16.dp))
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 26.dp),
+        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.15f)
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    
+    Column(modifier = Modifier.padding(start = 26.dp)) {
+        // Associated Tasks
+        item.context?.tasks?.forEach { task ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (task.isCompleted) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                    contentDescription = null,
+                    tint = if (task.isCompleted) RoutineTheme.colors.primary else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable(!isCompleted && !isOmitted) { 
+                            onAction(task.id, if (task.isCompleted) "RESET" else "COMPLETE") 
+                        }
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = task.title,
+                    style = RoutineTheme.typography.bodyBase.copy(
+                        fontSize = 13.sp,
+                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null
+                    ),
+                    color = if (task.isCompleted) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface
+                )
+            }
+        }
+
+        // Reminder & Note Row
+        if (item.context?.reminder != null || item.context?.note != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                item.context.reminder?.let { reminder ->
+                    AssistChip(
+                        onClick = { },
+                        label = { Text(reminder.formattedTime, fontSize = 10.sp) },
+                        leadingIcon = { Icon(Icons.Default.Notifications, null, Modifier.size(10.dp)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = RoutineTheme.colors.secondary.copy(alpha = 0.1f),
+                            labelColor = RoutineTheme.colors.secondary
+                        ),
+                        border = null,
+                        modifier = Modifier.height(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                
+                item.context.note?.let { note ->
+                    Icon(
+                        Icons.AutoMirrored.Filled.StickyNote2, 
+                        null, 
+                        modifier = Modifier.size(14.dp), 
+                        tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = note.content,
+                        style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp),
+                        color = RoutineTheme.colors.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MinimalSpontaneousRow(
     item: TodayTimelineUiModel,
     onAction: (String, String) -> Unit,
@@ -412,8 +536,8 @@ private fun MinimalSpontaneousRow(
 ) {
     val isCompleted = item.status == DailyInstanceStatus.COMPLETED
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
-    val isNotify = item.actionProtocol == ActionProtocol.NOTIFY
-    val color = if (isNotify) RoutineTheme.colors.secondary else AdHocAccent
+    val isPureReminder = item.context?.reminder != null && item.actionProtocol == ActionProtocol.CHECK && item.title.isBlank()
+    val color = if (isPureReminder) RoutineTheme.colors.secondary else AdHocAccent
     var showMenu by remember { mutableStateOf(false) }
 
     Surface(
@@ -429,7 +553,7 @@ private fun MinimalSpontaneousRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (isNotify) Icons.Default.Notifications else Icons.Default.FlashOn,
+                imageVector = if (isPureReminder) Icons.Default.Notifications else Icons.Default.FlashOn,
                 contentDescription = null,
                 tint = color,
                 modifier = Modifier.size(16.dp)
@@ -454,7 +578,7 @@ private fun MinimalSpontaneousRow(
                 }
             }
 
-            if (!isCompleted && !isOmitted && !isNotify) {
+            if (!isCompleted && !isOmitted && !isPureReminder) {
                 IconButton(
                     onClick = { onAction(item.id, "COMPLETE") },
                     modifier = Modifier.size(28.dp)
@@ -475,7 +599,7 @@ private fun MinimalSpontaneousRow(
                     Icon(Icons.Default.MoreVert, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(18.dp))
                 }
                 RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                    if (!isCompleted && !isOmitted && !isNotify) {
+                    if (!isCompleted && !isOmitted && !isPureReminder) {
                         RoutineDropdownMenuItem(
                             text = "Editar",
                             onClick = { 

@@ -46,7 +46,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         val structuralEntries = baseTimeline.filter { it.instance.target != null }
         val adHocEntries = baseTimeline.filter { it.instance.target == null }
         
-        val entryMap = structuralEntries.associateBy { getEntryTargetKey(it) }
+        val entryMap = structuralEntries.groupBy { getEntryTargetKey(it) }
         val adHocMap = adHocEntries.associateBy { it.instance.id }
 
         // 1. Identify all scheduled structural targets and their ancestors
@@ -81,13 +81,13 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
 
         // 2. Identify structural roots
         val rootKeys = allTargetKeysInHierarchy.filter { key ->
-            val entry = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date) ?: return@filter false
-            !hasAncestorInSet(entry, nodeMap, allTargetKeysInHierarchy)
+            val entries = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)?.let { listOf(it) } ?: return@filter false
+            entries.any { !hasAncestorInSet(it, nodeMap, allTargetKeysInHierarchy) }
         }
 
-        val structuralRoots = rootKeys.mapNotNull { key ->
-            val entry = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)
-            entry?.let { buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, mutableSetOf()) }
+        val structuralRoots = rootKeys.flatMap { key ->
+            val entries = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)?.let { listOf(it) }
+            entries?.map { buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, mutableSetOf()) } ?: emptyList()
         }
         
         // 3. Ad-hoc roots (instances with target == null and parentInstanceId == null)
@@ -156,7 +156,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
     private fun buildEntryNode(
         entry: TimelineEntry,
         nodeMap: Map<String, ActivityNode>,
-        entryMap: Map<String, TimelineEntry>,
+        entryMap: Map<String, List<TimelineEntry>>,
         adHocMap: Map<String, TimelineEntry>,
         associatedMap: Map<String?, List<TimelineEntry>>,
         allNotes: List<Note>,
@@ -164,10 +164,10 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         date: LocalDate,
         visited: MutableSet<String>
     ): HierarchicalTimelineEntry {
-        val targetKey = if (entry.instance.target != null) getEntryTargetKey(entry) else "ADHOC_${entry.instance.id}"
-        
-        if (visited.contains(targetKey)) return createLeaf(entry)
-        visited.add(targetKey)
+        // Use Instance ID for visited set to allow multiple occurrences of the same target
+        val visitedKey = if (entry.instance.target != null) "T_${entry.instance.id}" else "A_${entry.instance.id}"
+        if (visited.contains(visitedKey)) return createLeaf(entry)
+        visited.add(visitedKey)
 
         val associatedEntries = associatedMap[entry.instance.id] ?: emptyList()
         val associatedRecursive = associatedEntries.map { 
@@ -176,23 +176,27 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         
         val instanceNote = allNotes.find { it.instanceId == entry.instance.id }
         
-        val children = when {
-            entry.instance.target is ScheduleTarget.Node -> {
-                allNodes.filter { it.parentId == entry.instance.target.id }.map { childNode ->
-                    val childKey = "NODE_${childNode.id}"
-                    entryMap[childKey] ?: createVirtualStructuralEntry(childNode, date)
+        val children = if (entry.instance.actionProtocol == ActionProtocol.TIMER) {
+            when {
+                entry.instance.target is ScheduleTarget.Node -> {
+                    allNodes.filter { it.parentId == entry.instance.target.id }.flatMap { childNode ->
+                        val childKey = "NODE_${childNode.id}"
+                        entryMap[childKey] ?: listOf(createVirtualStructuralEntry(childNode, date))
+                    }
                 }
-            }
-            entry.instance.target is ScheduleTarget.Definition -> {
-                allNodes.filter { it.activityDefinitionId == entry.instance.target.id && it.parentId == null }.map { childNode ->
-                    val childKey = "NODE_${childNode.id}"
-                    entryMap[childKey] ?: createVirtualStructuralEntry(childNode, date)
+                entry.instance.target is ScheduleTarget.Definition -> {
+                    allNodes.filter { it.activityDefinitionId == entry.instance.target.id && it.parentId == null }.flatMap { childNode ->
+                        val childKey = "NODE_${childNode.id}"
+                        entryMap[childKey] ?: listOf(createVirtualStructuralEntry(childNode, date))
+                    }
                 }
+                entry.instance.target == null -> {
+                    adHocMap.values.filter { it.instance.parentInstanceId == entry.instance.id }
+                }
+                else -> emptyList()
             }
-            entry.instance.target == null -> {
-                adHocMap.values.filter { it.instance.parentInstanceId == entry.instance.id }
-            }
-            else -> emptyList()
+        } else {
+            emptyList()
         }
         
         val recursiveChildren = children.map { childEntry ->
@@ -292,7 +296,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         return when (val target = entry.instance.target) {
             is ScheduleTarget.Node -> "NODE_${target.id}"
             is ScheduleTarget.Definition -> "DEF_${target.id}"
-            else -> "UNKNOWN"
+            else -> "INSTANCE_${entry.instance.id}" // Force unique key for non-targeted items
         }
     }
 }

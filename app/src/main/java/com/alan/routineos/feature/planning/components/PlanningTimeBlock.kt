@@ -22,11 +22,16 @@ import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.component.RoutineDropdownMenu
 import com.alan.routineos.core.designsystem.component.RoutineDropdownMenuItem
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.domain.model.ActionProtocol
 import com.alan.routineos.domain.model.DailyInstanceStatus
 import com.alan.routineos.domain.model.TemporalImpact
 import com.alan.routineos.feature.today.components.drawThreadLine
 import com.alan.routineos.feature.today.model.TodaySubNodeUiModel
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
+
+import com.alan.routineos.domain.model.*
+import com.alan.routineos.feature.today.components.drawThreadLine
+import com.alan.routineos.feature.today.model.*
 
 @Composable
 fun PlanningTimeBlock(
@@ -35,9 +40,22 @@ fun PlanningTimeBlock(
     onExpandClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    when (item.itemType) {
+        PlanningItemType.ACTIVITY -> FullActivityBlock(item, onAction, onExpandClick, modifier)
+        PlanningItemType.TASK -> CompactTaskBlock(item, onAction, modifier)
+        PlanningItemType.REMINDER -> LightweightReminderBlock(item, onAction, modifier)
+    }
+}
+
+@Composable
+private fun FullActivityBlock(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    onExpandClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
     val isModified = item.status == DailyInstanceStatus.MODIFIED
-    var showMenu by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -79,6 +97,8 @@ fun PlanningTimeBlock(
         Spacer(modifier = Modifier.width(8.dp))
 
         // Content Card
+        val protocolColor = RoutineTheme.colors.roleEvent
+
         RoutineCard(
             modifier = Modifier.weight(1f).alpha(if (isOmitted) 0.6f else 1f),
             containerColor = RoutineTheme.colors.surface3,
@@ -87,8 +107,7 @@ fun PlanningTimeBlock(
                 color = when {
                     isOmitted -> RoutineTheme.colors.border
                     isModified -> RoutineTheme.colors.secondary.copy(alpha = 0.5f)
-                    item.isAdHoc -> Color(0xFFB894E6).copy(alpha = 0.5f)
-                    else -> RoutineTheme.colors.border
+                    else -> protocolColor.copy(alpha = 0.4f)
                 }
             )
         ) {
@@ -102,12 +121,12 @@ fun PlanningTimeBlock(
                         val badgeColor = when {
                             isOmitted -> RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.2f)
                             isModified -> RoutineTheme.colors.secondary.copy(alpha = 0.1f)
-                            else -> RoutineTheme.colors.primary.copy(alpha = 0.1f)
+                            else -> protocolColor.copy(alpha = 0.15f)
                         }
                         val textColor = when {
                             isOmitted -> RoutineTheme.colors.onSurfaceVariant
                             isModified -> RoutineTheme.colors.secondary
-                            else -> RoutineTheme.colors.primary
+                            else -> protocolColor
                         }
 
                         Surface(color = badgeColor, shape = RoutineTheme.shapes.pill) {
@@ -127,46 +146,7 @@ fun PlanningTimeBlock(
                         }
                     }
 
-                    Box {
-                        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(24.dp)) {
-                            Icon(Icons.Default.MoreVert, null, tint = RoutineTheme.colors.onSurfaceVariant)
-                        }
-                        RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                            if (!isOmitted) {
-                                RoutineDropdownMenuItem(
-                                    text = "Mover",
-                                    onClick = { showMenu = false; onAction(item.id, "MOVE_REQUEST") },
-                                    icon = Icons.Default.Edit
-                                )
-                                RoutineDropdownMenuItem(
-                                    text = "Omitir",
-                                    onClick = { showMenu = false; onAction(item.id, "SKIP") },
-                                    icon = Icons.Default.Block
-                                )
-                                if (item.isAdHoc) {
-                                    RoutineDropdownMenuItem(
-                                        text = "Editar Estructura",
-                                        onClick = { showMenu = false; onAction(item.id, "EDIT_SPONTANEOUS") },
-                                        icon = Icons.Default.FlashOn
-                                    )
-                                    RoutineDropdownMenuItem(
-                                        text = "Eliminar",
-                                        onClick = { showMenu = false; onAction(item.id, "DELETE_INSTANCE") },
-                                        icon = Icons.Default.Delete,
-                                        iconColor = RoutineTheme.colors.error
-                                    )
-                                }
-                            }
-                            if (isOmitted || isModified) {
-                                RoutineDropdownMenuItem(
-                                    text = "Revertir",
-                                    onClick = { showMenu = false; onAction(item.id, "RESET") },
-                                    icon = Icons.AutoMirrored.Filled.Undo,
-                                    iconColor = RoutineTheme.colors.secondary
-                                )
-                            }
-                        }
-                    }
+                    ActionMenu(item, isOmitted, isModified) { onAction(item.id, it) }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -189,29 +169,7 @@ fun PlanningTimeBlock(
                 // CONTEXT INDICATORS
                 if (item.context != null) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (item.context.tasks.isNotEmpty()) {
-                            ContextIndicator(
-                                icon = Icons.Default.CheckBox,
-                                text = "${item.context.tasks.size}"
-                            )
-                        }
-                        if (item.context.reminder != null) {
-                            ContextIndicator(
-                                icon = Icons.Default.Notifications,
-                                text = ""
-                            )
-                        }
-                        if (item.context.note != null) {
-                            ContextIndicator(
-                                icon = Icons.Default.Description,
-                                text = ""
-                            )
-                        }
-                    }
+                    ContextIndicators(item)
                 }
 
                 AnimatedVisibility(visible = item.isExpanded) {
@@ -228,6 +186,190 @@ fun PlanningTimeBlock(
             }
         }
     }
+}
+
+@Composable
+private fun CompactTaskBlock(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isOmitted = item.status == DailyInstanceStatus.OMITTED
+    val isModified = item.status == DailyInstanceStatus.MODIFIED
+    val accentColor = RoutineTheme.colors.roleTask
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Time Axis (Mini)
+        Column(
+            modifier = Modifier.width(72.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = item.startTimeMinutes?.let { formatMinutes(it) } ?: "",
+                style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
+                color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        RoutineCard(
+            modifier = Modifier.weight(1f),
+            containerColor = RoutineTheme.colors.surface2.copy(alpha = 0.5f),
+            border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.2f))
+        ) {
+            Row(
+                modifier = Modifier.padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.TaskAlt, null, modifier = Modifier.size(16.dp), tint = accentColor)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                        color = RoutineTheme.colors.onSurface
+                    )
+                }
+                ActionMenu(item, isOmitted, isModified) { onAction(item.id, it) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LightweightReminderBlock(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isOmitted = item.status == DailyInstanceStatus.OMITTED
+    val isModified = item.status == DailyInstanceStatus.MODIFIED
+    val accentColor = RoutineTheme.colors.roleReminder
+
+    Row(
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.width(72.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = item.startTimeMinutes?.let { formatMinutes(it) } ?: "",
+                style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
+                color = accentColor.copy(alpha = 0.8f)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Surface(
+            modifier = Modifier.weight(1f),
+            color = accentColor.copy(alpha = 0.05f),
+            shape = RoutineTheme.shapes.small,
+            border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.15f))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Notifications, null, modifier = Modifier.size(14.dp), tint = accentColor)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = item.title,
+                    style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
+                    color = RoutineTheme.colors.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                ActionMenu(item, isOmitted, isModified) { onAction(item.id, it) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActionMenu(
+    item: TodayTimelineUiModel,
+    isOmitted: Boolean,
+    isModified: Boolean,
+    onAction: (String) -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(24.dp)) {
+            Icon(Icons.Default.MoreVert, null, tint = RoutineTheme.colors.onSurfaceVariant)
+        }
+        RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+            if (!isOmitted) {
+                RoutineDropdownMenuItem(
+                    text = "Mover",
+                    onClick = { showMenu = false; onAction("MOVE_REQUEST") },
+                    icon = Icons.Default.Edit
+                )
+                RoutineDropdownMenuItem(
+                    text = "Omitir",
+                    onClick = { showMenu = false; onAction("SKIP") },
+                    icon = Icons.Default.Block
+                )
+                if (item.isAdHoc) {
+                    RoutineDropdownMenuItem(
+                        text = "Editar Estructura",
+                        onClick = { showMenu = false; onAction("EDIT_SPONTANEOUS") },
+                        icon = Icons.Default.FlashOn
+                    )
+                    RoutineDropdownMenuItem(
+                        text = "Eliminar",
+                        onClick = { showMenu = false; onAction("DELETE_INSTANCE") },
+                        icon = Icons.Default.Delete,
+                        iconColor = RoutineTheme.colors.error
+                    )
+                }
+            }
+            if (isOmitted || isModified) {
+                RoutineDropdownMenuItem(
+                    text = "Revertir",
+                    onClick = { showMenu = false; onAction("RESET") },
+                    icon = Icons.AutoMirrored.Filled.Undo,
+                    iconColor = RoutineTheme.colors.secondary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContextIndicators(item: TodayTimelineUiModel) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (item.context?.tasks?.isNotEmpty() == true) {
+            ContextIndicator(
+                icon = Icons.Default.CheckBox,
+                text = "${item.context.tasks.size}"
+            )
+        }
+        if (item.context?.reminder != null) {
+            ContextIndicator(
+                icon = Icons.Default.Notifications,
+                text = ""
+            )
+        }
+        if (item.context?.note != null) {
+            ContextIndicator(
+                icon = Icons.Default.Description,
+                text = ""
+            )
+        }
+    }
+}
+
+private fun formatMinutes(minutes: Int): String {
+    return "%02d:%02d".format(minutes / 60, minutes % 60)
 }
 
 @Composable

@@ -3,6 +3,8 @@ package com.alan.routineos.feature.planning
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.HierarchicalTimelineEntry
 import com.alan.routineos.feature.planning.model.PlanningDay
+import com.alan.routineos.feature.planning.model.SearchTargetUiModel
+import com.alan.routineos.feature.planning.model.UnifiedLinkingResult
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 import java.time.LocalDate
 
@@ -23,9 +25,10 @@ data class PlanningUiState(
     val exceptions: List<TodayTimelineUiModel> = emptyList(),
     val editingSpontaneousEntry: HierarchicalTimelineEntry? = null,
     val editorRole: EditorRole = EditorRole.EVENT,
-    val definitionsCatalog: List<ActivityDefinition> = emptyList(),
+    val unifiedCatalog: List<UnifiedLinkingResult> = emptyList(),
     val catalogSearchQuery: String = "",
-    val selectedLinkedActivity: ActivityDefinition? = null,
+    val selectedSemanticTarget: SearchTargetUiModel? = null,
+    val selectedContextualOccurrence: TodayTimelineUiModel? = null,
     val isCreatingNewEvent: Boolean = false,
     val pendingMove: com.alan.routineos.domain.model.PendingMove? = null
 )

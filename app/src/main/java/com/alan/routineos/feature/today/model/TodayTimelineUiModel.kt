@@ -30,6 +30,12 @@ data class InterceptionUiModel(
     val interrupter: TodayTimelineUiModel
 )
 
+enum class PlanningItemType {
+    ACTIVITY,
+    TASK,
+    REMINDER
+}
+
 /**
  * UI representation of a sub-node step.
  */
@@ -69,6 +75,7 @@ data class TodayTimelineUiModel(
     val temporalState: TimelineTemporalState = TimelineTemporalState.UPCOMING,
     val completion: HierarchyCompletion = HierarchyCompletion.NOT_STARTED,
     val actionProtocol: ActionProtocol = ActionProtocol.TIMER,
+    val itemType: PlanningItemType = PlanningItemType.ACTIVITY,
     val interception: InterceptionUiModel? = null,
     val context: ContextItemsUiModel? = null
 )
