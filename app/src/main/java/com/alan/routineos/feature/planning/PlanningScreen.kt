@@ -1,30 +1,55 @@
 package com.alan.routineos.feature.planning
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.feature.planning.components.PlanningExceptionCard
+import com.alan.routineos.feature.planning.components.PlanningReminderCard
+import com.alan.routineos.feature.planning.components.PlanningTimeBlock
+import com.alan.routineos.feature.planning.components.PlanningWeekHeader
 import com.alan.routineos.feature.planning.model.SearchTargetUiModel
 import com.alan.routineos.feature.planning.model.UnifiedLinkingResult
-import com.alan.routineos.feature.today.model.TodayTimelineUiModel
-import com.alan.routineos.feature.planning.components.PlanningExceptionCard
-import com.alan.routineos.feature.planning.components.PlanningTimeBlock
-import com.alan.routineos.feature.planning.components.PlanningUnscheduledCard
-import com.alan.routineos.feature.planning.components.PlanningWeekHeader
 import com.alan.routineos.feature.today.components.ConflictWarningDialog
 import com.alan.routineos.feature.today.components.SpontaneousEditorSheet
 import com.alan.routineos.feature.today.components.TimePicker
+import com.alan.routineos.feature.today.model.PlanningItemType
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
+
+private const val FLOATING_VISIBLE_LIMIT = 2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +84,7 @@ fun PlanningScreen(
 ) {
     var moveTargetId by remember { mutableStateOf<String?>(null) }
     val timePickerState = rememberTimePickerState()
-    
+
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
@@ -101,60 +126,84 @@ fun PlanningScreen(
                 onRangeClick = { showDatePicker = true }
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            PlanningSection(title = "PLANIFICACIÓN") {
-                if (uiState.timelineEntries.isEmpty() && uiState.unscheduledItems.isEmpty()) {
+                        // Floating Section: SOLO Recordatorios (sin hora por naturaleza)
+            val unscheduledReminders =
+                uiState.unscheduledItems.filter { it.itemType == PlanningItemType.REMINDER }
+            if (unscheduledReminders.isNotEmpty()) {
+                var showAllFloating by remember { mutableStateOf(false) }
+                val visibleFloating =
+                    if (showAllFloating) unscheduledReminders else unscheduledReminders.take(
+                        FLOATING_VISIBLE_LIMIT
+                    )
+
+                Column(
+                    modifier = Modifier.padding(horizontal = RoutineTheme.spacing.md),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    visibleFloating.forEach { item ->
+                        PlanningReminderCard(item = item, onAction = onAction)
+                    }
+
+                    if (!showAllFloating && unscheduledReminders.size > FLOATING_VISIBLE_LIMIT) {
+                        Text(
+                            text = "+${unscheduledReminders.size - FLOATING_VISIBLE_LIMIT} más",
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp),
+                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .clickable { showAllFloating = true }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Cronograma: Tareas sin hora (pineadas arriba) + Actividades/Tareas programadas
+            val unscheduledTasks =
+                uiState.unscheduledItems.filter { it.itemType == PlanningItemType.TASK }
+            PlanningSection(
+                title = "CRONOGRAMA DEL DÍA",
+                subtitle = if (uiState.timelineEntries.isNotEmpty()) "${uiState.timelineEntries.size} Bloques Activos" else null
+            ) {
+                if (unscheduledTasks.isEmpty() && uiState.timelineEntries.isEmpty()) {
                     EmptySectionMessage("Sin eventos programados")
                 } else {
+                    // 1. Pinned tasks (No time)
+                    unscheduledTasks.forEach { entry ->
+                        PlanningTimeBlock(
+                            item = entry,
+                            onAction = onAction,
+                            onExpandClick = onExpandClick
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    // 2. Scheduled timeline
                     uiState.timelineEntries.forEach { entry ->
                         PlanningTimeBlock(
                             item = entry,
-                            onAction = { id, type -> 
+                            onAction = { id, type ->
                                 if (type == "MOVE_REQUEST") moveTargetId = id
                                 else onAction(id, type)
                             },
                             onExpandClick = onExpandClick
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                    
-                    if (uiState.unscheduledItems.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "PENDIENTES DEL DÍA",
-                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
-                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        uiState.unscheduledItems.chunked(2).forEach { rowItems ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                rowItems.forEach { item ->
-                                    Box(modifier = Modifier.weight(1f)) {
-                                        PlanningUnscheduledCard(
-                                            title = item.title,
-                                            description = item.description,
-                                            onClick = { onAction(item.id, "MOVE_REQUEST") }
-                                        )
-                                    }
-                                }
-                                if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
 
             if (uiState.exceptions.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(32.dp))
-                PlanningSection(title = "AJUSTES DE RUTINA") {
+                PlanningSection(
+                    title = "AJUSTES DE RUTINA",
+                    subtitle = "Modificaciones de hoy"
+                ) {
                     uiState.exceptions.forEach { entry ->
                         PlanningExceptionCard(item = entry)
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
@@ -232,9 +281,9 @@ fun PlanningScreen(
                 }) { Text("Confirmar") }
             },
             dismissButton = { TextButton(onClick = { moveTargetId = null }) { Text("Cancelar") } },
-            text = { 
+            text = {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TimePicker(state = timePickerState) 
+                    TimePicker(state = timePickerState)
                 }
             }
         )
@@ -294,7 +343,9 @@ private fun EmptySectionMessage(message: String) {
         text = message,
         style = RoutineTheme.typography.bodyBase,
         color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f),
-        modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth(),
+        modifier = Modifier
+            .padding(vertical = 16.dp)
+            .fillMaxWidth(),
         textAlign = androidx.compose.ui.text.style.TextAlign.Center
     )
 }

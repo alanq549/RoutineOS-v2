@@ -32,9 +32,8 @@ class RegisterDailyActionUseCase @Inject constructor(
     }
 
     private suspend fun handleComplete(entry: HierarchicalTimelineEntry, metadataJson: String) {
-        // Completion allowed on leaf nodes (executable steps) or any Task (CHECK)
-        // Note: Associated tasks are handled as individual entries in this use case
-        if (entry.children.isNotEmpty() && entry.root.instance.actionProtocol == ActionProtocol.TIMER) return
+        // Completion allowed on leaf nodes (executable steps) or any Task/Reminder (CHECK)
+        if (entry.children.isNotEmpty() && entry.root.instance.role == DailyInstanceRole.ACTIVITY) return
         
         val instance = materializeIfVirtual(entry.root)
         

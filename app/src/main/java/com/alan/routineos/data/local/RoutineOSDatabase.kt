@@ -19,7 +19,7 @@ import com.alan.routineos.data.local.entities.*
         DeadlineEntity::class,
         NoteEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 abstract class RoutineOSDatabase : RoomDatabase() {
@@ -34,6 +34,70 @@ abstract class RoutineOSDatabase : RoomDatabase() {
     abstract fun backlogItemDao(): BacklogItemDao
     abstract fun deadlineDao(): DeadlineDao
     abstract fun noteDao(): NoteDao
+}
+
+val MIGRATION_9_10 = object : androidx.room.migration.Migration(9, 10) {
+    override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+        // 1. Create new table with role, avoiding manual DEFAULTs that Room doesn't expect
+        db.execSQL("""
+            CREATE TABLE daily_instances_new (
+                id TEXT NOT NULL PRIMARY KEY,
+                targetId TEXT,
+                targetType TEXT NOT NULL,
+                scheduledDate INTEGER NOT NULL,
+                titleSnapshot TEXT NOT NULL,
+                descriptionSnapshot TEXT NOT NULL,
+                plannedStartTime INTEGER,
+                plannedEndTime INTEGER,
+                plannedDurationMinutes INTEGER,
+                status TEXT NOT NULL,
+                mobility TEXT NOT NULL,
+                sourceRuleId TEXT,
+                parentInstanceId TEXT,
+                backlogId TEXT,
+                actionProtocol TEXT NOT NULL,
+                role TEXT NOT NULL,
+                reminderAbs INTEGER,
+                reminderRel INTEGER,
+                associatedInstanceId TEXT,
+                FOREIGN KEY(parentInstanceId) REFERENCES daily_instances(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                FOREIGN KEY(backlogId) REFERENCES backlog_items(id) ON UPDATE NO ACTION ON DELETE SET NULL,
+                FOREIGN KEY(sourceRuleId) REFERENCES schedule_rules(id) ON UPDATE NO ACTION ON DELETE SET NULL,
+                FOREIGN KEY(associatedInstanceId) REFERENCES daily_instances(id) ON UPDATE NO ACTION ON DELETE SET NULL
+            )
+        """)
+
+        // 2. Transfer data with backfill logic
+        db.execSQL("""
+            INSERT INTO daily_instances_new (
+                id, targetId, targetType, scheduledDate, titleSnapshot, descriptionSnapshot,
+                plannedStartTime, plannedEndTime, plannedDurationMinutes, status, mobility,
+                sourceRuleId, parentInstanceId, backlogId, actionProtocol, role, reminderAbs, reminderRel, associatedInstanceId
+            )
+            SELECT 
+                id, targetId, targetType, scheduledDate, titleSnapshot, descriptionSnapshot,
+                plannedStartTime, plannedEndTime, plannedDurationMinutes, status, mobility,
+                sourceRuleId, parentInstanceId, backlogId, actionProtocol,
+                CASE 
+                    WHEN actionProtocol = 'TIMER' THEN 'ACTIVITY'
+                    WHEN reminderAbs IS NOT NULL OR reminderRel IS NOT NULL THEN 'REMINDER'
+                    ELSE 'TASK'
+                END as role,
+                reminderAbs, reminderRel, associatedInstanceId
+            FROM daily_instances
+        """)
+
+        // 3. Swap
+        db.execSQL("DROP TABLE daily_instances")
+        db.execSQL("ALTER TABLE daily_instances_new RENAME TO daily_instances")
+
+        // 4. Recreate ONLY the indices defined in the Entity
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_daily_instances_sourceRuleId_scheduledDate ON daily_instances(sourceRuleId, scheduledDate)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_instances_parentInstanceId ON daily_instances(parentInstanceId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_instances_backlogId ON daily_instances(backlogId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_instances_sourceRuleId ON daily_instances(sourceRuleId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_instances_associatedInstanceId ON daily_instances(associatedInstanceId)")
+    }
 }
 
 val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
@@ -58,7 +122,7 @@ val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
                 actionProtocol TEXT NOT NULL DEFAULT 'TIMER',
                 reminderAbs INTEGER,
                 reminderRel INTEGER,
-                FOREIGN KEY(parentInstanceId) REFERENCES daily_instances_new(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                FOREIGN KEY(parentInstanceId) REFERENCES daily_instances(id) ON UPDATE NO ACTION ON DELETE CASCADE,
                 FOREIGN KEY(backlogId) REFERENCES backlog_items(id) ON UPDATE NO ACTION ON DELETE SET NULL,
                 FOREIGN KEY(sourceRuleId) REFERENCES schedule_rules(id) ON UPDATE NO ACTION ON DELETE SET NULL,
                 CHECK (reminderAbs IS NULL OR reminderRel IS NULL)
@@ -180,10 +244,10 @@ val MIGRATION_8_9 = object : androidx.room.migration.Migration(8, 9) {
                 reminderAbs INTEGER,
                 reminderRel INTEGER,
                 associatedInstanceId TEXT,
-                FOREIGN KEY(parentInstanceId) REFERENCES daily_instances_new(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                FOREIGN KEY(parentInstanceId) REFERENCES daily_instances(id) ON UPDATE NO ACTION ON DELETE CASCADE,
                 FOREIGN KEY(backlogId) REFERENCES backlog_items(id) ON UPDATE NO ACTION ON DELETE SET NULL,
                 FOREIGN KEY(sourceRuleId) REFERENCES schedule_rules(id) ON UPDATE NO ACTION ON DELETE SET NULL,
-                FOREIGN KEY(associatedInstanceId) REFERENCES daily_instances_new(id) ON UPDATE NO ACTION ON DELETE SET NULL,
+                FOREIGN KEY(associatedInstanceId) REFERENCES daily_instances(id) ON UPDATE NO ACTION ON DELETE SET NULL,
                 CHECK (reminderAbs IS NULL OR reminderRel IS NULL)
             )
         """)

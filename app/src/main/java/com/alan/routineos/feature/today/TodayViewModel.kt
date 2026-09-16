@@ -333,6 +333,11 @@ class TodayViewModel @Inject constructor(
             temporalState = temporalState,
             completion = completion,
             actionProtocol = root.instance.actionProtocol,
+            itemType = when (root.instance.role) {
+                DailyInstanceRole.ACTIVITY -> PlanningItemType.ACTIVITY
+                DailyInstanceRole.REMINDER -> PlanningItemType.REMINDER
+                DailyInstanceRole.TASK -> PlanningItemType.TASK
+            },
             context = if (associatedItems.isNotEmpty() || note != null || root.instance.reminderAbs != null || root.instance.reminderRel != null) {
                 ContextItemsUiModel(
                     tasks = associatedItems.map { 
@@ -448,7 +453,8 @@ class TodayViewModel @Inject constructor(
                     scheduledDate = LocalDate.now().toEpochDay(),
                     titleSnapshot = node.title,
                     descriptionSnapshot = node.description,
-                    status = DailyInstanceStatus.PLANNED
+                    status = DailyInstanceStatus.PLANNED,
+                    role = DailyInstanceRole.ACTIVITY
                 ),
                 isMaterialized = false
             ),
@@ -547,7 +553,9 @@ class TodayViewModel @Inject constructor(
             plannedDurationMinutes = duration,
             status = DailyInstanceStatus.MODIFIED,
             isAdHoc = true,
-            parentInstanceId = parentInstanceId
+            parentInstanceId = parentInstanceId,
+            actionProtocol = ActionProtocol.TIMER,
+            role = DailyInstanceRole.ACTIVITY
         )
         viewModelScope.launch {
             repository.upsertDailyInstance(adHocInstance)
@@ -610,6 +618,7 @@ class TodayViewModel @Inject constructor(
         val updated = entry.root.instance.copy(titleSnapshot = title)
         viewModelScope.launch {
             repository.upsertDailyInstance(updated)
+            // Sync editor state if editing existing item
             if (_uiState.value.editingSpontaneousEntry?.root?.instance?.id == id) {
                 _uiState.update { it.copy(editingSpontaneousEntry = entry.copy(root = entry.root.copy(instance = updated))) }
             }

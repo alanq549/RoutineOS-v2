@@ -66,6 +66,7 @@ class PlanningNavigationTest {
         override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
         override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>> = flowOf(emptyList())
+        override fun getNotesForDate(date: Long): Flow<List<Note>> = flowOf(emptyList())
         override suspend fun upsertNote(note: Note) {}
         override suspend fun deleteNote(note: Note) {}
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)

@@ -292,15 +292,24 @@ class OfflineActivityRepository @Inject constructor(
                 dailyInstanceDao.insertInstance(task.toEntity())
             }
             
-            // 3. Save Associated Note (V8 snapshots already included in Note model)
-            note?.let { 
-                noteDao.upsertNote(it.toEntity())
+            // 3. Save Associated Note
+            if (note != null) {
+                noteDao.upsertNote(note.toEntity())
+            } else {
+                // Explicit cleanup: if no note provided, remove any existing one for this instance
+                noteDao.deleteNoteByInstanceId(instance.id)
             }
         }
     }
 
     override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>> {
         return noteDao.getNotesByQuery(instanceId, date, title).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override fun getNotesForDate(date: Long): Flow<List<Note>> {
+        return noteDao.getNotesForDate(date).map { entities ->
             entities.map { it.toDomain() }
         }
     }

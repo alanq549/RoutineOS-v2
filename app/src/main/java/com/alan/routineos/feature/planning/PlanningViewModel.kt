@@ -91,7 +91,11 @@ class PlanningViewModel @Inject constructor(
             currentEntries = entries
             val scheduled = entries.filter { it.effectiveStartTimeMinutes != null }
             val unscheduled = entries.filter { it.effectiveStartTimeMinutes == null }
-            val exceptions = entries.filter { it.root.isMaterialized && it.root.instance.status != DailyInstanceStatus.PLANNED }
+            val exceptions = entries.filter { 
+                it.root.isMaterialized && 
+                !it.root.instance.isAdHoc &&
+                it.root.instance.status != DailyInstanceStatus.PLANNED 
+            }
 
             val allUiTimelineModels = (scheduled + unscheduled).map { it.toUiModel(p.expanded.contains(it.root.instance.id)) }
 
@@ -242,10 +246,10 @@ class PlanningViewModel @Inject constructor(
             completedSubNodesCount = completedCount,
             totalSubNodesCount = totalCount,
             actionProtocol = root.instance.actionProtocol,
-            itemType = when {
-                root.instance.actionProtocol == ActionProtocol.TIMER -> PlanningItemType.ACTIVITY
-                root.instance.reminderAbs != null || root.instance.reminderRel != null -> PlanningItemType.REMINDER
-                else -> PlanningItemType.TASK
+            itemType = when (root.instance.role) {
+                DailyInstanceRole.ACTIVITY -> PlanningItemType.ACTIVITY
+                DailyInstanceRole.REMINDER -> PlanningItemType.REMINDER
+                DailyInstanceRole.TASK -> PlanningItemType.TASK
             },
             conflict = root.conflict?.let { 
                 ConflictUiModel(
@@ -314,7 +318,9 @@ class PlanningViewModel @Inject constructor(
                     titleSnapshot = "",
                     descriptionSnapshot = "New Event",
                     status = DailyInstanceStatus.MODIFIED,
-                    isAdHoc = true
+                    isAdHoc = true,
+                    actionProtocol = ActionProtocol.TIMER,
+                    role = DailyInstanceRole.ACTIVITY
                 ),
                 isMaterialized = true
             )
@@ -344,6 +350,7 @@ class PlanningViewModel @Inject constructor(
             titleSnapshot = title,
             descriptionSnapshot = "",
             actionProtocol = ActionProtocol.CHECK,
+            role = DailyInstanceRole.TASK,
             status = DailyInstanceStatus.PLANNED,
             associatedInstanceId = _editingSpontaneousEntry.value?.root?.instance?.id
         )
@@ -415,9 +422,10 @@ class PlanningViewModel @Inject constructor(
                     _draftReminderAbs.value = entry.root.instance.reminderAbs
                     _draftReminderRel.value = entry.root.instance.reminderRel
                     
-                    _editorRole.value = when (entry.root.instance.actionProtocol) {
-                        ActionProtocol.TIMER -> EditorRole.EVENT
-                        ActionProtocol.CHECK -> EditorRole.TASK
+                    _editorRole.value = when (entry.root.instance.role) {
+                        DailyInstanceRole.ACTIVITY -> EditorRole.EVENT
+                        DailyInstanceRole.TASK -> EditorRole.TASK
+                        DailyInstanceRole.REMINDER -> EditorRole.REMINDER
                     }
 
                     // Initialize Selected Definition (Semantic Target)
@@ -524,6 +532,10 @@ class PlanningViewModel @Inject constructor(
         val updated = entry.root.instance.copy(titleSnapshot = title)
         viewModelScope.launch {
             repository.upsertDailyInstance(updated)
+            // Sync editor state if editing existing item
+            if (_editingSpontaneousEntry.value?.root?.instance?.id == id) {
+                _editingSpontaneousEntry.value = entry.copy(root = entry.root.copy(instance = updated))
+            }
         }
     }
 
@@ -548,6 +560,10 @@ class PlanningViewModel @Inject constructor(
         )
         viewModelScope.launch {
             repository.upsertDailyInstance(updated)
+            // Sync editor state
+            if (_editingSpontaneousEntry.value?.root?.instance?.id == id) {
+                _editingSpontaneousEntry.value = entry.copy(root = entry.root.copy(instance = updated))
+            }
         }
     }
 
@@ -562,30 +578,42 @@ class PlanningViewModel @Inject constructor(
             associatedInstanceId = linkedOccurrence?.id ?: entry.root.instance.associatedInstanceId,
             actionProtocol = when (role) {
                 EditorRole.EVENT -> ActionProtocol.TIMER
-                EditorRole.TASK -> ActionProtocol.CHECK
-                EditorRole.REMINDER -> ActionProtocol.CHECK // Default to CHECK for Reminder role, but pure reminder is metadata
+                else -> ActionProtocol.CHECK
             },
-            reminderAbs = _draftReminderAbs.value,
-            reminderRel = _draftReminderRel.value,
+            role = if (_isCreatingNewEvent.value) {
+                when (role) {
+                    EditorRole.EVENT -> DailyInstanceRole.ACTIVITY
+                    EditorRole.TASK -> DailyInstanceRole.TASK
+                    EditorRole.REMINDER -> DailyInstanceRole.REMINDER
+                }
+            } else {
+                entry.root.instance.role // Preserve role on edit
+            },
+            reminderAbs = if (role == EditorRole.REMINDER) _draftReminderAbs.value else null,
+            reminderRel = if (role == EditorRole.REMINDER) _draftReminderRel.value else null,
             isAdHoc = linkedSemantic == null
         )
         if (anchor.titleSnapshot.isBlank()) return
 
-        // Context items only for EVENT
-        val tasks = if (role == EditorRole.EVENT) {
+        // Context items only for ACTIVITY role
+        val tasks = if (anchor.role == DailyInstanceRole.ACTIVITY) {
             _draftTasks.value.map { it.copy(associatedInstanceId = anchor.id) }
         } else emptyList()
 
-        val noteContent = _draftNote.value
-        val note = if (noteContent.isNotBlank()) Note(
-            id = UUID.randomUUID().toString(),
-            content = noteContent,
-            instanceId = anchor.id,
-            dateSnapshot = anchor.scheduledDate,
-            targetTypeSnapshot = "INSTANCE",
-            targetIdSnapshot = anchor.id,
-            titleSnapshot = anchor.titleSnapshot
-        ) else null
+        val noteContent = _draftNote.value.trim()
+        val note = if (noteContent.isNotBlank() && anchor.role == DailyInstanceRole.TASK) {
+            // Preservation logic: use existing ID if editing
+            val existingId = entry.note?.id ?: UUID.randomUUID().toString()
+            Note(
+                id = existingId,
+                content = noteContent,
+                instanceId = anchor.id,
+                dateSnapshot = anchor.scheduledDate,
+                targetTypeSnapshot = "INSTANCE",
+                targetIdSnapshot = anchor.id,
+                titleSnapshot = anchor.titleSnapshot
+            )
+        } else null
 
         viewModelScope.launch {
             repository.upsertActivityWithContext(anchor, tasks, note)

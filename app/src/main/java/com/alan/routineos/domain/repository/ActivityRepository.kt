@@ -61,9 +61,10 @@ interface ActivityRepository {
     ) {}
 
     // Notes
-    fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<com.alan.routineos.domain.model.Note>>
-    suspend fun upsertNote(note: com.alan.routineos.domain.model.Note)
-    suspend fun deleteNote(note: com.alan.routineos.domain.model.Note)
+    fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>>
+    fun getNotesForDate(date: Long): Flow<List<Note>>
+    suspend fun upsertNote(note: Note)
+    suspend fun deleteNote(note: Note)
 
     // Metadata Schemas
     fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?>

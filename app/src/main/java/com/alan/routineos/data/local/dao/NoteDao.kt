@@ -21,4 +21,10 @@ interface NoteDao {
 
     @Delete
     suspend fun deleteNote(note: NoteEntity)
+
+    @Query("DELETE FROM notes WHERE instanceId = :instanceId")
+    suspend fun deleteNoteByInstanceId(instanceId: String)
+
+    @Query("SELECT * FROM notes WHERE dateSnapshot = :date")
+    fun getNotesForDate(date: Long): Flow<List<NoteEntity>>
 }

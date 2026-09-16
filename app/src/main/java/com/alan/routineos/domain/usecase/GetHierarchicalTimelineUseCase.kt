@@ -20,7 +20,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
             repository.getActivityDefinitions(),
             repository.getAllNodes(),
             resolveTimelineUseCase(date),
-            repository.getNotesByQuery(null, date.toEpochDay(), "") // Global/Historical fetch
+            repository.getNotesForDate(date.toEpochDay()) // Ensure all notes for the day are fetched
         ) { definitions, allNodes, flatTimeline, allNotes ->
             buildRecursiveHierarchy(definitions, allNodes, flatTimeline, allNotes, date)
         }
@@ -143,7 +143,8 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                             scheduledDate = date.toEpochDay(),
                             titleSnapshot = def.title,
                             descriptionSnapshot = def.description,
-                            status = DailyInstanceStatus.PLANNED
+                            status = DailyInstanceStatus.PLANNED,
+                            role = DailyInstanceRole.ACTIVITY
                         ),
                         isMaterialized = false
                     )
@@ -176,7 +177,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         
         val instanceNote = allNotes.find { it.instanceId == entry.instance.id }
         
-        val children = if (entry.instance.actionProtocol == ActionProtocol.TIMER) {
+        val children = if (entry.instance.role == DailyInstanceRole.ACTIVITY) {
             when {
                 entry.instance.target is ScheduleTarget.Node -> {
                     allNodes.filter { it.parentId == entry.instance.target.id }.flatMap { childNode ->
@@ -286,7 +287,8 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                 scheduledDate = date.toEpochDay(),
                 titleSnapshot = node.title,
                 descriptionSnapshot = node.description,
-                status = DailyInstanceStatus.PLANNED
+                status = DailyInstanceStatus.PLANNED,
+                role = DailyInstanceRole.ACTIVITY
             ),
             isMaterialized = false
         )

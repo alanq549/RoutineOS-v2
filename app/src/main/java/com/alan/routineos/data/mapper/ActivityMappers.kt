@@ -161,6 +161,7 @@ fun DailyInstanceEntity.toDomain(): DailyInstance {
         parentInstanceId = parentInstanceId,
         backlogId = backlogId,
         actionProtocol = ActionProtocol.valueOf(actionProtocol),
+        role = DailyInstanceRole.valueOf(role),
         reminderAbs = reminderAbs,
         reminderRel = reminderRel,
         associatedInstanceId = associatedInstanceId
@@ -194,6 +195,7 @@ fun DailyInstance.toEntity(): DailyInstanceEntity {
         parentInstanceId = parentInstanceId,
         backlogId = backlogId,
         actionProtocol = actionProtocol.name,
+        role = role.name,
         reminderAbs = reminderAbs,
         reminderRel = reminderRel,
         associatedInstanceId = associatedInstanceId

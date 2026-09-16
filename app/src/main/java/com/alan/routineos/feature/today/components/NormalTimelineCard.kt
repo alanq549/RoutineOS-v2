@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -350,6 +352,46 @@ private fun CompactTaskCard(
                         color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
+
+                // Note inside Task (Specialized Compact UI)
+                item.context?.note?.let { note ->
+                    Spacer(modifier = Modifier.height(6.dp))
+                    var isExpanded by remember { mutableStateOf(false) }
+                    val textLayoutResult = remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
+                    val isOverflowing = textLayoutResult.value?.hasVisualOverflow ?: false
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = isOverflowing) { isExpanded = !isExpanded },
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.StickyNote2, 
+                            null, 
+                            modifier = Modifier.size(13.dp).padding(top = 2.dp), 
+                            tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = note.content,
+                            style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp, lineHeight = 16.sp),
+                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.8f),
+                            maxLines = if (isExpanded) Int.MAX_VALUE else 2,
+                            overflow = TextOverflow.Ellipsis,
+                            onTextLayout = { textLayoutResult.value = it },
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (isOverflowing || isExpanded) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp).padding(start = 4.dp),
+                                tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
+                            )
+                        }
+                    }
+                }
             }
             ActionMenu(item, isCompleted, isOmitted) { id, action -> onAction(id, action) }
         }
@@ -366,27 +408,50 @@ private fun LightweightReminderCard(
     val accentColor = RoutineTheme.colors.roleReminder
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = accentColor.copy(alpha = 0.05f),
+        modifier = modifier.fillMaxWidth().clickable { onAction(item.id, "EDIT_SPONTANEOUS") },
+        color = Color(0xFF141B25),
         shape = RoutineTheme.shapes.small,
-        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.15f))
+        border = BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.8f))
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Notifications, null, tint = accentColor, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(14.dp))
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(accentColor.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                    .border(1.dp, accentColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Notifications, null, tint = accentColor, modifier = Modifier.size(16.dp))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = accentColor.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            "RECORDATORIO",
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, color = accentColor, fontWeight = FontWeight.Black),
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                        )
+                    }
+                    if (item.timeRangeText.isNotBlank()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = item.timeRangeText,
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp),
+                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                }
                 Text(
                     text = item.title,
-                    style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
-                    color = RoutineTheme.colors.onSurface
-                )
-                Text(
-                    text = item.timeRangeText,
-                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
-                    color = accentColor.copy(alpha = 0.8f)
+                    style = RoutineTheme.typography.bodyBase.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                    color = Color.White
                 )
             }
             ActionMenu(item, false, isOmitted) { id, action -> onAction(id, action) }
@@ -488,11 +553,11 @@ private fun ContextFooter(
             }
         }
 
-        // Reminder & Note Row
-        if (item.context?.reminder != null || item.context?.note != null) {
+        // Reminder Row (Note removed here, only for Tasks)
+        if (item.context?.reminder != null) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                item.context.reminder?.let { reminder ->
+                item.context.reminder.let { reminder ->
                     AssistChip(
                         onClick = { },
                         label = { Text(reminder.formattedTime, fontSize = 10.sp) },
@@ -503,24 +568,6 @@ private fun ContextFooter(
                         ),
                         border = null,
                         modifier = Modifier.height(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                
-                item.context.note?.let { note ->
-                    Icon(
-                        Icons.AutoMirrored.Filled.StickyNote2, 
-                        null, 
-                        modifier = Modifier.size(14.dp), 
-                        tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = note.content,
-                        style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp),
-                        color = RoutineTheme.colors.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -536,8 +583,7 @@ private fun MinimalSpontaneousRow(
 ) {
     val isCompleted = item.status == DailyInstanceStatus.COMPLETED
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
-    val isPureReminder = item.context?.reminder != null && item.actionProtocol == ActionProtocol.CHECK && item.title.isBlank()
-    val color = if (isPureReminder) RoutineTheme.colors.secondary else AdHocAccent
+    val color = if (item.itemType == PlanningItemType.REMINDER) RoutineTheme.colors.roleReminder else AdHocAccent
     var showMenu by remember { mutableStateOf(false) }
 
     Surface(
@@ -553,7 +599,7 @@ private fun MinimalSpontaneousRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (isPureReminder) Icons.Default.Notifications else Icons.Default.FlashOn,
+                imageVector = if (item.itemType == PlanningItemType.REMINDER) Icons.Default.Notifications else Icons.Default.FlashOn,
                 contentDescription = null,
                 tint = color,
                 modifier = Modifier.size(16.dp)
@@ -578,7 +624,7 @@ private fun MinimalSpontaneousRow(
                 }
             }
 
-            if (!isCompleted && !isOmitted && !isPureReminder) {
+            if (!isCompleted && !isOmitted) {
                 IconButton(
                     onClick = { onAction(item.id, "COMPLETE") },
                     modifier = Modifier.size(28.dp)
@@ -599,7 +645,7 @@ private fun MinimalSpontaneousRow(
                     Icon(Icons.Default.MoreVert, null, tint = RoutineTheme.colors.onSurfaceVariant, modifier = Modifier.size(18.dp))
                 }
                 RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                    if (!isCompleted && !isOmitted && !isPureReminder) {
+                    if (!isCompleted && !isOmitted) {
                         RoutineDropdownMenuItem(
                             text = "Editar",
                             onClick = { 

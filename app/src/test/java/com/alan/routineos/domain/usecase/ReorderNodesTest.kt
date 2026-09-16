@@ -138,6 +138,8 @@ class ReorderNodesTest {
         override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<com.alan.routineos.data.local.entities.NoteEntity>> = flowOf(emptyList())
         override suspend fun upsertNote(note: com.alan.routineos.data.local.entities.NoteEntity) {}
         override suspend fun deleteNote(note: com.alan.routineos.data.local.entities.NoteEntity) {}
+        override suspend fun deleteNoteByInstanceId(instanceId: String) {}
+        override fun getNotesForDate(date: Long): Flow<List<com.alan.routineos.data.local.entities.NoteEntity>> = flowOf(emptyList())
     }
 
     private class FakeBacklogItemDao : com.alan.routineos.data.local.dao.BacklogItemDao {

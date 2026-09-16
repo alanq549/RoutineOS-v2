@@ -61,6 +61,7 @@ data class DailyInstanceEntity(
     val parentInstanceId: String? = null,
     val backlogId: String? = null,
     val actionProtocol: String = "TIMER",
+    val role: String = "ACTIVITY",
     val reminderAbs: Int? = null,
     val reminderRel: Int? = null,
     val associatedInstanceId: String? = null

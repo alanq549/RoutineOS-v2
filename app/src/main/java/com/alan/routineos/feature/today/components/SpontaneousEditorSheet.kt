@@ -80,7 +80,12 @@ fun SpontaneousEditorSheet(
     }
 
     var newTaskTitle by remember { mutableStateOf("") }
-    var noteState by remember(entry.note?.id) { mutableStateOf(entry.note?.content ?: "") }
+    
+    // NOTE STATE with TextFieldValue for cursor stability and auto-bullets
+    var noteState by remember(entry.note?.id) { 
+        val content = entry.note?.content ?: ""
+        mutableStateOf(TextFieldValue(text = content, selection = TextRange(content.length))) 
+    }
 
     // Fix Catalog Search cursor bug using local TextFieldValue
     var searchQueryState by remember { 
@@ -243,83 +248,81 @@ fun SpontaneousEditorSheet(
                 )
             }
 
-            // UNIFIED LINKING SELECTOR
-            AnimatedVisibility(visible = role == EditorRole.TASK || role == EditorRole.REMINDER) {
-                Column(modifier = Modifier.padding(top = 16.dp)) {
-                    // Selection Chips
-                    if (selectedDefinition != null || selectedOccurrence != null) {
-                        FlowRow(
-                            modifier = Modifier.padding(bottom = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            selectedDefinition?.let {
-                                LinkChip(
-                                    title = it.title,
-                                    subtitle = it.subtitle ?: "Actividad",
-                                    icon = if (it.target is ScheduleTarget.Node) Icons.Default.AccountTree else Icons.Default.Tag,
-                                    accentColor = accentColor,
-                                    onClear = { onLinkToDefinition(null) }
-                                )
-                            }
-                            selectedOccurrence?.let {
-                                LinkChip(
-                                    title = it.title,
-                                    subtitle = it.timeRangeText,
-                                    icon = Icons.Default.Event,
-                                    accentColor = accentColor,
-                                    onClear = { onLinkToOccurrence(null) }
-                                )
-                            }
+            // UNIFIED LINKING SELECTOR (Always Visible)
+            Column(modifier = Modifier.padding(top = 16.dp)) {
+                // Selection Chips
+                if (selectedDefinition != null || selectedOccurrence != null) {
+                    FlowRow(
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        selectedDefinition?.let {
+                            LinkChip(
+                                title = it.title,
+                                subtitle = it.subtitle ?: "Actividad",
+                                icon = if (it.target is ScheduleTarget.Node) Icons.Default.AccountTree else Icons.Default.Tag,
+                                accentColor = accentColor,
+                                onClear = { onLinkToDefinition(null) }
+                            )
+                        }
+                        selectedOccurrence?.let {
+                            LinkChip(
+                                title = it.title,
+                                subtitle = it.timeRangeText,
+                                icon = Icons.Default.Event,
+                                accentColor = accentColor,
+                                onClear = { onLinkToOccurrence(null) }
+                            )
                         }
                     }
+                }
 
-                    // Unified Input
-                    TextField(
-                        value = searchQueryState,
-                        onValueChange = { 
-                            searchQueryState = it
-                            onUpdateCatalogSearch(it.text) 
-                        },
-                        placeholder = { Text("Relacionado con...", fontSize = 13.sp) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(DarkSurface),
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent
-                        ),
-                        leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant) },
-                        textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
-                        singleLine = true
-                    )
-                    
-                    if (unifiedCatalog.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Surface(
-                            color = DarkSurface,
-                            shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.1f)),
-                            modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp)
-                        ) {
-                            LazyColumn(contentPadding = PaddingValues(4.dp)) {
-                                // 1. ACTIVITIES / STRUCTURE
-                                val semanticItems = unifiedCatalog.filter { it is UnifiedLinkingResult.SemanticDefinition || it is UnifiedLinkingResult.SemanticNode }
-                                if (semanticItems.isNotEmpty()) {
-                                    item { ResultHeader("ACTIVIDADES / ESTRUCTURA") }
-                                    items(semanticItems) { item -> UnifiedResultRow(item, accentColor) { onSelectUnifiedResult(it); searchQueryState = TextFieldValue("") } }
-                                }
+                // Unified Input
+                TextField(
+                    value = searchQueryState,
+                    onValueChange = { 
+                        searchQueryState = it
+                        onUpdateCatalogSearch(it.text) 
+                    },
+                    placeholder = { Text("Relacionado con...", fontSize = 13.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurface),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent
+                    ),
+                    leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant) },
+                    textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
+                    singleLine = true
+                )
+                
+                if (unifiedCatalog.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color = DarkSurface,
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.1f)),
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp)
+                    ) {
+                        LazyColumn(contentPadding = PaddingValues(4.dp)) {
+                            // 1. ACTIVITIES / STRUCTURE
+                            val semanticItems = unifiedCatalog.filter { it is UnifiedLinkingResult.SemanticDefinition || it is UnifiedLinkingResult.SemanticNode }
+                            if (semanticItems.isNotEmpty()) {
+                                item { ResultHeader("ACTIVIDADES / ESTRUCTURA") }
+                                items(semanticItems) { item -> UnifiedResultRow(item, accentColor) { onSelectUnifiedResult(it); searchQueryState = TextFieldValue("") } }
+                            }
 
-                                // 2. OCCURRENCES
-                                val occurrences = unifiedCatalog.filterIsInstance<UnifiedLinkingResult.ContextualOccurrence>()
-                                if (occurrences.isNotEmpty()) {
-                                    item { ResultHeader("OCURRENCIAS") }
-                                    items(occurrences) { item -> UnifiedResultRow(item, accentColor) { onSelectUnifiedResult(it); searchQueryState = TextFieldValue("") } }
-                                }
+                            // 2. OCCURRENCES
+                            val occurrencesList = unifiedCatalog.filterIsInstance<UnifiedLinkingResult.ContextualOccurrence>()
+                            if (occurrencesList.isNotEmpty()) {
+                                item { ResultHeader("OCURRENCIAS") }
+                                items(occurrencesList) { item -> UnifiedResultRow(item, accentColor) { onSelectUnifiedResult(it); searchQueryState = TextFieldValue("") } }
                             }
                         }
                     }
@@ -336,11 +339,12 @@ fun SpontaneousEditorSheet(
                 onPickStart = { pickingType = PickingType.START; showTimePicker = true },
                 onPickEnd = { pickingType = PickingType.END; showTimePicker = true },
                 onSetTimeToNow = { onSetTimeToNow(root.id) },
+                onClearTime = { onUpdateSchedule(root.id, null, null) },
                 hideEnd = role != EditorRole.EVENT
             )
 
-            // DYNAMIC SECTIONS
-            AnimatedVisibility(visible = role != EditorRole.TASK) {
+            // DYNAMIC SECTIONS: Sub-tasks (EVENT only)
+            AnimatedVisibility(visible = role == EditorRole.EVENT) {
                 Column {
                     Spacer(modifier = Modifier.height(24.dp))
                     SectionHeader("Contexto & Tarea Ligada")
@@ -354,58 +358,85 @@ fun SpontaneousEditorSheet(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-            // Add Task Input
-            QuickAddTaskInput(
-                value = newTaskTitle,
-                onValueChange = { newTaskTitle = it },
-                onAdd = { 
-                    onAddDraftTask(newTaskTitle)
-                    newTaskTitle = "" 
-                },
-                accentColor = accentColor
-            )
+                    // Add Task Input
+                    QuickAddTaskInput(
+                        value = newTaskTitle,
+                        onValueChange = { newTaskTitle = it },
+                        onAdd = { 
+                            onAddDraftTask(newTaskTitle)
+                            newTaskTitle = "" 
+                        },
+                        accentColor = accentColor
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            SectionHeader("Recordatorio & Notas")
-            
-            // Reminders row
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
-                Icon(Icons.Default.Notifications, null, tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(12.dp))
-                ReminderPills(
-                    abs = root.reminderAbs,
-                    rel = root.reminderRel,
-                    accentColor = accentColor,
-                    onUpdate = onUpdateDraftReminder
+            // DYNAMIC SECTIONS: Notes (TASK only)
+            if (role == EditorRole.TASK) {
+                Spacer(modifier = Modifier.height(24.dp))
+                SectionHeader("Notas Rápidas")
+                
+                TextField(
+                    value = noteState,
+                    onValueChange = { newValue ->
+                        val oldText = noteState.text
+                        val newText = newValue.text
+                        
+                        val processedValue = when {
+                            // 1. Convert "- " to "• " at start of any line
+                            newText.length > oldText.length && newText.endsWith("- ") -> {
+                                val selectionIndex = newValue.selection.end
+                                val lineStart = newText.substring(0, selectionIndex).lastIndexOf('\n') + 1
+                                if (newText.substring(lineStart, selectionIndex) == "- ") {
+                                    val prefix = newText.substring(0, lineStart)
+                                    val suffix = newText.substring(selectionIndex)
+                                    val lineContent = "• "
+                                    newValue.copy(
+                                        text = prefix + lineContent + suffix,
+                                        selection = TextRange(prefix.length + lineContent.length)
+                                    )
+                                } else newValue
+                            }
+                            // 2. Auto-bullet on Enter after a bullet line
+                            newText.length > oldText.length && newText.length >= 1 && newText[newValue.selection.end - 1] == '\n' -> {
+                                val selectionIndex = newValue.selection.end
+                                val beforeCursor = newText.substring(0, selectionIndex - 1)
+                                val lastNewlineBefore = beforeCursor.lastIndexOf('\n')
+                                val lastLine = if (lastNewlineBefore == -1) beforeCursor else beforeCursor.substring(lastNewlineBefore + 1)
+                                
+                                if (lastLine.trimStart().startsWith("• ")) {
+                                    val indent = lastLine.substringBefore("• ")
+                                    val bullet = "$indent• "
+                                    val prefix = newText.substring(0, selectionIndex)
+                                    val suffix = newText.substring(selectionIndex)
+                                    newValue.copy(
+                                        text = prefix + bullet + suffix,
+                                        selection = TextRange(prefix.length + bullet.length)
+                                    )
+                                } else newValue
+                            }
+                            else -> newValue
+                        }
+                        
+                        noteState = processedValue
+                        onUpdateDraftNote(processedValue.text)
+                    },
+                    placeholder = { Text("Añadir notas rápidas...", fontSize = 13.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurface)
+                        .border(1.dp, RoutineTheme.colors.border.copy(alpha = 0.1f), RoundedCornerShape(16.dp)),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent
+                    ),
+                    textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
+                    minLines = 3
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Note Area
-            TextField(
-                value = noteState,
-                onValueChange = { 
-                    noteState = it
-                    onUpdateDraftNote(it)
-                },
-                placeholder = { Text("Añadir notas rápidas...", fontSize = 13.sp) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(DarkSurface)
-                    .border(1.dp, RoutineTheme.colors.border.copy(alpha = 0.1f), RoundedCornerShape(16.dp)),
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent
-                ),
-                textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
-                minLines = 3
-            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -423,30 +454,37 @@ fun SpontaneousEditorSheet(
                     .height(58.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isCreationMode) buttonColor else RoutineTheme.colors.surface3,
-                    contentColor = if (role == EditorRole.TASK) Color.White else Color.Black,
+                    containerColor = if (isCreationMode) buttonColor else RoutineTheme.colors.primary.copy(alpha = 0.2f),
+                    contentColor = if (isCreationMode) {
+                        if (role == EditorRole.TASK) Color.White else Color.Black
+                    } else RoutineTheme.colors.primary,
                     disabledContainerColor = RoutineTheme.colors.surface2,
                     disabledContentColor = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
                 ),
+                border = if (!isCreationMode) BorderStroke(1.dp, RoutineTheme.colors.primary.copy(alpha = 0.5f)) else null,
                 enabled = root.titleSnapshot.isNotBlank()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     Icon(
-                        imageVector = when(role) {
-                            EditorRole.TASK -> Icons.Default.Check
-                            EditorRole.EVENT -> Icons.Default.Event
-                            EditorRole.REMINDER -> Icons.Default.Notifications
-                        },
+                        imageVector = if (isCreationMode) {
+                            when(role) {
+                                EditorRole.TASK -> Icons.Default.Check
+                                EditorRole.EVENT -> Icons.Default.Event
+                                EditorRole.REMINDER -> Icons.Default.Notifications
+                            }
+                        } else Icons.Default.Save,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = when(role) {
-                            EditorRole.TASK -> "Crear Tarea"
-                            EditorRole.EVENT -> if (isCreationMode) "Programar Evento" else "Registrar Evento"
-                            EditorRole.REMINDER -> "Crear Recordatorio"
-                        },
+                        text = if (isCreationMode) {
+                            when(role) {
+                                EditorRole.TASK -> "Crear Tarea"
+                                EditorRole.EVENT -> "Programar Evento"
+                                EditorRole.REMINDER -> "Crear Recordatorio"
+                            }
+                        } else "Guardar Cambios",
                         style = RoutineTheme.typography.labelCaps.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     )
                 }
@@ -535,6 +573,7 @@ private fun TimeRangePicker(
     onPickStart: () -> Unit,
     onPickEnd: () -> Unit,
     onSetTimeToNow: () -> Unit,
+    onClearTime: () -> Unit,
     hideEnd: Boolean
 ) {
     Column(
@@ -550,24 +589,38 @@ private fun TimeRangePicker(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Default.Schedule, null, tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f), modifier = Modifier.size(14.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Rango Temporal", style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp), color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.8f))
             }
             
-            if (startTime != null && endTime != null && !hideEnd) {
-                Surface(
-                    color = accentColor.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(8.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.3f))
+            if (startTime != null || endTime != null) {
+                TextButton(
+                    onClick = onClearTime,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    modifier = Modifier.height(24.dp)
                 ) {
                     Text(
-                        text = "Duración: ${endTime - startTime} min",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, color = accentColor, fontWeight = FontWeight.Bold)
+                        "Limpiar hora",
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, color = RoutineTheme.colors.error)
                     )
                 }
+            }
+        }
+
+        if (startTime != null && endTime != null && !hideEnd) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                color = accentColor.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.3f))
+            ) {
+                Text(
+                    text = "Duración: ${endTime - startTime} min",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, color = accentColor, fontWeight = FontWeight.Bold)
+                )
             }
         }
 
@@ -580,7 +633,7 @@ private fun TimeRangePicker(
         ) {
             TimeChip(
                 label = "Hora Inicio",
-                time = startTime?.let { formatMinutes(it) } ?: "00:00",
+                time = startTime?.let { formatMinutes(it) } ?: "--:--",
                 onClick = onPickStart,
                 modifier = Modifier.weight(1f)
             )
@@ -590,7 +643,7 @@ private fun TimeRangePicker(
                 
                 TimeChip(
                     label = "Hora Fin",
-                    time = endTime?.let { formatMinutes(it) } ?: "00:00",
+                    time = endTime?.let { formatMinutes(it) } ?: "--:--",
                     onClick = onPickEnd,
                     modifier = Modifier.weight(1f),
                     activeColor = accentColor
