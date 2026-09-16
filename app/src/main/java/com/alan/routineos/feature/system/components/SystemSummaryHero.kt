@@ -18,6 +18,7 @@ import com.alan.routineos.feature.system.model.SystemSummary
 @Composable
 fun SystemSummaryHero(
     summary: SystemSummary,
+    onAddClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -66,7 +67,7 @@ fun SystemSummaryHero(
             }
 
             Button(
-                onClick = { },
+                onClick = onAddClick,
                 modifier = Modifier.height(56.dp),
                 shape = RoutineTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(

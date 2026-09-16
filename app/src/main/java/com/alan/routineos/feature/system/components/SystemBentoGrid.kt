@@ -9,6 +9,7 @@ import com.alan.routineos.feature.system.model.LifeArea
 @Composable
 fun SystemBentoGrid(
     lifeAreas: List<LifeArea>,
+    onCardClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -18,7 +19,7 @@ fun SystemBentoGrid(
         lifeAreas.forEach { area ->
             SystemCard(
                 area = area,
-                onClick = { /* Navigate to detail later */ }
+                onClick = { onCardClick(area.id) }
             )
         }
     }

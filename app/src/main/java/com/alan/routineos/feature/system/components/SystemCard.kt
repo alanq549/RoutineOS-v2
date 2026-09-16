@@ -121,7 +121,7 @@ fun SystemCard(
                         )
                         
                         Text(
-                            text = if (area.successRate != null) "${(area.successRate * 100).toInt()}%" else "SIN DATOS",
+                            text = if (area.successRate != null) "${(area.successRate * 100).toInt()}%" else "SIN RESULTADOS",
                             style = RoutineTheme.typography.dataLarge.copy(
                                 fontSize = 12.sp, 
                                 fontWeight = FontWeight.Bold,
@@ -166,7 +166,7 @@ fun SystemCard(
                             color = Color.White
                         )
                         Text(
-                            text = " / ${area.completedCount + area.skippedCount} completadas",
+                            text = " / ${area.completedCount + area.skippedCount} resultados",
                             style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp),
                             color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f),
                             modifier = Modifier.padding(start = 4.dp)
@@ -175,14 +175,14 @@ fun SystemCard(
 
                     if (area.pendingCount > 0) {
                         Surface(
-                            color = RoutineTheme.colors.primary.copy(alpha = 0.1f),
+                            color = semanticColor.copy(alpha = 0.12f),
                             shape = RoundedCornerShape(6.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.primary.copy(alpha = 0.3f))
+                            border = androidx.compose.foundation.BorderStroke(1.dp, semanticColor.copy(alpha = 0.3f))
                         ) {
                             Text(
                                 text = "${area.pendingCount} PENDIENTES",
                                 style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
-                                color = RoutineTheme.colors.primary,
+                                color = semanticColor,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
                         }
@@ -196,12 +196,16 @@ fun SystemCard(
 @Composable
 private fun getTechnicalIcon(name: String): ImageVector {
     return when (name.lowercase()) {
-        "fitness", "gym" -> Icons.Default.FitnessCenter
-        "school", "study" -> Icons.Default.School
+        "fitness_center" -> Icons.Default.FitnessCenter
+        "school" -> Icons.Default.School
         "work" -> Icons.Default.Work
         "favorite" -> Icons.Default.Favorite
         "bedtime" -> Icons.Default.Bedtime
         "rocket" -> Icons.Default.RocketLaunch
+        "account_tree" -> Icons.Default.AccountTree
+        "science" -> Icons.Default.Science
+        "psychology" -> Icons.Default.Psychology
+        "palette" -> Icons.Default.Palette
         else -> Icons.Default.AccountTree
     }
 }

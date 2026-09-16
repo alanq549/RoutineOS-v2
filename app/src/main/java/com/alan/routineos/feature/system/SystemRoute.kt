@@ -12,6 +12,12 @@ fun SystemRoute(
     val uiState by viewModel.uiState.collectAsState()
 
     SystemScreen(
-        uiState = uiState
+        uiState = uiState,
+        onAddClick = viewModel::onAddSystemClick,
+        onCardClick = viewModel::onEditSystemClick,
+        onUpdateFields = viewModel::onUpdateSystemFields,
+        onSave = viewModel::onSaveSystem,
+        onDelete = viewModel::onDeleteSystem,
+        onDismiss = viewModel::onDismissEditor
     )
 }
