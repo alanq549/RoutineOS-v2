@@ -34,8 +34,8 @@ class SystemStatsCalculationTest {
         assertEquals(1, stats.size)
         val s = stats[0]
         assertEquals(1, s.activityCount)
-        assertEquals(1, s.instanceCount)
-        assertEquals(1, s.completionCount)
+        assertEquals(1, s.scheduledCount)
+        assertEquals(1, s.completedCount)
         assertEquals(1f, s.successRate)
     }
 

@@ -24,10 +24,10 @@ class SystemViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             getSystemsWithStatsUseCase().collect { systemsWithStats ->
-                val uiModels = systemsWithStats.mapIndexed { index, item -> item.toUiModel(index) }
+                val uiModels = systemsWithStats.map { it.toUiModel() }
                 val totalDefs = systemsWithStats.sumOf { it.activityCount }
-                val totalInstances = systemsWithStats.sumOf { it.instanceCount }
-                val totalCompletions = systemsWithStats.sumOf { it.completionCount }
+                val totalInstances = systemsWithStats.sumOf { it.scheduledCount }
+                val totalCompletions = systemsWithStats.sumOf { it.completedCount }
 
                 _uiState.update { 
                     it.copy(
@@ -45,31 +45,21 @@ class SystemViewModel @Inject constructor(
         }
     }
 
-    private fun com.alan.routineos.domain.model.SystemWithStats.toUiModel(index: Int): com.alan.routineos.feature.system.model.LifeArea {
+    private fun com.alan.routineos.domain.model.SystemWithStats.toUiModel(): com.alan.routineos.feature.system.model.LifeArea {
         val status = if (system.isArchived) com.alan.routineos.feature.system.model.LifeAreaStatus.ARCHIVED 
                      else com.alan.routineos.feature.system.model.LifeAreaStatus.ACTIVE
 
-        return if (index == 0) {
-            com.alan.routineos.feature.system.model.LifeArea.Large(
-                id = system.id,
-                title = system.title,
-                iconName = system.iconKey,
-                status = status,
-                routinesCount = activityCount,
-                subjectsCount = 0, // Placeholder
-                nextExecution = "Mañana"
-            )
-        } else {
-            com.alan.routineos.feature.system.model.LifeArea.Medium(
-                id = system.id,
-                title = system.title,
-                iconName = system.iconKey,
-                status = status,
-                sessionsCount = instanceCount,
-                exercisesCount = activityCount,
-                templatesCount = 0,
-                nextExecution = "Hoy"
-            )
-        }
+        return com.alan.routineos.feature.system.model.LifeArea(
+            id = system.id,
+            title = system.title,
+            iconName = system.iconKey,
+            status = status,
+            colorHex = system.colorHex,
+            activityCount = activityCount,
+            completedCount = completedCount,
+            skippedCount = skippedCount,
+            pendingCount = pendingCount,
+            successRate = successRate
+        )
     }
 }
