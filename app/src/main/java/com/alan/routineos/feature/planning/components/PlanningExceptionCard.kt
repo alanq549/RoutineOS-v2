@@ -20,14 +20,18 @@ import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.today.model.PlanningItemType
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
-import com.alan.routineos.feature.planning.PlanningAccents
 
 @Composable
 fun PlanningExceptionCard(
     item: TodayTimelineUiModel,
     modifier: Modifier = Modifier
 ) {
-    val accentColor = if (item.itemType == PlanningItemType.REMINDER) PlanningAccents.Purple else Color(0xFF60A5FA)
+    val accentColor = when (item.itemType) {
+        PlanningItemType.ACTIVITY -> RoutineTheme.colors.roleEvent
+        PlanningItemType.TASK -> RoutineTheme.colors.roleTask
+        PlanningItemType.REMINDER -> RoutineTheme.colors.roleReminder
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = Color(0xFF10151D),

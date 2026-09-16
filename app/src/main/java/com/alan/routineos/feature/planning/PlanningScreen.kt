@@ -1,5 +1,6 @@
 package com.alan.routineos.feature.planning
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,12 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
@@ -33,6 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -164,6 +170,7 @@ fun PlanningScreen(
             // Cronograma: Tareas sin hora (pineadas arriba) + Actividades/Tareas programadas
             val unscheduledTasks =
                 uiState.unscheduledItems.filter { it.itemType == PlanningItemType.TASK }
+            
             PlanningSection(
                 title = "CRONOGRAMA DEL DÍA",
                 subtitle = if (uiState.timelineEntries.isNotEmpty()) "${uiState.timelineEntries.size} Bloques Activos" else null
@@ -171,26 +178,44 @@ fun PlanningScreen(
                 if (unscheduledTasks.isEmpty() && uiState.timelineEntries.isEmpty()) {
                     EmptySectionMessage("Sin eventos programados")
                 } else {
-                    // 1. Pinned tasks (No time)
-                    unscheduledTasks.forEach { entry ->
-                        PlanningTimeBlock(
-                            item = entry,
-                            onAction = onAction,
-                            onExpandClick = onExpandClick
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                    // 2. Scheduled timeline
-                    uiState.timelineEntries.forEach { entry ->
-                        PlanningTimeBlock(
-                            item = entry,
-                            onAction = { id, type ->
-                                if (type == "MOVE_REQUEST") moveTargetId = id
-                                else onAction(id, type)
-                            },
-                            onExpandClick = onExpandClick
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+                    // Stitch Base Spine: Sharp and Dark to allow semantic signal layers to pop
+                    val spineNeutral = Color(0xFF0F172A)
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                // 1. Draw Global Neutral Spine Line (36dp axis)
+                                val x = 36.dp.toPx()
+                                drawLine(
+                                    color = spineNeutral,
+                                    start = androidx.compose.ui.geometry.Offset(x, 0f),
+                                    end = androidx.compose.ui.geometry.Offset(x, size.height),
+                                    strokeWidth = 1.5.dp.toPx()
+                                )
+                            }
+                    ) {
+                        Column {
+                            // 1. Pinned tasks (No time)
+                            unscheduledTasks.forEach { entry ->
+                                PlanningTimeBlock(
+                                    item = entry,
+                                    onAction = onAction,
+                                    onExpandClick = onExpandClick
+                                )
+                            }
+                            // 2. Scheduled timeline
+                            uiState.timelineEntries.forEach { entry ->
+                                PlanningTimeBlock(
+                                    item = entry,
+                                    onAction = { id, type ->
+                                        if (type == "MOVE_REQUEST") moveTargetId = id
+                                        else onAction(id, type)
+                                    },
+                                    onExpandClick = onExpandClick
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -294,7 +294,14 @@ class OfflineActivityRepository @Inject constructor(
             
             // 3. Save Associated Note
             if (note != null) {
-                noteDao.upsertNote(note.toEntity())
+                // Find existing note for this instance to ensure update
+                val existing = noteDao.getNoteByInstanceId(instance.id)
+                val noteToSave = if (existing != null) {
+                    note.copy(id = existing.id).toEntity()
+                } else {
+                    note.toEntity()
+                }
+                noteDao.upsertNote(noteToSave)
             } else {
                 // Explicit cleanup: if no note provided, remove any existing one for this instance
                 noteDao.deleteNoteByInstanceId(instance.id)

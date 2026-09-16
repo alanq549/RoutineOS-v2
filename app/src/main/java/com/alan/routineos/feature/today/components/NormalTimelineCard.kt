@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -79,15 +80,13 @@ private fun FullActivityCard(
     val isCurrent = item.temporalState == TimelineTemporalState.CURRENT
     val isInterrupter = item.conflict.isInterrupter
 
-    val cardAlpha = if (isOmitted || isCompleted || isOverdue || isStale) 0.65f else 1f
-
-    val accentColor = when {
-        isCompleted -> RoutineTheme.colors.primary
-        isOverdue -> OverdueAccent
-        item.isAdHoc -> AdHocAccent
-        item.status == DailyInstanceStatus.MODIFIED -> RoutineTheme.colors.secondary
-        else -> RoutineTheme.colors.primary
+    val semanticColor = when (item.itemType) {
+        PlanningItemType.ACTIVITY -> RoutineTheme.colors.roleEvent
+        PlanningItemType.TASK -> RoutineTheme.colors.roleTask
+        PlanningItemType.REMINDER -> RoutineTheme.colors.roleReminder
     }
+
+    val cardAlpha = if (isOmitted || isCompleted || isOverdue || isStale) 0.65f else 1f
 
     val impactColor = when (item.conflict.impact) {
         TemporalImpact.WARNING -> RoutineTheme.colors.error
@@ -97,7 +96,7 @@ private fun FullActivityCard(
 
     val meshBrush = if (!isCompleted && (isCurrent || (item.isAdHoc && !isOmitted))) {
         Brush.radialGradient(
-            colors = listOf(accentColor.copy(alpha = 0.12f), Color.Transparent),
+            colors = listOf(semanticColor.copy(alpha = 0.12f), Color.Transparent),
             radius = 600f
         )
     } else {
@@ -114,9 +113,8 @@ private fun FullActivityCard(
             width = if (isInterrupter) 1.5.dp else 1.dp,
             color = when {
                 isCompleted -> RoutineTheme.colors.border
-                item.isAdHoc -> AdHocAccent.copy(alpha = 0.75f)
                 isInterrupter && impactColor != null -> impactColor
-                else -> accentColor.copy(alpha = 0.4f)
+                else -> semanticColor.copy(alpha = 0.35f)
             }
         )
     ) {
@@ -147,7 +145,7 @@ private fun FullActivityCard(
                                 else -> Icons.Default.Schedule
                             },
                             contentDescription = null,
-                            tint = if (isOverdue) OverdueAccent else accentColor,
+                            tint = if (isOverdue) OverdueAccent else semanticColor,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -291,7 +289,7 @@ private fun FullActivityCard(
                     Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
                         Button(
                             onClick = { onAction(item.id, "COMPLETE") },
-                            colors = ButtonDefaults.buttonColors(containerColor = accentColor.copy(alpha = 0.9f), contentColor = Color.Black),
+                            colors = ButtonDefaults.buttonColors(containerColor = semanticColor.copy(alpha = 0.9f), contentColor = Color.Black),
                             shape = RoutineTheme.shapes.small,
                             modifier = Modifier.height(36.dp)
                         ) {
@@ -312,83 +310,120 @@ private fun CompactTaskCard(
 ) {
     val isCompleted = item.status == DailyInstanceStatus.COMPLETED
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
-    val accentColor = RoutineTheme.colors.roleTask
+    val indigoAccent = RoutineTheme.colors.roleTask
     
-    RoutineCard(
-        modifier = modifier.fillMaxWidth(),
-        containerColor = RoutineTheme.colors.surface2.copy(alpha = 0.5f),
-        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.2f))
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { onAction(item.id, if (isCompleted) "RESET" else "COMPLETE") },
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
-                    contentDescription = null,
-                    tint = if (isCompleted) RoutineTheme.colors.primary else accentColor,
-                    modifier = Modifier.size(24.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .drawBehind {
+                // Vibrant Layered Spine (Today axis: 22dp)
+                val x = 22.dp.toPx() 
+
+                // Layer 1: Atmospheric Glow
+                drawLine(
+                    brush = Brush.verticalGradient(
+                        0.0f to Color.Transparent,
+                        0.2f to indigoAccent.copy(alpha = 0.05f),
+                        0.5f to indigoAccent.copy(alpha = 0.15f),
+                        0.8f to indigoAccent.copy(alpha = 0.05f),
+                        1.0f to Color.Transparent
+                    ),
+                    start = androidx.compose.ui.geometry.Offset(x, 0f),
+                    end = androidx.compose.ui.geometry.Offset(x, size.height),
+                    strokeWidth = 8.dp.toPx()
+                )
+
+                // Layer 2: Core Signal
+                drawLine(
+                    brush = Brush.verticalGradient(
+                        0.0f to indigoAccent.copy(alpha = 0.2f),
+                        0.3f to indigoAccent.copy(alpha = 0.6f),
+                        0.5f to indigoAccent.copy(alpha = 0.9f),
+                        0.7f to indigoAccent.copy(alpha = 0.6f),
+                        1.0f to indigoAccent.copy(alpha = 0.2f)
+                    ),
+                    start = androidx.compose.ui.geometry.Offset(x, 0f),
+                    end = androidx.compose.ui.geometry.Offset(x, size.height),
+                    strokeWidth = 1.5.dp.toPx()
                 )
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.title,
-                    style = RoutineTheme.typography.bodyBase.copy(
-                        fontSize = 16.sp, 
-                        fontWeight = FontWeight.SemiBold,
-                        textDecoration = if (isCompleted) TextDecoration.LineThrough else null
-                    ),
-                    color = if (isCompleted) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface
-                )
-                if (item.timeRangeText.isNotBlank()) {
-                    Text(
-                        text = item.timeRangeText,
-                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
-                        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
+    ) {
+        RoutineCard(
+            modifier = Modifier.fillMaxWidth().padding(start = 40.dp).alpha(if (isOmitted) 0.65f else 1f),
+            containerColor = Color.Transparent,
+            border = BorderStroke(1.dp, indigoAccent.copy(alpha = 0.35f))
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { onAction(item.id, if (isCompleted) "RESET" else "COMPLETE") },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                        contentDescription = null,
+                        tint = if (isCompleted) RoutineTheme.colors.primary else indigoAccent,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
-
-                // Note inside Task (Specialized Compact UI)
-                item.context?.note?.let { note ->
-                    Spacer(modifier = Modifier.height(6.dp))
-                    var isExpanded by remember { mutableStateOf(false) }
-                    val textLayoutResult = remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
-                    val isOverflowing = textLayoutResult.value?.hasVisualOverflow ?: false
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = isOverflowing) { isExpanded = !isExpanded },
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.StickyNote2, 
-                            null, 
-                            modifier = Modifier.size(13.dp).padding(top = 2.dp), 
-                            tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        style = RoutineTheme.typography.bodyBase.copy(
+                            fontSize = 16.sp, 
+                            fontWeight = FontWeight.SemiBold,
+                            textDecoration = if (isCompleted) TextDecoration.LineThrough else null
+                        ),
+                        color = if (isCompleted) RoutineTheme.colors.onSurfaceVariant else RoutineTheme.colors.onSurface
+                    )
+                    if (item.timeRangeText.isNotBlank()) {
                         Text(
-                            text = note.content,
-                            style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp, lineHeight = 16.sp),
-                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.8f),
-                            maxLines = if (isExpanded) Int.MAX_VALUE else 2,
-                            overflow = TextOverflow.Ellipsis,
-                            onTextLayout = { textLayoutResult.value = it },
-                            modifier = Modifier.weight(1f)
+                            text = item.timeRangeText,
+                            style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
+                            color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
                         )
-                        if (isOverflowing || isExpanded) {
+                    }
+
+                    // Note inside Task (Specialized Compact UI)
+                    item.context?.note?.let { note ->
+                        Spacer(modifier = Modifier.height(6.dp))
+                        var isExpanded by remember { mutableStateOf(false) }
+                        val textLayoutResult = remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
+                        val isOverflowing = textLayoutResult.value?.hasVisualOverflow ?: false
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = isOverflowing) { isExpanded = !isExpanded },
+                            verticalAlignment = Alignment.Top
+                        ) {
                             Icon(
-                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp).padding(start = 4.dp),
-                                tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
+                                Icons.AutoMirrored.Filled.StickyNote2, 
+                                null, 
+                                modifier = Modifier.size(13.dp).padding(top = 2.dp), 
+                                tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f)
                             )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = note.content,
+                                style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp),
+                                color = RoutineTheme.colors.onSurfaceVariant,
+                                maxLines = if (isExpanded) Int.MAX_VALUE else 2,
+                                overflow = TextOverflow.Ellipsis,
+                                onTextLayout = { textLayoutResult.value = it },
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (isOverflowing || isExpanded) {
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
+                                )
+                            }
                         }
                     }
                 }
@@ -405,13 +440,13 @@ private fun LightweightReminderCard(
     modifier: Modifier = Modifier
 ) {
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
-    val accentColor = RoutineTheme.colors.roleReminder
+    val amberAccent = RoutineTheme.colors.roleReminder
 
     Surface(
-        modifier = modifier.fillMaxWidth().clickable { onAction(item.id, "EDIT_SPONTANEOUS") },
+        modifier = modifier.fillMaxWidth().alpha(if (isOmitted) 0.65f else 1f).clickable { onAction(item.id, "EDIT_SPONTANEOUS") },
         color = Color(0xFF141B25),
         shape = RoutineTheme.shapes.small,
-        border = BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.8f))
+        border = BorderStroke(1.dp, if (isOmitted) RoutineTheme.colors.border else amberAccent.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -420,22 +455,22 @@ private fun LightweightReminderCard(
             Box(
                 modifier = Modifier
                     .size(32.dp)
-                    .background(accentColor.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-                    .border(1.dp, accentColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                    .background(amberAccent.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                    .border(1.dp, amberAccent.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Notifications, null, tint = accentColor, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Notifications, null, tint = amberAccent, modifier = Modifier.size(16.dp))
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = accentColor.copy(alpha = 0.15f),
+                        color = amberAccent.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
                             "RECORDATORIO",
-                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, color = accentColor, fontWeight = FontWeight.Black),
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, color = amberAccent, fontWeight = FontWeight.Black),
                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
                         )
                     }

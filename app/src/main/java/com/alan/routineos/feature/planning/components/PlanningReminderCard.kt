@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.domain.model.DailyInstanceStatus
-import com.alan.routineos.feature.planning.PlanningAccents
+import com.alan.routineos.feature.today.model.PlanningItemType
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
 /**
@@ -48,7 +48,11 @@ private fun FloatingItemCard(
 ) {
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
     val isModified = item.status == DailyInstanceStatus.MODIFIED
-    val purpleAccent = PlanningAccents.Purple
+    val semanticColor = when (item.itemType) {
+        PlanningItemType.ACTIVITY -> RoutineTheme.colors.roleEvent
+        PlanningItemType.TASK -> RoutineTheme.colors.roleTask
+        PlanningItemType.REMINDER -> RoutineTheme.colors.roleReminder
+    }
 
     Box(
         modifier = modifier
@@ -67,11 +71,11 @@ private fun FloatingItemCard(
             Box(
                 modifier = Modifier
                     .size(32.dp)
-                    .background(purpleAccent.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-                    .border(1.dp, purpleAccent.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                    .background(semanticColor.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                    .border(1.dp, semanticColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, null, modifier = Modifier.size(16.dp), tint = purpleAccent)
+                Icon(icon, null, modifier = Modifier.size(16.dp), tint = semanticColor)
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -79,14 +83,14 @@ private fun FloatingItemCard(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = purpleAccent.copy(alpha = 0.15f),
+                        color = semanticColor.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
                             badgeText,
                             style = RoutineTheme.typography.labelCaps.copy(
                                 fontSize = 8.sp,
-                                color = purpleAccent,
+                                color = semanticColor,
                                 fontWeight = FontWeight.Black
                             ),
                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)

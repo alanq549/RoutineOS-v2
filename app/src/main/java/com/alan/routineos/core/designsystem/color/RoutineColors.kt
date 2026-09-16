@@ -18,9 +18,9 @@ data class RoutineColorScheme(
     val onPrimary: Color,
     val onSurface: Color,
     val onSurfaceVariant: Color,
-    val roleEvent: Color = Color(0xFF34D399),
-    val roleTask: Color = Color(0xFFA855F7),
-    val roleReminder: Color = Color(0xFFF87171)
+    val roleEvent: Color = Color(0xFF34D399), // Emerald
+    val roleTask: Color = Color(0xFF818CF8), // Indigo
+    val roleReminder: Color = Color(0xFFFBBF24) // Amber
 )
 
 val DarkRoutineColorScheme = RoutineColorScheme(
@@ -35,7 +35,10 @@ val DarkRoutineColorScheme = RoutineColorScheme(
     error = Color(0xFFFFB4AB),
     onPrimary = Color(0xFF003825),
     onSurface = Color(0xFFE9EDF2),
-    onSurfaceVariant = Color(0xFF94A3B8) // Stitch Subtle Slate
+    onSurfaceVariant = Color(0xFF94A3B8), // Stitch Subtle Slate
+    roleEvent = Color(0xFF34D399),
+    roleTask = Color(0xFF818CF8),
+    roleReminder = Color(0xFFFBBF24)
 )
 
 val LocalRoutineColors = staticCompositionLocalOf {

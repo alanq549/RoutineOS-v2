@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -41,27 +42,118 @@ fun PlanningTimeBlock(
     onExpandClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxWidth()) {
-        // Continuous Vertical Spine Line (Stitch High-Fidelity)
-        Box(
-            modifier = Modifier
-                .padding(start = 35.5.dp) 
-                .width(2.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(RoutineTheme.colors.border.copy(alpha = 0.5f), RoutineTheme.colors.border.copy(alpha = 0.1f))
-                    )
-                )
-        )
+    val semanticColor = when (item.itemType) {
+        PlanningItemType.ACTIVITY -> RoutineTheme.colors.roleEvent
+        PlanningItemType.TASK -> RoutineTheme.colors.roleTask
+        PlanningItemType.REMINDER -> RoutineTheme.colors.roleReminder
+    }
 
-        Column {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .drawBehind {
+                // Vibrant Layered Spine (36dp axis)
+                val x = 36.dp.toPx()
+                
+                // Layer 1: Atmospheric Glow (wider and softer)
+                drawLine(
+                    brush = Brush.verticalGradient(
+                        0.0f to Color.Transparent,
+                        0.2f to semanticColor.copy(alpha = 0.05f),
+                        0.5f to semanticColor.copy(alpha = 0.15f),
+                        0.8f to semanticColor.copy(alpha = 0.05f),
+                        1.0f to Color.Transparent
+                    ),
+                    start = androidx.compose.ui.geometry.Offset(x, 0f),
+                    end = androidx.compose.ui.geometry.Offset(x, size.height),
+                    strokeWidth = 8.dp.toPx()
+                )
+
+                // Layer 2: Core Signal (Solid technical line)
+                drawLine(
+                    brush = Brush.verticalGradient(
+                        0.0f to semanticColor.copy(alpha = 0.2f),
+                        0.3f to semanticColor.copy(alpha = 0.6f),
+                        0.5f to semanticColor.copy(alpha = 0.9f),
+                        0.7f to semanticColor.copy(alpha = 0.6f),
+                        1.0f to semanticColor.copy(alpha = 0.2f)
+                    ),
+                    start = androidx.compose.ui.geometry.Offset(x, 0f),
+                    end = androidx.compose.ui.geometry.Offset(x, size.height),
+                    strokeWidth = 2.dp.toPx()
+                )
+            }
+    ) {
+        // Inner Column handles the actual visual spacing
+        Column(modifier = Modifier.padding(bottom = 12.dp)) {
             when (item.itemType) {
                 PlanningItemType.ACTIVITY -> FullActivityBlock(item, onAction, onExpandClick)
                 PlanningItemType.TASK -> CompactTaskBlock(item, onAction)
-                PlanningItemType.REMINDER -> PlanningReminderCard(item = item, onAction = onAction, modifier = Modifier.padding(vertical = 4.dp))
+                PlanningItemType.REMINDER -> TimelineReminderBlock(item, onAction)
             }
         }
+    }
+}
+
+@Composable
+private fun TimelineReminderBlock(
+    item: TodayTimelineUiModel,
+    onAction: (String, String) -> Unit
+) {
+    val isOmitted = item.status == DailyInstanceStatus.OMITTED
+    val amberAccent = RoutineTheme.colors.roleReminder
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onAction(item.id, "EDIT_SPONTANEOUS") },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Time & Marker (Double Ring with dot)
+        Column(
+            modifier = Modifier.width(72.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = item.startTimeMinutes?.let { formatMinutes(it) } ?: "",
+                style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                color = if (isOmitted) RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f) else amberAccent
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.drawBehind {
+                    // STITCH BLOOM EFFECT (Circular Diffusion)
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(amberAccent.copy(alpha = 0.2f), Color.Transparent),
+                            center = center,
+                            radius = 50f
+                        ),
+                        radius = 50f
+                    )
+                }
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = RoutineTheme.colors.background,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, if (isOmitted) RoutineTheme.colors.border else amberAccent),
+                    modifier = Modifier.size(16.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .background(if (isOmitted) RoutineTheme.colors.onSurfaceVariant else amberAccent, CircleShape)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // REMINDER CARD
+        PlanningReminderCard(item = item, onAction = onAction, modifier = Modifier.weight(1f))
     }
 }
 
@@ -73,7 +165,7 @@ private fun FullActivityBlock(
 ) {
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
     val isModified = item.status == DailyInstanceStatus.MODIFIED
-    val emeraldNeon = RoutineTheme.colors.primary
+    val semanticColor = RoutineTheme.colors.roleEvent
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
@@ -87,20 +179,40 @@ private fun FullActivityBlock(
             Text(
                 text = item.timeRangeText,
                 style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
-                color = if (isOmitted) RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f) else emeraldNeon
+                color = if (isOmitted) RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f) else semanticColor
             )
             
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Stitch Activity Marker (Ring with dot)
-            Surface(
-                shape = CircleShape,
-                color = RoutineTheme.colors.background,
-                border = androidx.compose.foundation.BorderStroke(2.dp, if (isOmitted) RoutineTheme.colors.border else emeraldNeon),
-                modifier = Modifier.size(20.dp)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.drawBehind {
+                    // STITCH BLOOM EFFECT (Circular Diffusion)
+                    // We use drawCircle to ensure no square edges.
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(semanticColor.copy(alpha = 0.25f), Color.Transparent),
+                            center = center,
+                            radius = 60f
+                        ),
+                        radius = 60f
+                    )
+                }
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Box(modifier = Modifier.size(6.dp).background(if (isOmitted) RoutineTheme.colors.onSurfaceVariant else emeraldNeon, CircleShape))
+                // Stitch Activity Marker (Double Ring)
+                Surface(
+                    shape = CircleShape,
+                    color = RoutineTheme.colors.background,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, if (isOmitted) RoutineTheme.colors.border else semanticColor),
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(if (isOmitted) RoutineTheme.colors.onSurfaceVariant else semanticColor, CircleShape)
+                        )
+                    }
                 }
             }
             
@@ -119,7 +231,7 @@ private fun FullActivityBlock(
             containerColor = Color(0xFF121A24),
             border = androidx.compose.foundation.BorderStroke(
                 width = 1.dp,
-                color = if (isOmitted) RoutineTheme.colors.border else emeraldNeon.copy(alpha = 0.4f)
+                color = if (isOmitted) RoutineTheme.colors.border else semanticColor.copy(alpha = 0.3f)
             )
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -130,7 +242,7 @@ private fun FullActivityBlock(
                         .size(140.dp)
                         .background(
                             Brush.radialGradient(
-                                colors = listOf(emeraldNeon.copy(alpha = 0.08f), Color.Transparent),
+                                colors = listOf(semanticColor.copy(alpha = 0.08f), Color.Transparent),
                                 center = androidx.compose.ui.geometry.Offset(x = 400f, y = 0f),
                                 radius = 400f
                             )
@@ -146,20 +258,20 @@ private fun FullActivityBlock(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Surface(
-                                    color = emeraldNeon.copy(alpha = 0.12f), 
+                                    color = semanticColor.copy(alpha = 0.12f), 
                                     shape = RoundedCornerShape(6.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, emeraldNeon.copy(alpha = 0.3f))
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, semanticColor.copy(alpha = 0.3f))
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(11.dp), tint = emeraldNeon)
+                                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(11.dp), tint = semanticColor)
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
                                             text = "RECURRENTE",
                                             style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
-                                            color = emeraldNeon
+                                            color = semanticColor
                                         )
                                     }
                                 }
@@ -187,7 +299,7 @@ private fun FullActivityBlock(
                         AnimatedVisibility(visible = item.isExpanded) {
                             if (item.subNodes.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(14.dp))
-                                Column(modifier = Modifier.padding(start = 4.dp).drawThreadLine(RoutineTheme.colors.border.copy(alpha = 0.25f)).padding(start = 20.dp)) {
+                                Column(modifier = Modifier.padding(start = 4.dp).drawThreadLine(PlanningAccents.SpineMedium.copy(alpha = 0.4f)).padding(start = 20.dp)) {
                                     item.subNodes.forEach { sub ->
                                         PlanningSubNodeRow(sub)
                                         Spacer(modifier = Modifier.height(8.dp))
@@ -198,7 +310,7 @@ private fun FullActivityBlock(
                     }
 
                     // STITCH BOTTOM STATUS BAR
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(RoutineTheme.colors.border.copy(alpha = 0.6f)))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(PlanningAccents.SpineMedium.copy(alpha = 0.6f)))
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -230,13 +342,13 @@ private fun CompactTaskBlock(
 ) {
     val isOmitted = item.status == DailyInstanceStatus.OMITTED
     val isModified = item.status == DailyInstanceStatus.MODIFIED
-    val purpleAccent = PlanningAccents.Purple
+    val indigoAccent = RoutineTheme.colors.roleTask
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { onAction(item.id, "EDIT_SPONTANEOUS") },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Time & Hollow Marker
+        // Time & Marker (Double Ring with dot)
         Column(
             modifier = Modifier.width(72.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -244,24 +356,51 @@ private fun CompactTaskBlock(
             Text(
                 text = item.startTimeMinutes?.let { formatMinutes(it) } ?: "",
                 style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
-                color = purpleAccent
+                color = if (isOmitted) RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f) else indigoAccent
             )
             Spacer(modifier = Modifier.height(6.dp))
+            
             Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .border(2.5.dp, purpleAccent.copy(alpha = 0.7f), CircleShape)
-                    .background(RoutineTheme.colors.background, CircleShape)
-            )
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.drawBehind {
+                    // STITCH BLOOM EFFECT (Circular Diffusion)
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(indigoAccent.copy(alpha = 0.2f), Color.Transparent),
+                            center = center,
+                            radius = 60f
+                        ),
+                        radius = 60f
+                    )
+                }
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = RoutineTheme.colors.background,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, if (isOmitted) RoutineTheme.colors.border else indigoAccent),
+                    modifier = Modifier.size(16.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .background(if (isOmitted) RoutineTheme.colors.onSurfaceVariant else indigoAccent, CircleShape)
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // TASK CARD (Stitch Purple)
+        // TASK CARD (Stitch Indigo)
         RoutineCard(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).alpha(if (isOmitted) 0.7f else 1f),
             containerColor = Color(0xFF121620),
-            border = androidx.compose.foundation.BorderStroke(1.dp, purpleAccent.copy(alpha = 0.3f))
+            border = androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = if (isOmitted) RoutineTheme.colors.border else indigoAccent.copy(alpha = 0.25f)
+            )
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
@@ -271,11 +410,11 @@ private fun CompactTaskBlock(
                 Box(
                     modifier = Modifier
                         .size(24.dp)
-                        .border(1.5.dp, purpleAccent.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                        .background(purpleAccent.copy(alpha = 0.08f), RoundedCornerShape(6.dp)),
+                        .border(1.5.dp, indigoAccent.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                        .background(indigoAccent.copy(alpha = 0.08f), RoundedCornerShape(6.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp), tint = purpleAccent)
+                    Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp), tint = indigoAccent)
                 }
                 
                 Spacer(modifier = Modifier.width(14.dp))
@@ -290,7 +429,7 @@ private fun CompactTaskBlock(
                     )
                     Text(
                         text = "Puntual de hoy",
-                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, color = purpleAccent, fontWeight = FontWeight.SemiBold)
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, color = indigoAccent, fontWeight = FontWeight.SemiBold)
                     )
                     
                     // Note inside Task (Specialized Compact UI)
@@ -303,7 +442,7 @@ private fun CompactTaskBlock(
                         Surface(
                             color = RoutineTheme.colors.background.copy(alpha = 0.4f),
                             shape = RoundedCornerShape(8.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border.copy(alpha = 0.2f)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, PlanningAccents.SpineMedium.copy(alpha = 0.2f)),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(enabled = isOverflowing) { isExpanded = !isExpanded }

@@ -35,6 +35,10 @@ private enum class PickingType { START, END }
 private val DarkSurface = Color(0xFF0D1017)
 private val DarkCard = Color(0xFF171B26)
 
+private fun caretIsAfterNewline(text: String, selection: TextRange): Boolean {
+    return selection.end > 0 && text[selection.end - 1] == '\n'
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpontaneousEditorSheet(
@@ -279,28 +283,34 @@ fun SpontaneousEditorSheet(
                 }
 
                 // Unified Input
-                TextField(
-                    value = searchQueryState,
-                    onValueChange = { 
-                        searchQueryState = it
-                        onUpdateCatalogSearch(it.text) 
-                    },
-                    placeholder = { Text("Relacionado con...", fontSize = 13.sp) },
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(DarkSurface),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent
-                    ),
-                    leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant) },
-                    textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
-                    singleLine = true
-                )
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp), tint = RoutineTheme.colors.onSurfaceVariant)
+                    TextField(
+                        value = searchQueryState,
+                        onValueChange = { 
+                            searchQueryState = it
+                            onUpdateCatalogSearch(it.text) 
+                        },
+                        placeholder = { Text("Relacionado con...", fontSize = 13.sp) },
+                        modifier = Modifier.weight(1f),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent
+                        ),
+                        textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
+                        singleLine = true
+                    )
+                }
                 
                 if (unifiedCatalog.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -381,37 +391,40 @@ fun SpontaneousEditorSheet(
                     onValueChange = { newValue ->
                         val oldText = noteState.text
                         val newText = newValue.text
+                        val selection = newValue.selection
                         
                         val processedValue = when {
-                            // 1. Convert "- " to "• " at start of any line
-                            newText.length > oldText.length && newText.endsWith("- ") -> {
-                                val selectionIndex = newValue.selection.end
-                                val lineStart = newText.substring(0, selectionIndex).lastIndexOf('\n') + 1
-                                if (newText.substring(lineStart, selectionIndex) == "- ") {
-                                    val prefix = newText.substring(0, lineStart)
-                                    val suffix = newText.substring(selectionIndex)
-                                    val lineContent = "• "
-                                    newValue.copy(
-                                        text = prefix + lineContent + suffix,
-                                        selection = TextRange(prefix.length + lineContent.length)
-                                    )
+                            // 1. Convert "- " to "• " at start of any line (robust)
+                            newText.length > oldText.length && newText.contains("- ") -> {
+                                val caretPos = selection.end
+                                if (caretPos >= 2) {
+                                    val textBeforeCaret = newText.substring(0, caretPos)
+                                    val lineStart = textBeforeCaret.lastIndexOf('\n') + 1
+                                    if (textBeforeCaret.substring(lineStart) == "- ") {
+                                        val prefix = newText.substring(0, lineStart)
+                                        val suffix = newText.substring(caretPos)
+                                        newValue.copy(
+                                            text = prefix + "• " + suffix,
+                                            selection = TextRange(lineStart + 2)
+                                        )
+                                    } else newValue
                                 } else newValue
                             }
-                            // 2. Auto-bullet on Enter after a bullet line
-                            newText.length > oldText.length && newText.length >= 1 && newText[newValue.selection.end - 1] == '\n' -> {
-                                val selectionIndex = newValue.selection.end
-                                val beforeCursor = newText.substring(0, selectionIndex - 1)
-                                val lastNewlineBefore = beforeCursor.lastIndexOf('\n')
-                                val lastLine = if (lastNewlineBefore == -1) beforeCursor else beforeCursor.substring(lastNewlineBefore + 1)
+                            // 2. Auto-bullet on Enter after a line starting with a bullet
+                            newText.length > oldText.length && selection.end > 0 && newText[selection.end - 1] == '\n' -> {
+                                val caretPos = selection.end
+                                val textBeforeNewline = newText.substring(0, caretPos - 1)
+                                val lastNewlineBefore = textBeforeNewline.lastIndexOf('\n')
+                                val lastLine = if (lastNewlineBefore == -1) textBeforeNewline else textBeforeNewline.substring(lastNewlineBefore + 1)
                                 
                                 if (lastLine.trimStart().startsWith("• ")) {
                                     val indent = lastLine.substringBefore("• ")
                                     val bullet = "$indent• "
-                                    val prefix = newText.substring(0, selectionIndex)
-                                    val suffix = newText.substring(selectionIndex)
+                                    val prefix = newText.substring(0, caretPos)
+                                    val suffix = newText.substring(caretPos)
                                     newValue.copy(
                                         text = prefix + bullet + suffix,
-                                        selection = TextRange(prefix.length + bullet.length)
+                                        selection = TextRange(caretPos + bullet.length)
                                     )
                                 } else newValue
                             }
@@ -434,7 +447,7 @@ fun SpontaneousEditorSheet(
                         focusedIndicatorColor = Color.Transparent
                     ),
                     textStyle = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
-                    minLines = 3
+                    minLines = 4
                 )
             }
 

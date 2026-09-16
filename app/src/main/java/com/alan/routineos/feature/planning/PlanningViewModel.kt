@@ -2,20 +2,52 @@ package com.alan.routineos.feature.planning
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alan.routineos.domain.model.*
+import com.alan.routineos.domain.model.ActionProtocol
+import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.domain.model.ActivityNode
+import com.alan.routineos.domain.model.DailyInstance
+import com.alan.routineos.domain.model.DailyInstanceRole
+import com.alan.routineos.domain.model.DailyInstanceStatus
+import com.alan.routineos.domain.model.HierarchicalTimelineEntry
+import com.alan.routineos.domain.model.HierarchyCompletion
+import com.alan.routineos.domain.model.Note
+import com.alan.routineos.domain.model.PendingMove
+import com.alan.routineos.domain.model.ScheduleTarget
+import com.alan.routineos.domain.model.TemporalImpact
 import com.alan.routineos.domain.repository.ActivityRepository
-import com.alan.routineos.domain.usecase.*
+import com.alan.routineos.domain.usecase.DailyAction
+import com.alan.routineos.domain.usecase.GetHierarchicalTimelineUseCase
+import com.alan.routineos.domain.usecase.RegisterDailyActionUseCase
+import com.alan.routineos.domain.usecase.SimulateMoveUseCase
+import com.alan.routineos.domain.usecase.TimelineEntry
 import com.alan.routineos.feature.planning.model.PlanningDay
 import com.alan.routineos.feature.planning.model.SearchTargetUiModel
 import com.alan.routineos.feature.planning.model.UnifiedLinkingResult
-import com.alan.routineos.feature.today.model.*
+import com.alan.routineos.feature.today.model.AssociatedNoteUiModel
+import com.alan.routineos.feature.today.model.AssociatedReminderUiModel
+import com.alan.routineos.feature.today.model.AssociatedTaskUiModel
+import com.alan.routineos.feature.today.model.ConflictDetailUiModel
+import com.alan.routineos.feature.today.model.ConflictUiModel
+import com.alan.routineos.feature.today.model.ContextItemsUiModel
+import com.alan.routineos.feature.today.model.PlanningItemType
+import com.alan.routineos.feature.today.model.TodaySubNodeUiModel
+import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -82,7 +114,7 @@ class PlanningViewModel @Inject constructor(
         val allNodes = args[14] as List<ActivityNode>
 
         DataPackage(
-            date, expanded, editing, creating, pending, tasks, note, 
+            date, expanded, editing, creating, pending, tasks, note,
             reminderAbs, reminderRel, role, linkingQuery, selectedSemantic,
             selectedContextual, allDefs, allNodes
         )
@@ -91,34 +123,43 @@ class PlanningViewModel @Inject constructor(
             currentEntries = entries
             val scheduled = entries.filter { it.effectiveStartTimeMinutes != null }
             val unscheduled = entries.filter { it.effectiveStartTimeMinutes == null }
-            val exceptions = entries.filter { 
-                it.root.isMaterialized && 
-                !it.root.instance.isAdHoc &&
-                it.root.instance.status != DailyInstanceStatus.PLANNED 
+            val exceptions = entries.filter {
+                it.root.isMaterialized &&
+                        !it.root.instance.isAdHoc &&
+                        it.root.instance.status != DailyInstanceStatus.PLANNED
             }
 
-            val allUiTimelineModels = (scheduled + unscheduled).map { it.toUiModel(p.expanded.contains(it.root.instance.id)) }
+            val allUiTimelineModels =
+                (scheduled + unscheduled).map { it.toUiModel(p.expanded.contains(it.root.instance.id)) }
 
-            val unifiedCatalog: List<UnifiedLinkingResult> = if (p.linkingQuery.isBlank()) emptyList() 
-            else {
-                val matchesDefs = p.allDefinitions
-                    .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
-                    .map { UnifiedLinkingResult.SemanticDefinition(it.id, it.title, it.description) }
-                
-                val matchesNodes = p.allNodes
-                    .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
-                    .map { node ->
-                        val parentDef = p.allDefinitions.find { it.id == node.activityDefinitionId }
-                        UnifiedLinkingResult.SemanticNode(node.id, node.title, parentDef?.title)
-                    }
+            val unifiedCatalog: List<UnifiedLinkingResult> =
+                if (p.linkingQuery.isBlank()) emptyList()
+                else {
+                    val matchesDefs = p.allDefinitions
+                        .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
+                        .map {
+                            UnifiedLinkingResult.SemanticDefinition(
+                                it.id,
+                                it.title,
+                                it.description
+                            )
+                        }
 
-                val matchesOccurrences = allUiTimelineModels
-                    .filter { it.id != p.editing?.root?.instance?.id }
-                    .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
-                    .map { UnifiedLinkingResult.ContextualOccurrence(it) }
-                
-                matchesDefs + matchesNodes + matchesOccurrences
-            }
+                    val matchesNodes = p.allNodes
+                        .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
+                        .map { node ->
+                            val parentDef =
+                                p.allDefinitions.find { it.id == node.activityDefinitionId }
+                            UnifiedLinkingResult.SemanticNode(node.id, node.title, parentDef?.title)
+                        }
+
+                    val matchesOccurrences = allUiTimelineModels
+                        .filter { it.id != p.editing?.root?.instance?.id }
+                        .filter { it.title.contains(p.linkingQuery, ignoreCase = true) }
+                        .map { UnifiedLinkingResult.ContextualOccurrence(it) }
+
+                    matchesDefs + matchesNodes + matchesOccurrences
+                }
 
             PlanningUiState(
                 isLoading = false,
@@ -139,8 +180,8 @@ class PlanningViewModel @Inject constructor(
                             )
                         },
                         note = if (p.note.isNotBlank()) Note(
-                            id = "draft", 
-                            content = p.note, 
+                            id = "draft",
+                            content = p.note,
                             instanceId = entry.root.instance.id,
                             dateSnapshot = p.date.toEpochDay(),
                             titleSnapshot = entry.root.instance.titleSnapshot
@@ -186,7 +227,8 @@ class PlanningViewModel @Inject constructor(
             val date = startOfWeek.plusDays(i.toLong())
             PlanningDay(
                 id = date.toString(),
-                name = date.dayOfWeek.getDisplayName(TextStyle.SHORT, localeES).replaceFirstChar { it.uppercase() },
+                name = date.dayOfWeek.getDisplayName(TextStyle.SHORT, localeES)
+                    .replaceFirstChar { it.uppercase() },
                 dayOfMonth = date.dayOfMonth.toString(),
                 isSelected = date.isEqual(selected)
             )
@@ -196,7 +238,7 @@ class PlanningViewModel @Inject constructor(
     private fun generateWeekRangeText(selected: LocalDate): String {
         val startOfWeek = selected.minusDays(selected.dayOfWeek.value.toLong() - 1)
         val endOfWeek = startOfWeek.plusDays(6)
-        
+
         val startDay = startOfWeek.dayOfMonth
         val startMonth = startOfWeek.month.getDisplayName(TextStyle.FULL, localeES)
         val endDay = endOfWeek.dayOfMonth
@@ -251,12 +293,18 @@ class PlanningViewModel @Inject constructor(
                 DailyInstanceRole.REMINDER -> PlanningItemType.REMINDER
                 DailyInstanceRole.TASK -> PlanningItemType.TASK
             },
-            conflict = root.conflict?.let { 
+            conflict = root.conflict?.let {
                 ConflictUiModel(
-                    hasConflict = it.hasConflict, 
-                    impact = it.impact, 
-                    details = it.details.map { d -> 
-                        ConflictDetailUiModel(d.otherInstanceId, "OTRA", d.relationship, d.impact, d.isInterruption) 
+                    hasConflict = it.hasConflict,
+                    impact = it.impact,
+                    details = it.details.map { d ->
+                        ConflictDetailUiModel(
+                            d.otherInstanceId,
+                            "OTRA",
+                            d.relationship,
+                            d.impact,
+                            d.isInterruption
+                        )
                     },
                     suggestions = it.suggestions
                 )
@@ -264,7 +312,7 @@ class PlanningViewModel @Inject constructor(
             subNodes = children.map { it.toSubNodeUiModel() },
             context = if (associatedItems.isNotEmpty() || note != null || root.instance.reminderAbs != null || root.instance.reminderRel != null) {
                 ContextItemsUiModel(
-                    tasks = associatedItems.map { 
+                    tasks = associatedItems.map {
                         AssociatedTaskUiModel(
                             id = it.root.instance.id,
                             title = it.root.instance.titleSnapshot,
@@ -274,11 +322,28 @@ class PlanningViewModel @Inject constructor(
                         )
                     },
                     reminder = when {
-                        root.instance.reminderAbs != null -> AssociatedReminderUiModel(formatMinutes(root.instance.reminderAbs), false)
-                        root.instance.reminderRel != null -> AssociatedReminderUiModel("${root.instance.reminderRel} min", true, root.instance.reminderRel)
+                        root.instance.reminderAbs != null -> AssociatedReminderUiModel(
+                            formatMinutes(
+                                root.instance.reminderAbs
+                            ), false
+                        )
+
+                        root.instance.reminderRel != null -> AssociatedReminderUiModel(
+                            "${root.instance.reminderRel} min",
+                            true,
+                            root.instance.reminderRel
+                        )
+
                         else -> null
                     },
-                    note = note?.let { AssociatedNoteUiModel(it.id, it.content, "", it.titleSnapshot) }
+                    note = note?.let {
+                        AssociatedNoteUiModel(
+                            it.id,
+                            it.content,
+                            "",
+                            it.titleSnapshot
+                        )
+                    }
                 )
             } else null
         )
@@ -387,11 +452,27 @@ class PlanningViewModel @Inject constructor(
     fun onSelectUnifiedResult(result: UnifiedLinkingResult) {
         when (result) {
             is UnifiedLinkingResult.SemanticDefinition -> {
-                onLinkToDefinition(SearchTargetUiModel(result.id, result.title, null, ScheduleTarget.Definition(result.id)))
+                onLinkToDefinition(
+                    SearchTargetUiModel(
+                        result.id,
+                        result.title,
+                        null,
+                        ScheduleTarget.Definition(result.id)
+                    )
+                )
             }
+
             is UnifiedLinkingResult.SemanticNode -> {
-                onLinkToDefinition(SearchTargetUiModel(result.id, result.title, result.parentTitle, ScheduleTarget.Node(result.id)))
+                onLinkToDefinition(
+                    SearchTargetUiModel(
+                        result.id,
+                        result.title,
+                        result.parentTitle,
+                        ScheduleTarget.Node(result.id)
+                    )
+                )
             }
+
             is UnifiedLinkingResult.ContextualOccurrence -> {
                 onLinkToOccurrence(result.item)
             }
@@ -414,6 +495,7 @@ class PlanningViewModel @Inject constructor(
                     val minutes = actionType.removePrefix("MOVE_CONFIRM:").toInt()
                     onAttemptMove(instanceId, minutes)
                 }
+
                 actionType == "DELETE_INSTANCE" -> repository.deleteDailyInstance(instanceId)
                 actionType == "EDIT_SPONTANEOUS" -> {
                     // Initialize Drafts
@@ -421,7 +503,7 @@ class PlanningViewModel @Inject constructor(
                     _draftNote.value = entry.note?.content ?: ""
                     _draftReminderAbs.value = entry.root.instance.reminderAbs
                     _draftReminderRel.value = entry.root.instance.reminderRel
-                    
+
                     _editorRole.value = when (entry.root.instance.role) {
                         DailyInstanceRole.ACTIVITY -> EditorRole.EVENT
                         DailyInstanceRole.TASK -> EditorRole.TASK
@@ -432,11 +514,26 @@ class PlanningViewModel @Inject constructor(
                     val target = entry.root.instance.target
                     if (target is ScheduleTarget.Definition) {
                         val def = repository.getActivityDefinitionById(target.id)
-                        _selectedSemanticTarget.value = def?.let { SearchTargetUiModel(it.id, it.title, null, ScheduleTarget.Definition(it.id)) }
+                        _selectedSemanticTarget.value = def?.let {
+                            SearchTargetUiModel(
+                                it.id,
+                                it.title,
+                                null,
+                                ScheduleTarget.Definition(it.id)
+                            )
+                        }
                     } else if (target is ScheduleTarget.Node) {
                         val node = repository.getNodeById(target.id)
-                        val parentDef = node?.let { repository.getActivityDefinitionById(it.activityDefinitionId) }
-                        _selectedSemanticTarget.value = node?.let { SearchTargetUiModel(it.id, it.title, parentDef?.title, ScheduleTarget.Node(it.id)) }
+                        val parentDef =
+                            node?.let { repository.getActivityDefinitionById(it.activityDefinitionId) }
+                        _selectedSemanticTarget.value = node?.let {
+                            SearchTargetUiModel(
+                                it.id,
+                                it.title,
+                                parentDef?.title,
+                                ScheduleTarget.Node(it.id)
+                            )
+                        }
                     } else {
                         _selectedSemanticTarget.value = null
                     }
@@ -450,7 +547,7 @@ class PlanningViewModel @Inject constructor(
                     } else {
                         _selectedContextualOccurrence.value = null
                     }
-                    
+
                     _isCreatingNewEvent.value = false
                     _editingSpontaneousEntry.value = entry
                 }
@@ -460,7 +557,7 @@ class PlanningViewModel @Inject constructor(
 
     private fun onAttemptMove(instanceId: String, newStartTime: Int, newEndTime: Int? = null) {
         val entry = findEntry(instanceId) ?: return
-        
+
         val currentInstances = collectAllInstances(currentEntries)
         val conflict = simulateMoveUseCase(
             currentInstances = currentInstances,
@@ -479,7 +576,11 @@ class PlanningViewModel @Inject constructor(
     fun onConfirmPendingMove() {
         val pending = _pendingMove.value ?: return
         if (pending.entry.root.instance.isAdHoc && pending.newEndTime != null) {
-            onUpdateSpontaneousSchedule(pending.entry.root.instance.id, pending.newStartTime, pending.newEndTime)
+            onUpdateSpontaneousSchedule(
+                pending.entry.root.instance.id,
+                pending.newStartTime,
+                pending.newEndTime
+            )
         } else {
             performMove(pending.entry, pending.newStartTime)
         }
@@ -499,7 +600,7 @@ class PlanningViewModel @Inject constructor(
     private fun collectAllInstances(entries: List<HierarchicalTimelineEntry>): List<DailyInstance> {
         val list = mutableListOf<DailyInstance>()
         fun collect(items: List<HierarchicalTimelineEntry>) {
-            items.forEach { 
+            items.forEach {
                 list.add(it.root.instance)
                 collect(it.children)
             }
@@ -524,17 +625,19 @@ class PlanningViewModel @Inject constructor(
         if (_isCreatingNewEvent.value && _editingSpontaneousEntry.value?.root?.instance?.id == id) {
             val current = _editingSpontaneousEntry.value!!
             val updated = current.root.instance.copy(titleSnapshot = title)
-            _editingSpontaneousEntry.value = current.copy(root = current.root.copy(instance = updated))
+            _editingSpontaneousEntry.value =
+                current.copy(root = current.root.copy(instance = updated))
             return
         }
-        
+
         val entry = findEntry(id) ?: return
         val updated = entry.root.instance.copy(titleSnapshot = title)
         viewModelScope.launch {
             repository.upsertDailyInstance(updated)
             // Sync editor state if editing existing item
             if (_editingSpontaneousEntry.value?.root?.instance?.id == id) {
-                _editingSpontaneousEntry.value = entry.copy(root = entry.root.copy(instance = updated))
+                _editingSpontaneousEntry.value =
+                    entry.copy(root = entry.root.copy(instance = updated))
             }
         }
     }
@@ -547,7 +650,8 @@ class PlanningViewModel @Inject constructor(
                 plannedEndTime = end,
                 plannedDurationMinutes = if (start != null && end != null) end - start else null
             )
-            _editingSpontaneousEntry.value = current.copy(root = current.root.copy(instance = updated))
+            _editingSpontaneousEntry.value =
+                current.copy(root = current.root.copy(instance = updated))
             return
         }
 
@@ -562,7 +666,8 @@ class PlanningViewModel @Inject constructor(
             repository.upsertDailyInstance(updated)
             // Sync editor state
             if (_editingSpontaneousEntry.value?.root?.instance?.id == id) {
-                _editingSpontaneousEntry.value = entry.copy(root = entry.root.copy(instance = updated))
+                _editingSpontaneousEntry.value =
+                    entry.copy(root = entry.root.copy(instance = updated))
             }
         }
     }
@@ -572,7 +677,7 @@ class PlanningViewModel @Inject constructor(
         val role = _editorRole.value
         val linkedSemantic = _selectedSemanticTarget.value
         val linkedOccurrence = _selectedContextualOccurrence.value
-        
+
         val anchor = entry.root.instance.copy(
             target = linkedSemantic?.target ?: entry.root.instance.target,
             associatedInstanceId = linkedOccurrence?.id ?: entry.root.instance.associatedInstanceId,
@@ -602,7 +707,6 @@ class PlanningViewModel @Inject constructor(
 
         val noteContent = _draftNote.value.trim()
         val note = if (noteContent.isNotBlank() && anchor.role == DailyInstanceRole.TASK) {
-            // Preservation logic: use existing ID if editing
             val existingId = entry.note?.id ?: UUID.randomUUID().toString()
             Note(
                 id = existingId,
@@ -616,6 +720,8 @@ class PlanningViewModel @Inject constructor(
         } else null
 
         viewModelScope.launch {
+            // Log for debugging
+            println("ALAN: Saving ActivityWithContext. Note exists: ${note != null}")
             repository.upsertActivityWithContext(anchor, tasks, note)
             onDismissSpontaneousEditor()
         }
@@ -646,7 +752,10 @@ class PlanningViewModel @Inject constructor(
         return null
     }
 
-    private fun findChild(children: List<HierarchicalTimelineEntry>, id: String): HierarchicalTimelineEntry? {
+    private fun findChild(
+        children: List<HierarchicalTimelineEntry>,
+        id: String
+    ): HierarchicalTimelineEntry? {
         children.forEach { child ->
             if (child.root.instance.id == id) return child
             findChildEntry(child.children, id)?.let { return it }
@@ -654,7 +763,10 @@ class PlanningViewModel @Inject constructor(
         return null
     }
 
-    private fun findChildEntry(children: List<HierarchicalTimelineEntry>, id: String): HierarchicalTimelineEntry? {
+    private fun findChildEntry(
+        children: List<HierarchicalTimelineEntry>,
+        id: String
+    ): HierarchicalTimelineEntry? {
         children.forEach { child ->
             if (child.root.instance.id == id) return child
             findChildEntry(child.children, id)?.let { return it }
