@@ -116,7 +116,6 @@ class MainActivity : ComponentActivity() {
 private fun isPlanningRoute(route: String?): Boolean {
     return route == AppRoutes.Planner.route || 
            route == AppRoutes.Activities.route || 
-           route == AppRoutes.Systems.route ||
            route == AppRoutes.Planning.route
 }
 

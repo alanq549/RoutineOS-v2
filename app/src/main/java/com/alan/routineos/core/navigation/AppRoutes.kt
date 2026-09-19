@@ -7,7 +7,6 @@ sealed class AppRoutes(val route: String) {
     object Planning : AppRoutes("planning_graph")
     object Planner : AppRoutes("planner")
     object Activities : AppRoutes("activities")
-    object Systems : AppRoutes("systems")
     
     object Stats : AppRoutes("stats")
     object Account : AppRoutes("account")

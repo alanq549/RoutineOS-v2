@@ -21,7 +21,6 @@ import com.alan.routineos.core.designsystem.component.RoutineScaffold
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.core.navigation.AppRoutes
 import com.alan.routineos.feature.dashboard.DashboardRoute
-import com.alan.routineos.feature.system.SystemRoute
 
 @Composable
 fun PlanningWorkspace(
@@ -93,9 +92,6 @@ fun PlanningWorkspace(
                     onActivityClick = onActivityClick
                 )
             }
-            composable(AppRoutes.Systems.route) {
-                SystemRoute()
-            }
         }
     }
 }
@@ -123,12 +119,6 @@ private fun PlanningSegmentedSelector(
             title = "ACTIVIDADES",
             isSelected = currentRoute == AppRoutes.Activities.route,
             onClick = { onNavigateToMode(AppRoutes.Activities.route) },
-            modifier = Modifier.weight(1f)
-        )
-        SegmentModeButton(
-            title = "SISTEMAS",
-            isSelected = currentRoute == AppRoutes.Systems.route,
-            onClick = { onNavigateToMode(AppRoutes.Systems.route) },
             modifier = Modifier.weight(1f)
         )
     }

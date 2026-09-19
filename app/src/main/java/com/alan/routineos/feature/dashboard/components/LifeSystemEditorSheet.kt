@@ -1,4 +1,4 @@
-package com.alan.routineos.feature.system.components
+package com.alan.routineos.feature.dashboard.components
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import javax.inject.Inject
 
+@Deprecated("To be integrated into Stats module in future phases. Currently unused in consolidated Activities view.")
 class GetSystemsWithStatsUseCase @Inject constructor(
     private val repository: ActivityRepository
 ) {
