@@ -55,7 +55,7 @@ class DashboardViewModel @Inject constructor(
                             repository.getNodesForActivityDefinition(def.id),
                             repository.getRulesForActivityTree(def.id)
                         ) { nodes, rules ->
-                            mapToCardModel(def, nodes, rules)
+                            mapToCardModel(def, nodes, rules, systems)
                         }
                     }.let { combine(it) { it.toList() }.first() }
                 }
@@ -134,8 +134,13 @@ class DashboardViewModel @Inject constructor(
     private fun mapToCardModel(
         def: ActivityDefinition,
         nodes: List<com.alan.routineos.domain.model.ActivityNode>,
-        rules: List<com.alan.routineos.domain.model.ScheduleRule>
+        rules: List<com.alan.routineos.domain.model.ScheduleRule>,
+        systems: List<LifeSystem>
     ): ActivityCardModel {
+        val linkedSystem = systems.find { it.id == def.systemId }
+        val iconKey = linkedSystem?.iconKey ?: "account_tree"
+        val iconColor = linkedSystem?.colorHex ?: "#94A3B8"
+
         val uniqueDays = rules.flatMap { it.daysOfWeek }.distinct().size
         val containers = nodes.filter { it.parentId == null }.size
         val leaves = nodes.filter { node -> nodes.none { it.parentId == node.id } }.size
@@ -195,7 +200,8 @@ class DashboardViewModel @Inject constructor(
         return ActivityCardModel(
             id = def.id,
             title = def.title,
-            iconName = if (def.title.contains("Gym", ignoreCase = true)) "fitness_center" else "school",
+            iconName = iconKey,
+            iconColorHex = iconColor,
             frequency = if (uniqueDays == 7) "Lun - Dom" else if (uniqueDays >= 5) "Lun - Vie" else "Frecuencia",
             durationText = if (uniqueDays > 0) "$uniqueDays sesiones/sem" else "Sin configurar",
             subtitle = def.description,

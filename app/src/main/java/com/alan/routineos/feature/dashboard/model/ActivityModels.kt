@@ -4,6 +4,7 @@ data class ActivityCardModel(
     val id: String,
     val title: String,
     val iconName: String,
+    val iconColorHex: String, // New field for semantic identity
     val frequency: String,
     val durationText: String,
     val subtitle: String,
