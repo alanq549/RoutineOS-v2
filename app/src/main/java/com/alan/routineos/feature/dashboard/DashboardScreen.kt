@@ -74,7 +74,7 @@ fun DashboardScreen(
                 TextButton(onClick = onAddSystem) {
                     Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("+ SISTEMA", style = RoutineTheme.typography.labelCaps)
+                    Text(" SISTEMA", style = RoutineTheme.typography.labelCaps)
                 }
             }
 
@@ -83,12 +83,13 @@ fun DashboardScreen(
             // SYSTEM FILTER ROW
             LazyRow(
                 contentPadding = PaddingValues(horizontal = RoutineTheme.spacing.md),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 item {
                     SystemFilterChip(
                         name = "Todas",
+                        count = uiState.totalActivitiesCount,
                         icon = Icons.Default.AccountTree,
                         color = RoutineTheme.colors.onSurfaceVariant,
                         isSelected = uiState.selectedSystemId == null,
@@ -98,6 +99,7 @@ fun DashboardScreen(
                 items(uiState.allSystems) { system ->
                     SystemFilterChip(
                         name = system.title,
+                        count = uiState.systemCounts[system.id] ?: 0,
                         icon = getTechnicalIcon(system.iconKey),
                         color = Color(android.graphics.Color.parseColor(system.colorHex)),
                         isSelected = uiState.selectedSystemId == system.id,
@@ -166,41 +168,59 @@ fun DashboardScreen(
 @Composable
 private fun SystemFilterChip(
     name: String,
+    count: Int,
     icon: ImageVector,
     color: Color,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null
 ) {
-    val backgroundColor = if (isSelected) color.copy(alpha = 0.15f) else RoutineTheme.colors.surface2
-    val borderColor = if (isSelected) color else RoutineTheme.colors.border
+    val backgroundColor = if (isSelected) color.copy(alpha = 0.12f) else RoutineTheme.colors.surface2
+    val borderColor = if (isSelected) color.copy(alpha = 0.8f) else RoutineTheme.colors.border.copy(alpha = 0.4f)
 
     Surface(
         color = backgroundColor,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp), // Slightly more technical radius
         border = BorderStroke(1.dp, borderColor),
         modifier = Modifier
-            .height(40.dp)
+            .height(44.dp)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
+            // Technical Count Badge
+            Surface(
+                color = if (isSelected) color.copy(alpha = 0.2f) else RoutineTheme.colors.background.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.size(width = 24.dp, height = 18.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = count.toString(),
+                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                        color = if (isSelected) color else RoutineTheme.colors.onSurfaceVariant
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isSelected) color else RoutineTheme.colors.onSurfaceVariant,
+                tint = if (isSelected) color else RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f),
                 modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = name,
-                style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp),
+                text = name.uppercase(),
+                style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, letterSpacing = 1.sp),
                 color = if (isSelected) Color.White else RoutineTheme.colors.onSurfaceVariant,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )

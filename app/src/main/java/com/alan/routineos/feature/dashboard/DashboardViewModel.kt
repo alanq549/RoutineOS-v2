@@ -7,12 +7,19 @@ import com.alan.routineos.domain.model.LifeSystem
 import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.feature.dashboard.model.*
+import com.alan.routineos.feature.dashboard.model.ActivityCardModel
+import com.alan.routineos.feature.dashboard.model.ActivitySummaryDay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
+
+data class SystemDensity(
+    val systemId: String?,
+    val count: Int
+)
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -43,6 +50,12 @@ class DashboardViewModel @Inject constructor(
                 _editingSystem,
                 _isCreatingNewSystem
             ) { systems, definitions, selectedId, editing, creating ->
+                // Calculate real counters for systems
+                val densities = systems.associate { system ->
+                    system.id to definitions.count { it.systemId == system.id }
+                }
+                val totalCount = definitions.size
+
                 val filteredDefs = if (selectedId == null) {
                     definitions
                 } else {
@@ -64,6 +77,8 @@ class DashboardViewModel @Inject constructor(
                     isLoading = false,
                     myActivities = cards,
                     allSystems = systems,
+                    systemCounts = densities,
+                    totalActivitiesCount = totalCount,
                     selectedSystemId = selectedId,
                     editingSystem = editing,
                     isCreatingNewSystem = creating
@@ -162,7 +177,6 @@ class DashboardViewModel @Inject constructor(
             val dayRules = rules.filter { it.daysOfWeek.contains(day) }
             if (dayRules.isEmpty()) return@mapNotNull null
             
-            // Collect titles of the targets AND their immediate children if they are containers
             val previewItems = mutableListOf<String>()
             
             dayRules.forEach { rule ->
@@ -172,17 +186,14 @@ class DashboardViewModel @Inject constructor(
                 }
                 
                 if (targetId == null) {
-                    // Definition scheduled: show its top-level nodes
                     previewItems.addAll(nodes.filter { it.parentId == null }.map { it.title })
                 } else {
                     val targetNode = nodes.find { it.id == targetId }
                     val children = nodes.filter { it.parentId == targetId }
                     
                     if (children.isNotEmpty()) {
-                        // Container scheduled: show its children
                         previewItems.addAll(children.map { it.title })
                     } else {
-                        // Leaf scheduled: show itself
                         targetNode?.let { previewItems.add(it.title) }
                     }
                 }
@@ -193,9 +204,13 @@ class DashboardViewModel @Inject constructor(
             ActivitySummaryDay(
                 dayName = dayNames[day],
                 activities = previewItems.distinct(),
-                detailText = null // We'll show the actual list now
+                detailText = null
             )
         }
+
+        val previewLimit = 2
+        val visibleSummary = summaryItems.take(previewLimit)
+        val moreDays = if (summaryItems.size > previewLimit) summaryItems.size - previewLimit else 0
 
         return ActivityCardModel(
             id = def.id,
@@ -206,7 +221,8 @@ class DashboardViewModel @Inject constructor(
             durationText = if (uniqueDays > 0) "$uniqueDays sesiones/sem" else "Sin configurar",
             subtitle = def.description,
             statsLine = statsLine,
-            summaryItems = summaryItems.take(5) // Increased to show more context
+            summaryItems = visibleSummary,
+            moreDaysCount = moreDays
         )
     }
 

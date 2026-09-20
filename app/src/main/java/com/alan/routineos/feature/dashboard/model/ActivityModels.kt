@@ -4,12 +4,13 @@ data class ActivityCardModel(
     val id: String,
     val title: String,
     val iconName: String,
-    val iconColorHex: String, // New field for semantic identity
+    val iconColorHex: String,
     val frequency: String,
     val durationText: String,
     val subtitle: String,
     val statsLine: String = "",
-    val summaryItems: List<ActivitySummaryDay> = emptyList()
+    val summaryItems: List<ActivitySummaryDay> = emptyList(),
+    val moreDaysCount: Int = 0
 )
 
 data class ActivitySummaryDay(

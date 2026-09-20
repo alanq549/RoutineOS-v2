@@ -8,6 +8,8 @@ data class DashboardUiState(
     val searchQueries: String = "",
     val myActivities: List<ActivityCardModel> = emptyList(),
     val allSystems: List<LifeSystem> = emptyList(),
+    val systemCounts: Map<String, Int> = emptyMap(), // systemId -> activityCount
+    val totalActivitiesCount: Int = 0,
     val selectedSystemId: String? = null,
     val editingSystem: LifeSystem? = null,
     val isCreatingNewSystem: Boolean = false
