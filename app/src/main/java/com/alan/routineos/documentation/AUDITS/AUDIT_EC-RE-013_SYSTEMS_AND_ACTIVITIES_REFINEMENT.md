@@ -1,14 +1,14 @@
 ---
 ec_id: EC-RE-013
-ronda: 1
+ronda: 2
 fecha: 2026-09-06
-resultado: CHANGES_REQUESTED
+resultado: PASS
 ---
 
 # Auditoría Técnica: EC-RE-013 - Refinamiento de Catálogo y Constructor de Actividades
 
 **Fecha:** 2026-09-06
-**Estado:** CHANGES_REQUESTED
+**Estado:** PASS (Aprobado en Ronda 2)
 **Criterio de Evaluación:** Código Fuente Real, Interfaz de Usuario, Invariantes de Arquitectura y Suite de Tests
 
 ## 1. Archivos Revisados
@@ -19,59 +19,54 @@ resultado: CHANGES_REQUESTED
 - [DashboardViewModel.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/dashboard/DashboardViewModel.kt)
 - [ActivityCard.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/dashboard/components/ActivityCard.kt)
 - [ActivityModels.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/dashboard/model/ActivityModels.kt)
+- [PlanningViewModel.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/planning/PlanningViewModel.kt)
 
-## 2. Resultados de Verificación (Checklist Funcional y de Arquitectura)
+### Tests Unitarios
+- [SystemStatsCalculationTest.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/test/java/com/alan/routineos/domain/usecase/SystemStatsCalculationTest.kt)
+- [PlanningEventFlowTest.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/test/java/com/alan/routineos/feature/planning/PlanningEventFlowTest.kt)
+
+## 2. Resultados de Verificación (Checklist de Re-Auditoría)
 
 | # | Punto de Control | Resultado | Evidencia / Observación |
 |---|---|---|---|
-| 1 | Conexión Dinámica de Sistemas | **PASS** | `ActivityCreationViewModel` consume `repository.getAllSystems()` reactivamente. |
-| 2 | Selección e Interacción de Sistemas | **PASS** | `SystemTile` interactivo con alternancia de selección y `selectedSystemId`. |
-| 3 | Persistencia del `systemId` | **PASS** | `ActivityDefinition` se guarda con `systemId = currentState.selectedSystemId`. |
-| 4 | Mensaje de Respaldo Sin Sistemas | **PASS** | Muestra "No hay sistemas configurados." cuando la lista está vacía. |
-| 5 | Compactación de Días en Catálogo | **PASS** | `DashboardViewModel` aplica `.take(2)` y genera `moreDaysCount`. |
-| 6 | Invariante Domain-Agnostic en Catálogo | **FAIL** | String "UNIVERSIDAD" hardcodeado como fallback en `ActivityCard.kt` (`if (activity.iconName == "account_tree") "SIN SISTEMA" else "UNIVERSIDAD"`). |
-| 7 | Eliminación de Mocks Estáticos en UI | **FAIL** | Mocks de texto estáticos hardcodeados en `ActivityCard.kt` ("05", "15", "27.5h", "5.5 hrs", "07:00 - 10:00"). |
-| 8 | Suite de Pruebas Unitarias | **FAIL** | La suite `testDebugUnitTest` reporta 4 fallos en tests unitarios. |
+| 1 | `ActivityCard`: Sin nombres de dominio hardcodeados | **PASS** | `text = activity.systemTitle ?: "SIN SISTEMA"` lee dinámicamente de `LifeSystem`. |
+| 2 | `ActivityCard`: Sin estadísticas ficticias | **PASS** | `CardStatBadge` ficticios ("05", "15", "27.5h") removidos. `statsLine` se muestra solo con datos derivados reales. |
+| 3 | `ActivityCard`: Sin horarios/duraciones inventadas | **PASS** | Textos estáticos "5.5 hrs" y "07:00 - 10:00" eliminados por completo de la tarjeta del catálogo. |
+| 4 | `DashboardViewModel`: Compactación visual de preview | **PASS** | `.take(2)` aplica estrictamente en presentación UI. No altera reglas de agendamiento en DB/dominio. |
+| 5 | `DashboardViewModel`: Contadores por `LifeSystem` | **PASS** | `densities` calcula correctamente las ocurrencias por `system.id`. |
+| 6 | `PlanningViewModel.findEntry`: Búsqueda recursiva limpia | **PASS** | `searchEntryRecursively` sobre `children` y `associatedItems` no genera ciclos ni duplicaciones. |
+| 7 | Invariantes de Estructura | **PASS** | `ActivityNode` permanece exclusivo de `ActivityDefinition`. `TASK` y `REMINDER` no expanden nodos. |
+| 8 | Arquitectura y Agnosticismo | **PASS** | No se reintrodujo pantalla/ruta `Systems`. No se añadieron migraciones ni entidades destructivas. |
+| 9 | Verificación de Compilación y Suite de Tests | **PASS** | `assembleDebug` exitoso y `testDebugUnitTest` 100% verde (80/80 tests pasaron). |
 
 ## 3. Resultados de Ejecución
 
 - **Build (`assembleDebug`):** EXITOSO.
-- **Tests (`testDebugUnitTest`):** FALLIDO (76 pasaron, 4 fallaron).
+- **Tests (`testDebugUnitTest`):** EXITOSOS (80 pasaron, 0 fallaron).
 
-## 4. Hallazgos y Observaciones
+## 4. Ronda 2 - Veredicto Final
 
-### Hallazgo 1: Violación de Invariante Domain-Agnostic en `ActivityCard.kt` [CRÍTICO]
-- En `ActivityCard.kt` se hardcodeó la lógica:
-  `if (activity.iconName == "account_tree") "SIN SISTEMA" else "UNIVERSIDAD"`
-- Violación directa de `08_ARCHITECTURE_INVARIANTS.md`: ningún concepto de dominio específico ("UNIVERSIDAD") puede codificarse en tiempo de compilación.
-- **Causa**: `ActivityCardModel` carece del campo `systemTitle: String?`. `DashboardViewModel.mapToCardModel` ya busca `linkedSystem = systems.find { it.id == def.systemId }`, pero no transfiere `linkedSystem?.title` al modelo visual.
+> [!NOTE]
+> Se verificó la resolución completa de los hallazgos críticos de la Ronda 1.
+> La tarjeta de actividad es 100% dinámica, sin textos ni estadísticas ficticias de dominio.
+> La suite de tests pasa sin ningún error y la arquitectura domain-agnostic se mantiene intacta.
 
-### Hallazgo 2: Presencia de Valores Mock Hardcodeados en `ActivityCard.kt` [CRÍTICO]
-- En `ActivityCard.kt` se dejaron textos estáticos de prototipo con comentarios `// Mocking from img`:
-  - Tarjetas de estadísticas: `CardStatBadge("SESIONES", "05")`, `CardStatBadge("BLOQUES", "15")`, `CardStatBadge("CARGA SEM", "27.5h")`.
-  - Duración de resumen: `Text("5.5 hrs")`.
-  - Horario de resumen: `Text("07:00 - 10:00")`.
-- **Incapacidad de Reflejar Datos Reales**: Los valores presentados al usuario no se calculan a partir de los datos reales del modelo de la actividad.
+**ESTADO:** **PASS** (En validación manual por el Project Lead)
 
-### Hallazgo 3: Fallos en Suite de Tests Unitarios [CRÍTICO]
-- `gradle_build("app:testDebugUnitTest")` falló con 4 errores en:
-  1. `com.alan.routineos.domain.usecase.SystemStatsCalculationTest > calculates system stats correctly`
-  2. `com.alan.routineos.feature.planning.PlanningEventFlowTest > HIERARCHY - Ad-hoc item with no links should be strictly independent`
-  3. `com.alan.routineos.feature.planning.PlanningEventFlowTest > HIERARCHY - Task linked to Activity should NOT inherit its structural children`
-  4. `com.alan.routineos.feature.planning.PlanningEventFlowTest > EDIT - Reconstructs both semantic target and contextual association correctly`
+---
 
-## 5. Plan de Corrección (Paso a Paso para el Implementador)
+## 5. Plan de Validación Manual (para el Project Lead)
 
-1. **Añadir `systemTitle` a `ActivityCardModel`**:
-   - Agregar `val systemTitle: String? = null` a `ActivityCardModel` en `ActivityModels.kt`.
-   - En `DashboardViewModel.kt`, mapear `systemTitle = linkedSystem?.title?.uppercase()`.
+1. **Creador de Actividades (Activity Builder)**:
+   - Abrir la pantalla de creación de actividades ("+ Nueva Actividad").
+   - Verificar que la sección "01 // SISTEMA" cargue dinámicamente los sistemas reales disponibles en base de datos.
+   - Seleccionar un sistema (ej: "Salud" o "Carrera"), ingresar un título ("Entrenamiento Mañanero") y presionar "GUARDAR DEFINICIÓN".
+   - Confirmar que la actividad se guarde y cierre la pantalla correctamente.
 
-2. **Refactorizar `ActivityCard.kt` para Eliminar Hardcodes de Dominio y Mocks**:
-   - Reemplazar `if (activity.iconName == "account_tree") "SIN SISTEMA" else "UNIVERSIDAD"` por `activity.systemTitle ?: "SIN SISTEMA"`.
-   - Eliminar o dinamizar los bloques de estadísticas estáticas ("05", "15", "27.5h") y los horarios hardcodeados ("5.5 hrs", "07:00 - 10:00"). Si las reglas u orígenes de datos no proporcionan horas formateadas en el `summaryItems`, se debe mostrar únicamente el título de la actividad y sus nodos sin inventar datos de hora ficticios.
-
-3. **Reparar Suite de Tests Unitarios**:
-   - Investigar y corregir las aserciones / datos de prueba en `SystemStatsCalculationTest` y `PlanningEventFlowTest` para que `testDebugUnitTest` complete con 100% de éxito.
+2. **Catálogo de Actividades (Dashboard)**:
+   - En el catálogo, verificar que la tarjeta recién creada muestre la etiqueta del sistema seleccionado ("SALUD", "CARRERA", etc.) o "SIN SISTEMA" si no se eligió ninguno.
+   - Confirmar que no aparezcan números ni horarios ficticios estáticos ("05", "15", "27.5h", "5.5 hrs").
+   - Para actividades con más de 2 días programados, verificar que solo se muestren los primeros 2 días e incluya el indicador `+ N DÍAS`.
 
 ---
 **Firma:** AI Auditor Agent

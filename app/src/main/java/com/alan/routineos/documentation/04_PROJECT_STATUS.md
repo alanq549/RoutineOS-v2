@@ -28,7 +28,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-010 | Historical Analysis & Trends | High | Large | AI Agent | EC-RE-009 | CLOSED | PASS. Analytics engine for KPIs and trends implemented and audited (60 tests). |
 | EC-RE-011 | Intelligence Dashboard | High | Medium | AI Agent | EC-RE-010 | CLOSED | PASS. Visual analytics, weekly rhythm and adherence charts implemented. |
 | EC-RE-012 | Planificador (Planner) MVP | High | Large | AI Agent | EC-RE-011 | CLOSED | PASS. Interactive timeline with Move, Skip and Catalog integration. |
-| EC-RE-013 | Systems & Activities Refinement | High | Medium | AI Agent | EC-RE-012 | CHANGES_REQUESTED | Real system selection in Activity Builder and Catalog compaction. Changes requested in audit. |
+| EC-RE-013 | Systems & Activities Refinement | High | Medium | AI Agent | EC-RE-012 | USER_REVIEW_PENDING | PASS. Real system selection in Activity Builder, dynamic system titles, no UI mocks, 80/80 tests passing. |
 
 ---
 
