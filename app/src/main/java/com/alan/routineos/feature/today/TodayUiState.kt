@@ -1,6 +1,9 @@
 package com.alan.routineos.feature.today
 
+import com.alan.routineos.domain.model.HierarchicalTimelineEntry
 import com.alan.routineos.domain.model.MetadataSchema
+import com.alan.routineos.domain.model.PendingMove
+import com.alan.routineos.domain.model.SuggestedTimeWindow
 import com.alan.routineos.feature.today.model.TodayProgress
 import com.alan.routineos.feature.today.model.TodayTimelineUiModel
 
@@ -12,5 +15,8 @@ data class TodayUiState(
     val nextActivity: TodayTimelineUiModel? = null,
     val focusItemId: String? = null,
     val captureSchema: MetadataSchema? = null,
-    val captureTargetId: String? = null
+    val captureTargetId: String? = null,
+    val temporalSuggestions: List<SuggestedTimeWindow> = emptyList(),
+    val editingSpontaneousEntry: HierarchicalTimelineEntry? = null,
+    val pendingMove: PendingMove? = null
 )

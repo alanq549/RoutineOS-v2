@@ -6,7 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,20 +23,63 @@ import com.alan.routineos.feature.planning.model.PlanningDay
 @Composable
 fun PlanningWeekHeader(
     days: List<PlanningDay>,
+    weekRangeText: String,
     onDaySelected: (String) -> Unit,
+    onPrevWeek: () -> Unit,
+    onNextWeek: () -> Unit,
+    onRangeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = RoutineTheme.spacing.md),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .background(RoutineTheme.colors.surface1.copy(alpha = 0.95f))
+            .padding(bottom = 16.dp)
     ) {
-        days.forEach { day ->
-            DayItem(
-                day = day,
-                onClick = { onDaySelected(day.id) }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = RoutineTheme.spacing.md, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onPrevWeek) {
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "Semana anterior",
+                    tint = RoutineTheme.colors.onSurfaceVariant
+                )
+            }
+
+            Text(
+                text = weekRangeText.uppercase(),
+                style = RoutineTheme.typography.labelCaps.copy(letterSpacing = 1.sp),
+                color = RoutineTheme.colors.primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onRangeClick() }
             )
+
+            IconButton(onClick = onNextWeek) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Semana siguiente",
+                    tint = RoutineTheme.colors.onSurfaceVariant
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = RoutineTheme.spacing.md, end = RoutineTheme.spacing.md, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            days.forEach { day ->
+                DayItem(
+                    day = day,
+                    onClick = { onDaySelected(day.id) }
+                )
+            }
         }
     }
 }

@@ -40,12 +40,13 @@ class DailyInstanceDeduplicationTest {
             scheduledDate = 100L,
             titleSnapshot = "Title",
             descriptionSnapshot = "Desc",
-            status = "PLANNED"
+            status = "PLANNED",
+            sourceRuleId = "rule1"
         )
         
         val instance2 = instance1.copy(id = "2") // Same target and date, different ID
 
-        dao.insertInstance(instance1)
-        dao.insertInstance(instance2) // Should throw due to UNIQUE index
+        dao.insertInstanceStrict(instance1)
+        dao.insertInstanceStrict(instance2) // Should throw due to UNIQUE index
     }
 }

@@ -92,7 +92,7 @@ class ActivityDetailViewModelTest {
         override suspend fun reorderNodes(nodeIds: List<String>) {}
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
         
-        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {
+        override suspend fun registerInstanceExecution(instance: DailyInstance, metadataJson: String) {
             registerExecutionCallCount++
         }
         
@@ -118,7 +118,12 @@ class ActivityDetailViewModelTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
+        override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>> = flowOf(emptyList())
+        override fun getNotesForDate(date: Long): Flow<List<Note>> = flowOf(emptyList())
+        override suspend fun upsertNote(note: Note) {}
+        override suspend fun deleteNote(note: Note) {}
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
         override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}

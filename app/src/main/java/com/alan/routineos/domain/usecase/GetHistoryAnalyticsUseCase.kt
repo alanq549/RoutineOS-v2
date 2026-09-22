@@ -54,11 +54,12 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
             val dayMetricOccs = metricOccurrences.filter { it.date == current }
             val dayAllOccs = enrichedOccurrences.filter { it.date == current }
             
-            val completed = dayMetricOccs.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+            // V6 Logic: completed means it has an associated execution (matched by ID or snapshots)
+            val completed = dayMetricOccs.count { it.execution != null && !it.isAdHoc }
             val omitted = dayMetricOccs.count { it.instance.status == DailyInstanceStatus.OMITTED }
             val eligible = dayMetricOccs.count { !it.isAdHoc } - omitted
             val missed = eligible - completed
-            val spontaneous = dayMetricOccs.count { it.isAdHoc }
+            val spontaneous = dayMetricOccs.count { it.isAdHoc && it.execution != null }
 
             dailyStatsList.add(DailyStats(
                 date = current,
@@ -140,7 +141,7 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
             }
 
             val sTotal = systemOccurrences.count { !it.isAdHoc }
-            val sCompleted = systemOccurrences.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+            val sCompleted = systemOccurrences.count { it.execution != null && !it.isAdHoc }
             val sOmitted = systemOccurrences.count { it.instance.status == DailyInstanceStatus.OMITTED && !it.isAdHoc }
             val sEligible = sTotal - sOmitted
             val sMissed = sEligible - sCompleted
@@ -170,11 +171,11 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
             }
 
             val aTotal = activityOccurrences.count { !it.isAdHoc }
-            val aCompleted = activityOccurrences.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+            val aCompleted = activityOccurrences.count { it.execution != null && !it.isAdHoc }
             val aOmitted = activityOccurrences.count { it.instance.status == DailyInstanceStatus.OMITTED && !it.isAdHoc }
             val aEligible = aTotal - aOmitted
             val aMissed = aEligible - aCompleted
-            val aSpontaneous = activityOccurrences.count { it.isAdHoc }
+            val aSpontaneous = activityOccurrences.count { it.isAdHoc && it.execution != null }
 
             ActivityAdherence(
                 activityId = definition.id,
@@ -191,7 +192,7 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
 
         // Global Averages (Respecting the requested range strictly)
         val totalOccurrences = metricOccurrences.count { !it.isAdHoc }
-        val completedCount = metricOccurrences.count { it.instance.status == DailyInstanceStatus.COMPLETED && !it.isAdHoc }
+        val completedCount = metricOccurrences.count { it.execution != null && !it.isAdHoc }
         val omittedCount = metricOccurrences.count { it.instance.status == DailyInstanceStatus.OMITTED && !it.isAdHoc }
         val eligibleCount = totalOccurrences - omittedCount
         val missedCount = eligibleCount - completedCount

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import javax.inject.Inject
 
+@Deprecated("To be integrated into Stats module in future phases. Currently unused in consolidated Activities view.")
 class GetSystemsWithStatsUseCase @Inject constructor(
     private val repository: ActivityRepository
 ) {
@@ -37,16 +38,20 @@ class GetSystemsWithStatsUseCase @Inject constructor(
                     systemDefIds.contains(defId)
                 }
 
-                val completions = systemInstances.count { instance ->
-                    instanceToExecutionMap[instance.id]?.isNotEmpty() ?: false
-                }
+                val completedCount = systemInstances.count { it.status == DailyInstanceStatus.COMPLETED }
+                val skippedCount = systemInstances.count { it.status == DailyInstanceStatus.OMITTED }
+                val pendingCount = systemInstances.count { it.status == DailyInstanceStatus.PLANNED || it.status == DailyInstanceStatus.MODIFIED }
+                
+                val totalWithResult = completedCount + skippedCount
 
                 SystemWithStats(
                     system = system,
                     activityCount = systemActivities.size,
-                    instanceCount = systemInstances.size,
-                    completionCount = completions,
-                    successRate = if (systemInstances.isEmpty()) 0f else completions.toFloat() / systemInstances.size
+                    scheduledCount = systemInstances.size,
+                    completedCount = completedCount,
+                    skippedCount = skippedCount,
+                    pendingCount = pendingCount,
+                    successRate = if (totalWithResult == 0) null else completedCount.toFloat() / totalWithResult
                 )
             }
         }

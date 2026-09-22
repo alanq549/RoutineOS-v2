@@ -3,14 +3,23 @@ package com.alan.routineos.feature.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.domain.model.LifeSystem
 import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.feature.dashboard.model.*
+import com.alan.routineos.feature.dashboard.model.ActivityCardModel
+import com.alan.routineos.feature.dashboard.model.ActivitySummaryDay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
+
+data class SystemDensity(
+    val systemId: String?,
+    val count: Int
+)
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -20,6 +29,10 @@ class DashboardViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(DashboardUiState(isLoading = true))
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
+    private val _selectedSystemId = MutableStateFlow<String?>(null)
+    private val _editingSystem = MutableStateFlow<LifeSystem?>(null)
+    private val _isCreatingNewSystem = MutableStateFlow(false)
+
     init {
         loadData()
     }
@@ -27,32 +40,122 @@ class DashboardViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadData() {
         viewModelScope.launch {
-            repository.getActivityDefinitions().flatMapLatest { definitions ->
-                if (definitions.isEmpty()) return@flatMapLatest flowOf(emptyList<ActivityCardModel>())
-                
-                val cardFlows = definitions.map { def ->
-                    combine(
-                        repository.getNodesForActivityDefinition(def.id),
-                        repository.getRulesForActivityTree(def.id)
-                    ) { nodes, rules ->
-                        mapToCardModel(def, nodes, rules)
-                    }
+            val systemsFlow = repository.getAllSystems()
+            val definitionsFlow = repository.getActivityDefinitions()
+
+            combine(
+                systemsFlow,
+                definitionsFlow,
+                _selectedSystemId,
+                _editingSystem,
+                _isCreatingNewSystem
+            ) { systems, definitions, selectedId, editing, creating ->
+                // Calculate real counters for systems
+                val densities = systems.associate { system ->
+                    system.id to definitions.count { it.systemId == system.id }
                 }
-                combine(cardFlows) { it.toList() }
-            }.collect { cards ->
-                _uiState.value = _uiState.value.copy(
+                val totalCount = definitions.size
+
+                val filteredDefs = if (selectedId == null) {
+                    definitions
+                } else {
+                    definitions.filter { it.systemId == selectedId }
+                }
+
+                val cards = if (filteredDefs.isEmpty()) emptyList() else {
+                    filteredDefs.map { def ->
+                        combine(
+                            repository.getNodesForActivityDefinition(def.id),
+                            repository.getRulesForActivityTree(def.id)
+                        ) { nodes, rules ->
+                            mapToCardModel(def, nodes, rules, systems)
+                        }
+                    }.let { combine(it) { it.toList() }.first() }
+                }
+
+                DashboardUiState(
                     isLoading = false,
-                    myActivities = cards
+                    myActivities = cards,
+                    allSystems = systems,
+                    systemCounts = densities,
+                    totalActivitiesCount = totalCount,
+                    selectedSystemId = selectedId,
+                    editingSystem = editing,
+                    isCreatingNewSystem = creating
                 )
+            }.collect { newState ->
+                _uiState.value = newState
             }
         }
+    }
+
+    fun onSystemSelected(systemId: String?) {
+        _selectedSystemId.value = systemId
+    }
+
+    fun onAddSystemClick() {
+        _isCreatingNewSystem.value = true
+        _editingSystem.value = LifeSystem(
+            id = UUID.randomUUID().toString(),
+            title = "",
+            description = "",
+            iconKey = "account_tree",
+            colorHex = "#34D399"
+        )
+    }
+
+    fun onEditSystemClick(id: String) {
+        viewModelScope.launch {
+            val system = repository.getSystemById(id)
+            if (system != null) {
+                _isCreatingNewSystem.value = false
+                _editingSystem.value = system
+            }
+        }
+    }
+
+    fun onUpdateSystemFields(title: String, icon: String, color: String) {
+        _editingSystem.update { current ->
+            current?.copy(title = title, iconKey = icon, colorHex = color)
+        }
+    }
+
+    fun onSaveSystem() {
+        val system = _editingSystem.value ?: return
+        if (system.title.isBlank()) return
+
+        viewModelScope.launch {
+            repository.upsertSystem(system)
+            onDismissSystemEditor()
+        }
+    }
+
+    fun onDeleteSystem(id: String) {
+        viewModelScope.launch {
+            val system = repository.getSystemById(id)
+            if (system != null) {
+                repository.deleteSystem(system)
+                if (_selectedSystemId.value == id) _selectedSystemId.value = null
+                onDismissSystemEditor()
+            }
+        }
+    }
+
+    fun onDismissSystemEditor() {
+        _editingSystem.value = null
+        _isCreatingNewSystem.value = false
     }
 
     private fun mapToCardModel(
         def: ActivityDefinition,
         nodes: List<com.alan.routineos.domain.model.ActivityNode>,
-        rules: List<com.alan.routineos.domain.model.ScheduleRule>
+        rules: List<com.alan.routineos.domain.model.ScheduleRule>,
+        systems: List<LifeSystem>
     ): ActivityCardModel {
+        val linkedSystem = systems.find { it.id == def.systemId }
+        val iconKey = linkedSystem?.iconKey ?: "account_tree"
+        val iconColor = linkedSystem?.colorHex ?: "#94A3B8"
+
         val uniqueDays = rules.flatMap { it.daysOfWeek }.distinct().size
         val containers = nodes.filter { it.parentId == null }.size
         val leaves = nodes.filter { node -> nodes.none { it.parentId == node.id } }.size
@@ -74,7 +177,6 @@ class DashboardViewModel @Inject constructor(
             val dayRules = rules.filter { it.daysOfWeek.contains(day) }
             if (dayRules.isEmpty()) return@mapNotNull null
             
-            // Collect titles of the targets AND their immediate children if they are containers
             val previewItems = mutableListOf<String>()
             
             dayRules.forEach { rule ->
@@ -84,17 +186,14 @@ class DashboardViewModel @Inject constructor(
                 }
                 
                 if (targetId == null) {
-                    // Definition scheduled: show its top-level nodes
                     previewItems.addAll(nodes.filter { it.parentId == null }.map { it.title })
                 } else {
                     val targetNode = nodes.find { it.id == targetId }
                     val children = nodes.filter { it.parentId == targetId }
                     
                     if (children.isNotEmpty()) {
-                        // Container scheduled: show its children
                         previewItems.addAll(children.map { it.title })
                     } else {
-                        // Leaf scheduled: show itself
                         targetNode?.let { previewItems.add(it.title) }
                     }
                 }
@@ -105,19 +204,26 @@ class DashboardViewModel @Inject constructor(
             ActivitySummaryDay(
                 dayName = dayNames[day],
                 activities = previewItems.distinct(),
-                detailText = null // We'll show the actual list now
+                detailText = null
             )
         }
+
+        val previewLimit = 2
+        val visibleSummary = summaryItems.take(previewLimit)
+        val moreDays = if (summaryItems.size > previewLimit) summaryItems.size - previewLimit else 0
 
         return ActivityCardModel(
             id = def.id,
             title = def.title,
-            iconName = if (def.title.contains("Gym", ignoreCase = true)) "fitness_center" else "school",
+            iconName = iconKey,
+            iconColorHex = iconColor,
             frequency = if (uniqueDays == 7) "Lun - Dom" else if (uniqueDays >= 5) "Lun - Vie" else "Frecuencia",
             durationText = if (uniqueDays > 0) "$uniqueDays sesiones/sem" else "Sin configurar",
             subtitle = def.description,
             statsLine = statsLine,
-            summaryItems = summaryItems.take(5) // Increased to show more context
+            summaryItems = visibleSummary,
+            moreDaysCount = moreDays,
+            systemTitle = linkedSystem?.title?.uppercase()
         )
     }
 

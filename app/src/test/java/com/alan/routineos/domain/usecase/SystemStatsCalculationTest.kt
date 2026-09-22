@@ -17,8 +17,8 @@ class SystemStatsCalculationTest {
         val activity = ActivityDefinition("a1", "Gym", "Desc", systemId = "s1")
         val node = ActivityNode("n1", "a1", null, 0, "Push")
         
-        val instance = DailyInstance("di1", ScheduleTarget.Node("n1"), 0L, "Snapshot", "")
-        val execution = ActivityExecution("e1", "n1", "di1", 0L, 0L, "{}")
+        val instance = DailyInstance("di1", ScheduleTarget.Node("n1"), 0L, "Snapshot", "", status = DailyInstanceStatus.COMPLETED)
+        val execution = ActivityExecution("e1", "n1", "di1", 0L, 0L, "{}", "a1", "s1", "Push")
 
         val repository = object : FakeActivityRepository() {
             override fun getAllSystems() = flowOf(listOf(system))
@@ -34,8 +34,8 @@ class SystemStatsCalculationTest {
         assertEquals(1, stats.size)
         val s = stats[0]
         assertEquals(1, s.activityCount)
-        assertEquals(1, s.instanceCount)
-        assertEquals(1, s.completionCount)
+        assertEquals(1, s.scheduledCount)
+        assertEquals(1, s.completedCount)
         assertEquals(1f, s.successRate)
     }
 
@@ -52,7 +52,7 @@ class SystemStatsCalculationTest {
         override suspend fun deleteNode(node: ActivityNode) {}
         override suspend fun reorderNodes(nodeIds: List<String>) {}
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
-        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {}
+        override suspend fun registerInstanceExecution(instance: DailyInstance, metadataJson: String) {}
         override fun getAllExecutions(): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyOf())
@@ -72,7 +72,12 @@ class SystemStatsCalculationTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
+        override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>> = flowOf(emptyList())
+        override fun getNotesForDate(date: Long): Flow<List<Note>> = flowOf(emptyList())
+        override suspend fun upsertNote(note: Note) {}
+        override suspend fun deleteNote(note: Note) {}
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
         override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}

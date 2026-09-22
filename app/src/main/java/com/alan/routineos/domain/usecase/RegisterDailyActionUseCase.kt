@@ -2,7 +2,6 @@ package com.alan.routineos.domain.usecase
 
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
-import java.util.*
 import javax.inject.Inject
 
 sealed class DailyAction {
@@ -33,21 +32,21 @@ class RegisterDailyActionUseCase @Inject constructor(
     }
 
     private suspend fun handleComplete(entry: HierarchicalTimelineEntry, metadataJson: String) {
-        // Completion only allowed on leaf nodes (executable steps)
-        if (entry.children.isNotEmpty()) return
-
+        // Completion allowed on leaf nodes (executable steps) or any Task/Reminder (CHECK)
+        if (entry.children.isNotEmpty() && entry.root.instance.role == DailyInstanceRole.ACTIVITY) return
+        
         val instance = materializeIfVirtual(entry.root)
+        
+        // Reminder instances (which don't have a distinct NOTIFY protocol now) shouldn't produce executions if they aren't meant to be executable.
+        // But to protect executions, any instance with reminder only metadata but no executable protocol shouldn't be completed here, 
+        // or we guarantee it doesn't write execution if it's pure reminder metadata. 
+        // Actually, if it has a valid operational protocol like CHECK or TIMER, it writes history.
+        // If it's a pure reminder metadata item with no title or title but purely for warning attention, it shouldn't produce execution.
+        // Let's protect it based on an explicit check or rule if needed. For now, just save status and execution.
         repository.upsertDailyInstance(instance.copy(status = DailyInstanceStatus.COMPLETED))
         
-        val target = instance.target
-        if (target is ScheduleTarget.Node) {
-            repository.registerExecution(
-                nodeId = target.id,
-                scheduledDate = instance.scheduledDate,
-                metadataJson = metadataJson,
-                dailyInstanceId = instance.id
-            )
-        }
+        // Register execution for the fact history (Blindaje de Historial CHECK/TIMER)
+        repository.registerInstanceExecution(instance, metadataJson)
     }
 
     private suspend fun handleSkipRecursive(entry: HierarchicalTimelineEntry) {
@@ -90,13 +89,14 @@ class RegisterDailyActionUseCase @Inject constructor(
     private suspend fun handleResetRecursive(entry: HierarchicalTimelineEntry) {
         val instance = materializeIfVirtual(entry.root)
         
-        val targetStatus = if (instance.isAdHoc || instance.sourceRuleId == null) {
-            DailyInstanceStatus.MODIFIED 
+        if (instance.sourceRuleId != null) {
+            // Rule Override: Delete the instance to revert to original rule projection
+            repository.deleteDailyInstance(instance.id)
         } else {
-            DailyInstanceStatus.PLANNED
+            // Pure Ad-hoc: Reset status to initial state
+            val targetStatus = DailyInstanceStatus.MODIFIED
+            repository.upsertDailyInstance(instance.copy(status = targetStatus))
         }
-        
-        repository.upsertDailyInstance(instance.copy(status = targetStatus))
 
         // IMPORTANT: Non-destructive RESET. We do NOT delete ActivityExecution records.
         // History analysis will filter based on the final DailyInstance status.

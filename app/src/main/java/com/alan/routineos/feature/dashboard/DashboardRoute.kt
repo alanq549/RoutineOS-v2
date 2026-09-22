@@ -16,6 +16,13 @@ fun DashboardRoute(
     DashboardScreen(
         uiState = uiState,
         onAddActivity = onAddActivity,
-        onActivityClick = onActivityClick
+        onActivityClick = onActivityClick,
+        onSystemSelected = viewModel::onSystemSelected,
+        onAddSystem = viewModel::onAddSystemClick,
+        onEditSystem = viewModel::onEditSystemClick,
+        onUpdateSystemFields = viewModel::onUpdateSystemFields,
+        onSaveSystem = viewModel::onSaveSystem,
+        onDeleteSystem = viewModel::onDeleteSystem,
+        onDismissSystemEditor = viewModel::onDismissSystemEditor
     )
 }

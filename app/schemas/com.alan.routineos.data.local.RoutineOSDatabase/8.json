@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "8002a2ce6f81437d47bf471f4ef5b4a6",
+    "identityHash": "0876b1dda4601b93b91f9ace533ae9bf",
     "entities": [
       {
         "tableName": "activity_definitions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `systemId` TEXT, `isDeleted` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`systemId`) REFERENCES `life_systems`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -25,6 +25,17 @@
             "columnName": "description",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "systemId",
+            "columnName": "systemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -32,7 +43,31 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_activity_definitions_systemId",
+            "unique": false,
+            "columnNames": [
+              "systemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_activity_definitions_systemId` ON `${TABLE_NAME}` (`systemId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "life_systems",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "systemId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "activity_nodes",
@@ -133,7 +168,7 @@
       },
       {
         "tableName": "activity_executions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `nodeId` TEXT NOT NULL, `dailyInstanceId` TEXT, `scheduledDate` INTEGER NOT NULL, `completedAt` INTEGER NOT NULL, `metadataJson` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`nodeId`) REFERENCES `activity_nodes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`dailyInstanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `nodeId` TEXT, `dailyInstanceId` TEXT, `scheduledDate` INTEGER NOT NULL, `completedAt` INTEGER NOT NULL, `metadataJson` TEXT NOT NULL, `activityIdSnapshot` TEXT NOT NULL, `systemIdSnapshot` TEXT, `titleSnapshot` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`nodeId`) REFERENCES `activity_nodes`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`dailyInstanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -144,8 +179,7 @@
           {
             "fieldPath": "nodeId",
             "columnName": "nodeId",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "dailyInstanceId",
@@ -167,6 +201,23 @@
           {
             "fieldPath": "metadataJson",
             "columnName": "metadataJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityIdSnapshot",
+            "columnName": "activityIdSnapshot",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "systemIdSnapshot",
+            "columnName": "systemIdSnapshot",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "titleSnapshot",
+            "columnName": "titleSnapshot",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -200,7 +251,7 @@
         "foreignKeys": [
           {
             "table": "activity_nodes",
-            "onDelete": "CASCADE",
+            "onDelete": "SET NULL",
             "onUpdate": "NO ACTION",
             "columns": [
               "nodeId"
@@ -224,7 +275,7 @@
       },
       {
         "tableName": "schedule_rules",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT NOT NULL, `targetType` TEXT NOT NULL, `type` TEXT NOT NULL, `daysOfWeek` TEXT NOT NULL, `frequencyPerPeriod` INTEGER NOT NULL, `startTime` INTEGER, `endTime` INTEGER, `durationMinutes` INTEGER, `metadataJson` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT NOT NULL, `targetType` TEXT NOT NULL, `type` TEXT NOT NULL, `daysOfWeek` TEXT NOT NULL, `frequencyPerPeriod` INTEGER NOT NULL, `startTime` INTEGER, `endTime` INTEGER, `durationMinutes` INTEGER, `mobility` TEXT NOT NULL, `metadataJson` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -276,6 +327,12 @@
             "fieldPath": "durationMinutes",
             "columnName": "durationMinutes",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "mobility",
+            "columnName": "mobility",
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "metadataJson",
@@ -372,7 +429,7 @@
       },
       {
         "tableName": "daily_instances",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT, `targetType` TEXT NOT NULL, `scheduledDate` INTEGER NOT NULL, `titleSnapshot` TEXT NOT NULL, `descriptionSnapshot` TEXT NOT NULL, `plannedStartTime` INTEGER, `plannedEndTime` INTEGER, `plannedDurationMinutes` INTEGER, `status` TEXT NOT NULL, `sourceRuleId` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT, `targetType` TEXT NOT NULL, `scheduledDate` INTEGER NOT NULL, `titleSnapshot` TEXT NOT NULL, `descriptionSnapshot` TEXT NOT NULL, `plannedStartTime` INTEGER, `plannedEndTime` INTEGER, `plannedDurationMinutes` INTEGER, `status` TEXT NOT NULL, `mobility` TEXT NOT NULL, `sourceRuleId` TEXT, `parentInstanceId` TEXT, `backlogId` TEXT, `actionProtocol` TEXT NOT NULL, `reminderAbs` INTEGER, `reminderRel` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`parentInstanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`backlogId`) REFERENCES `backlog_items`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`sourceRuleId`) REFERENCES `schedule_rules`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -431,8 +488,314 @@
             "notNull": true
           },
           {
+            "fieldPath": "mobility",
+            "columnName": "mobility",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "sourceRuleId",
             "columnName": "sourceRuleId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "parentInstanceId",
+            "columnName": "parentInstanceId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backlogId",
+            "columnName": "backlogId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "actionProtocol",
+            "columnName": "actionProtocol",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reminderAbs",
+            "columnName": "reminderAbs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "reminderRel",
+            "columnName": "reminderRel",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_instances_sourceRuleId_scheduledDate",
+            "unique": true,
+            "columnNames": [
+              "sourceRuleId",
+              "scheduledDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_instances_sourceRuleId_scheduledDate` ON `${TABLE_NAME}` (`sourceRuleId`, `scheduledDate`)"
+          },
+          {
+            "name": "index_daily_instances_parentInstanceId",
+            "unique": false,
+            "columnNames": [
+              "parentInstanceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_instances_parentInstanceId` ON `${TABLE_NAME}` (`parentInstanceId`)"
+          },
+          {
+            "name": "index_daily_instances_backlogId",
+            "unique": false,
+            "columnNames": [
+              "backlogId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_instances_backlogId` ON `${TABLE_NAME}` (`backlogId`)"
+          },
+          {
+            "name": "index_daily_instances_sourceRuleId",
+            "unique": false,
+            "columnNames": [
+              "sourceRuleId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_instances_sourceRuleId` ON `${TABLE_NAME}` (`sourceRuleId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "daily_instances",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "parentInstanceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "backlog_items",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "backlogId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "schedule_rules",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sourceRuleId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "metadata_schemas",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT NOT NULL, `targetType` TEXT NOT NULL, `fieldsJson` TEXT NOT NULL, `schemaVersion` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetId",
+            "columnName": "targetId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetType",
+            "columnName": "targetType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fieldsJson",
+            "columnName": "fieldsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schemaVersion",
+            "columnName": "schemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_metadata_schemas_targetType_targetId",
+            "unique": true,
+            "columnNames": [
+              "targetType",
+              "targetId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_metadata_schemas_targetType_targetId` ON `${TABLE_NAME}` (`targetType`, `targetId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "life_systems",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `colorHex` TEXT NOT NULL, `isArchived` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iconKey",
+            "columnName": "iconKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "colorHex",
+            "columnName": "colorHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isArchived",
+            "columnName": "isArchived",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "backlog_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `definitionId` TEXT, `title` TEXT NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`definitionId`) REFERENCES `activity_definitions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "definitionId",
+            "columnName": "definitionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_backlog_items_definitionId",
+            "unique": false,
+            "columnNames": [
+              "definitionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_backlog_items_definitionId` ON `${TABLE_NAME}` (`definitionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "activity_definitions",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "definitionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "deadlines",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `dueAt` INTEGER NOT NULL, `definitionId` TEXT, `backlogId` TEXT, `instanceId` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`definitionId`) REFERENCES `activity_definitions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`backlogId`) REFERENCES `backlog_items`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`instanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dueAt",
+            "columnName": "dueAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "definitionId",
+            "columnName": "definitionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backlogId",
+            "columnName": "backlogId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "instanceId",
+            "columnName": "instanceId",
             "affinity": "TEXT"
           }
         ],
@@ -444,22 +807,222 @@
         },
         "indices": [
           {
-            "name": "index_daily_instances_targetType_targetId_scheduledDate",
-            "unique": true,
+            "name": "index_deadlines_definitionId",
+            "unique": false,
             "columnNames": [
-              "targetType",
-              "targetId",
-              "scheduledDate"
+              "definitionId"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_instances_targetType_targetId_scheduledDate` ON `${TABLE_NAME}` (`targetType`, `targetId`, `scheduledDate`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_deadlines_definitionId` ON `${TABLE_NAME}` (`definitionId`)"
+          },
+          {
+            "name": "index_deadlines_backlogId",
+            "unique": false,
+            "columnNames": [
+              "backlogId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_deadlines_backlogId` ON `${TABLE_NAME}` (`backlogId`)"
+          },
+          {
+            "name": "index_deadlines_instanceId",
+            "unique": false,
+            "columnNames": [
+              "instanceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_deadlines_instanceId` ON `${TABLE_NAME}` (`instanceId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "activity_definitions",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "definitionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "backlog_items",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "backlogId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "daily_instances",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "instanceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `content` TEXT NOT NULL, `definitionId` TEXT, `backlogId` TEXT, `instanceId` TEXT, `executionId` TEXT, `dateSnapshot` INTEGER NOT NULL, `targetTypeSnapshot` TEXT, `targetIdSnapshot` TEXT, `titleSnapshot` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`definitionId`) REFERENCES `activity_definitions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`backlogId`) REFERENCES `backlog_items`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`instanceId`) REFERENCES `daily_instances`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`executionId`) REFERENCES `activity_executions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "definitionId",
+            "columnName": "definitionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backlogId",
+            "columnName": "backlogId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "instanceId",
+            "columnName": "instanceId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "executionId",
+            "columnName": "executionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dateSnapshot",
+            "columnName": "dateSnapshot",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetTypeSnapshot",
+            "columnName": "targetTypeSnapshot",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "targetIdSnapshot",
+            "columnName": "targetIdSnapshot",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "titleSnapshot",
+            "columnName": "titleSnapshot",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_notes_definitionId",
+            "unique": false,
+            "columnNames": [
+              "definitionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_definitionId` ON `${TABLE_NAME}` (`definitionId`)"
+          },
+          {
+            "name": "index_notes_backlogId",
+            "unique": false,
+            "columnNames": [
+              "backlogId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_backlogId` ON `${TABLE_NAME}` (`backlogId`)"
+          },
+          {
+            "name": "index_notes_instanceId",
+            "unique": false,
+            "columnNames": [
+              "instanceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_instanceId` ON `${TABLE_NAME}` (`instanceId`)"
+          },
+          {
+            "name": "index_notes_executionId",
+            "unique": false,
+            "columnNames": [
+              "executionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_executionId` ON `${TABLE_NAME}` (`executionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "activity_definitions",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "definitionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "backlog_items",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "backlogId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "daily_instances",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "instanceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "activity_executions",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "executionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
           }
         ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8002a2ce6f81437d47bf471f4ef5b4a6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0876b1dda4601b93b91f9ace533ae9bf')"
     ]
   }
 }

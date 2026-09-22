@@ -34,12 +34,21 @@ class HierarchyIntegrityTest {
         definitionDao = db.activityDefinitionDao()
         nodeDao = db.activityNodeDao()
         repository = OfflineActivityRepository(
+            database = db,
             activityDefinitionDao = definitionDao,
             activityNodeDao = nodeDao,
             activityExecutionDao = db.activityExecutionDao(),
             scheduleRuleDao = db.scheduleRuleDao(),
             scheduleExceptionDao = db.scheduleExceptionDao(),
-            validateActivityNodeUseCase = com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase()
+            dailyInstanceDao = db.dailyInstanceDao(),
+            metadataSchemaDao = db.metadataSchemaDao(),
+            systemDao = db.systemDao(),
+            noteDao = db.noteDao(),
+            backlogItemDao = db.backlogItemDao(),
+            deadlineDao = db.deadlineDao(),
+            validateActivityNodeUseCase = com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase(),
+            validateScheduleRuleUseCase = com.alan.routineos.domain.usecase.ValidateScheduleRuleUseCase(),
+            validateMetadataSchemaUseCase = com.alan.routineos.domain.usecase.ValidateMetadataSchemaUseCase()
         )
     }
 

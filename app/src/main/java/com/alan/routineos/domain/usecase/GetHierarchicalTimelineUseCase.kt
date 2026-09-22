@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 /**
  * Resolves the daily timeline and organizes it into a recursive hierarchy.
- * Discovers structural nodes to allow manual materialization of sub-steps.
+ * Discovers structural nodes and ad-hoc temporal hierarchies.
  * Calculates completion status derived exclusively from executable leaf nodes.
  */
 class GetHierarchicalTimelineUseCase @Inject constructor(
@@ -19,9 +19,10 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         return combine(
             repository.getActivityDefinitions(),
             repository.getAllNodes(),
-            resolveTimelineUseCase(date)
-        ) { definitions, allNodes, flatTimeline ->
-            buildRecursiveHierarchy(definitions, allNodes, flatTimeline, date)
+            resolveTimelineUseCase(date),
+            repository.getNotesForDate(date.toEpochDay()) // Ensure all notes for the day are fetched
+        ) { definitions, allNodes, flatTimeline, allNotes ->
+            buildRecursiveHierarchy(definitions, allNodes, flatTimeline, allNotes, date)
         }
     }
 
@@ -29,16 +30,24 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         definitions: List<ActivityDefinition>,
         allNodes: List<ActivityNode>,
         flatTimeline: List<TimelineEntry>,
+        allNotes: List<Note>,
         date: LocalDate
     ): List<HierarchicalTimelineEntry> {
         val nodeMap = allNodes.associateBy { it.id }
         val defMap = definitions.associateBy { it.id }
+        val noteMap = allNotes.groupBy { it.instanceId } // Notes by instanceId
+
+        // Split flatTimeline into structural, ad-hoc, and associated
+        val baseTimeline = flatTimeline.filter { it.instance.associatedInstanceId == null }
+        val associatedItems = flatTimeline.filter { it.instance.associatedInstanceId != null }
         
-        // Split flatTimeline into structural and ad-hoc
-        val structuralEntries = flatTimeline.filter { it.instance.target != null }
-        val adHocEntries = flatTimeline.filter { it.instance.target == null }
+        val associatedMap = associatedItems.groupBy { it.instance.associatedInstanceId }
+
+        val structuralEntries = baseTimeline.filter { it.instance.target != null }
+        val adHocEntries = baseTimeline.filter { it.instance.target == null }
         
-        val entryMap = structuralEntries.associateBy { getEntryTargetKey(it) }
+        val entryMap = structuralEntries.groupBy { getEntryTargetKey(it) }
+        val adHocMap = adHocEntries.associateBy { it.instance.id }
 
         // 1. Identify all scheduled structural targets and their ancestors
         val allTargetKeysInHierarchy = mutableSetOf<String>()
@@ -55,7 +64,6 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                     currentId = nodeMap[currentId]?.parentId
                 }
                 
-                // Only add Definition as a grouper if it's actually needed
                 val defId = nodeMap[target.id]?.activityDefinitionId
                 if (defId != null) {
                     val definitionKey = "DEF_$defId"
@@ -73,17 +81,18 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
 
         // 2. Identify structural roots
         val rootKeys = allTargetKeysInHierarchy.filter { key ->
-            val entry = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date) ?: return@filter false
-            !hasAncestorInSet(entry, nodeMap, allTargetKeysInHierarchy)
+            val entries = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)?.let { listOf(it) } ?: return@filter false
+            entries.any { !hasAncestorInSet(it, nodeMap, allTargetKeysInHierarchy) }
         }
 
-        val structuralRoots = rootKeys.mapNotNull { key ->
-            val entry = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)
-            entry?.let { buildEntryNode(it, nodeMap, entryMap, allNodes, date, mutableSetOf()) }
+        val structuralRoots = rootKeys.flatMap { key ->
+            val entries = entryMap[key] ?: createVirtualFromKey(key, nodeMap, defMap, date)?.let { listOf(it) }
+            entries?.map { buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, mutableSetOf()) } ?: emptyList()
         }
         
-        // 3. Ad-hoc entries are always roots in the hierarchical view
-        val adHocRoots = adHocEntries.map { createLeaf(it) }
+        // 3. Ad-hoc roots (instances with target == null and parentInstanceId == null)
+        val adHocRoots = adHocEntries.filter { it.instance.parentInstanceId == null }
+            .map { buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, mutableSetOf()) }
 
         return (structuralRoots + adHocRoots).sortedBy { it.effectiveStartTimeMinutes ?: Int.MAX_VALUE }
     }
@@ -134,7 +143,8 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                             scheduledDate = date.toEpochDay(),
                             titleSnapshot = def.title,
                             descriptionSnapshot = def.description,
-                            status = DailyInstanceStatus.PLANNED
+                            status = DailyInstanceStatus.PLANNED,
+                            role = DailyInstanceRole.ACTIVITY
                         ),
                         isMaterialized = false
                     )
@@ -147,63 +157,97 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
     private fun buildEntryNode(
         entry: TimelineEntry,
         nodeMap: Map<String, ActivityNode>,
-        entryMap: Map<String, TimelineEntry>,
+        entryMap: Map<String, List<TimelineEntry>>,
+        adHocMap: Map<String, TimelineEntry>,
+        associatedMap: Map<String?, List<TimelineEntry>>,
+        allNotes: List<Note>,
         allNodes: List<ActivityNode>,
         date: LocalDate,
-        visited: MutableSet<String> // Prevent infinite loops
+        visited: MutableSet<String>
     ): HierarchicalTimelineEntry {
-        val target = entry.instance.target
-        val targetKey = getEntryTargetKey(entry)
-        
-        if (targetKey != "UNKNOWN" && visited.contains(targetKey)) {
-            // Cycle detected, return leaf
-            return createLeaf(entry)
-        }
-        if (targetKey != "UNKNOWN") visited.add(targetKey)
-        
-        // Discover structural children from the global node list
-        val structuralChildren = when (target) {
-            is ScheduleTarget.Node -> allNodes.filter { it.parentId == target.id }
-            is ScheduleTarget.Definition -> allNodes.filter { it.activityDefinitionId == target.id && it.parentId == null }
-            else -> emptyList()
+        // Use Instance ID for visited set to allow multiple occurrences of the same target
+        val visitedKey = if (entry.instance.target != null) "T_${entry.instance.id}" else "A_${entry.instance.id}"
+        if (visited.contains(visitedKey)) return createLeaf(entry)
+        visited.add(visitedKey)
+
+        val associatedEntries = associatedMap[entry.instance.id] ?: emptyList()
+        val associatedRecursive = associatedEntries.map { 
+            buildEntryNode(it, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, visited.toMutableSet())
         }
         
-        val recursiveChildren = structuralChildren.map { childNode ->
-            val childKey = "NODE_${childNode.id}"
-            val childEntry = entryMap[childKey] ?: createVirtualStructuralEntry(childNode, date)
-            buildEntryNode(childEntry, nodeMap, entryMap, allNodes, date, visited.toMutableSet())
+        val instanceNote = allNotes.find { it.instanceId == entry.instance.id }
+        
+        val children = if (entry.instance.role == DailyInstanceRole.ACTIVITY) {
+            when {
+                entry.instance.target is ScheduleTarget.Node -> {
+                    allNodes.filter { it.parentId == entry.instance.target.id }.flatMap { childNode ->
+                        val childKey = "NODE_${childNode.id}"
+                        entryMap[childKey] ?: listOf(createVirtualStructuralEntry(childNode, date))
+                    }
+                }
+                entry.instance.target is ScheduleTarget.Definition -> {
+                    allNodes.filter { it.activityDefinitionId == entry.instance.target.id && it.parentId == null }.flatMap { childNode ->
+                        val childKey = "NODE_${childNode.id}"
+                        entryMap[childKey] ?: listOf(createVirtualStructuralEntry(childNode, date))
+                    }
+                }
+                entry.instance.target == null -> {
+                    adHocMap.values.filter { it.instance.parentInstanceId == entry.instance.id }
+                }
+                else -> emptyList()
+            }
+        } else {
+            emptyList()
+        }
+        
+        val recursiveChildren = children.map { childEntry ->
+            buildEntryNode(childEntry, nodeMap, entryMap, adHocMap, associatedMap, allNotes, allNodes, date, visited.toMutableSet())
         }
 
-        return if (recursiveChildren.isEmpty()) {
-            createLeaf(entry)
+        return if (recursiveChildren.isEmpty() && associatedRecursive.isEmpty()) {
+            createLeaf(entry).copy(note = instanceNote)
         } else {
-            // CONTAINER NODE: Completion is derived from ALL descendant leaves recursively
             val totalLeaves = recursiveChildren.sumOf { it.totalCount }
             val completedLeaves = recursiveChildren.sumOf { it.completedCount }
             
-            // Effective Start Time: min of own start or children's effective start
+            // Temporal Logic V3:
+            val explicitStart = entry.instance.plannedStartTime
             val childrenStart = recursiveChildren.mapNotNull { it.effectiveStartTimeMinutes }.minOrNull()
-            val effectiveStart = entry.instance.plannedStartTime ?: childrenStart
+            
+            // Rule: Explicit start is immutable.
+            val effectiveStart = explicitStart ?: childrenStart
 
-            // Duration calculation: respect explicit root duration or calculate from children bounds
+            // Duration Logic V3:
             val explicitDuration = entry.instance.plannedDurationMinutes
-            val childrenDuration = if (recursiveChildren.any { it.root.instance.plannedStartTime != null || it.totalDurationMinutes != null }) {
+            val explicitEnd = entry.instance.plannedEndTime
+            
+            // Derivation only if NOT explicit range
+            val childrenDuration = if (recursiveChildren.any { it.effectiveStartTimeMinutes != null || it.totalDurationMinutes != null }) {
                 val start = effectiveStart
                 val maxEnd = recursiveChildren.mapNotNull { child ->
                     val childStart = child.effectiveStartTimeMinutes
-                    val childDur = child.totalDurationMinutes ?: 30
+                    val childDur = child.totalDurationMinutes ?: 0 // Points contribute 0 to range extension
                     if (childStart != null) childStart + childDur else null
                 }.maxOrNull()
                 
-                if (start != null && maxEnd != null) maxEnd - start else recursiveChildren.sumOf { it.totalDurationMinutes ?: 30 }
+                if (start != null && maxEnd != null && maxEnd > start) maxEnd - start else 0
             } else {
-                recursiveChildren.size * 60 // Default fallback for virtual children
+                0
             }
             
-            val totalDuration = explicitDuration ?: childrenDuration
+            val isExplicitPoint = entry.instance.plannedStartTime != null && 
+                                entry.instance.plannedEndTime == null && 
+                                entry.instance.plannedDurationMinutes == null
+
+            val totalDuration = when {
+                isExplicitPoint -> null
+                explicitEnd != null && explicitStart != null -> explicitEnd - explicitStart
+                explicitDuration != null -> explicitDuration
+                else -> if (childrenDuration > 0) childrenDuration else null
+            }
 
             val completion = when {
-                completedLeaves == totalLeaves -> HierarchyCompletion.COMPLETED
+                completedLeaves == totalLeaves && totalLeaves > 0 -> HierarchyCompletion.COMPLETED
                 completedLeaves == 0 -> HierarchyCompletion.NOT_STARTED
                 else -> HierarchyCompletion.IN_PROGRESS
             }
@@ -211,6 +255,8 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
             HierarchicalTimelineEntry(
                 root = entry,
                 children = recursiveChildren,
+                associatedItems = associatedRecursive,
+                note = instanceNote,
                 completedCount = completedLeaves,
                 totalCount = totalLeaves,
                 totalDurationMinutes = totalDuration,
@@ -241,7 +287,8 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
                 scheduledDate = date.toEpochDay(),
                 titleSnapshot = node.title,
                 descriptionSnapshot = node.description,
-                status = DailyInstanceStatus.PLANNED
+                status = DailyInstanceStatus.PLANNED,
+                role = DailyInstanceRole.ACTIVITY
             ),
             isMaterialized = false
         )
@@ -251,7 +298,7 @@ class GetHierarchicalTimelineUseCase @Inject constructor(
         return when (val target = entry.instance.target) {
             is ScheduleTarget.Node -> "NODE_${target.id}"
             is ScheduleTarget.Definition -> "DEF_${target.id}"
-            else -> "UNKNOWN"
+            else -> "INSTANCE_${entry.instance.id}" // Force unique key for non-targeted items
         }
     }
 }

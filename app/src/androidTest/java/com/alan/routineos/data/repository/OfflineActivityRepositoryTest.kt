@@ -33,12 +33,21 @@ class OfflineActivityRepositoryTest {
         activityDefinitionDao = db.activityDefinitionDao()
         activityNodeDao = db.activityNodeDao()
         repository = OfflineActivityRepository(
+            database = db,
             activityDefinitionDao = activityDefinitionDao,
             activityNodeDao = activityNodeDao,
             activityExecutionDao = db.activityExecutionDao(),
             scheduleRuleDao = db.scheduleRuleDao(),
             scheduleExceptionDao = db.scheduleExceptionDao(),
-            validateActivityNodeUseCase = com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase()
+            dailyInstanceDao = db.dailyInstanceDao(),
+            metadataSchemaDao = db.metadataSchemaDao(),
+            systemDao = db.systemDao(),
+            noteDao = db.noteDao(),
+            backlogItemDao = db.backlogItemDao(),
+            deadlineDao = db.deadlineDao(),
+            validateActivityNodeUseCase = com.alan.routineos.domain.usecase.ValidateActivityNodeUseCase(),
+            validateScheduleRuleUseCase = com.alan.routineos.domain.usecase.ValidateScheduleRuleUseCase(),
+            validateMetadataSchemaUseCase = com.alan.routineos.domain.usecase.ValidateMetadataSchemaUseCase()
         )
     }
 

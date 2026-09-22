@@ -20,12 +20,15 @@ class HistoricalOccurrenceResolver @Inject constructor(
         val rules = repository.getAllRules().first()
         val exceptions = repository.getAllExceptions().first()
         val materializedRange = repository.getDailyInstancesForDateRange(start.toEpochDay(), end.toEpochDay()).first()
+        val allExecutions = repository.getAllExecutions().first()
 
         val allOccurrences = mutableListOf<ResolvedOccurrence>()
+        val consumedExecutionIds = mutableSetOf<String>()
         
         var current = start
         while (!current.isAfter(end)) {
             val materializedToday = materializedRange.filter { it.scheduledDate == current.toEpochDay() }
+            val executionsToday = allExecutions.filter { it.scheduledDate == current.toEpochDay() }
             
             val resolved = resolutionEngine.resolve(
                 date = current,
@@ -36,10 +39,42 @@ class HistoricalOccurrenceResolver @Inject constructor(
                 nodes = nodes
             )
             
-            allOccurrences.addAll(resolved)
+            val enriched = resolved.map { occ ->
+                // Try to find a matching execution
+                val match = executionsToday.find { exec ->
+                    !consumedExecutionIds.contains(exec.id) && (
+                        exec.dailyInstanceId == occ.instance.id || 
+                        matchBySnapshot(exec, occ.instance)
+                    )
+                }
+                if (match != null) consumedExecutionIds.add(match.id)
+                
+                occ.copy(execution = match)
+            }
+            
+            allOccurrences.addAll(enriched)
             current = current.plusDays(1)
         }
         
         return allOccurrences
+    }
+
+    private fun matchBySnapshot(exec: ActivityExecution, instance: DailyInstance): Boolean {
+        // High-fidelity matching using snapshots for historical stability (even if nodeId is NULL)
+        return when (val target = instance.target) {
+            is ScheduleTarget.Node -> {
+                // Same node ID OR same title if the node was deleted
+                (exec.nodeId != null && exec.nodeId == target.id) || 
+                (exec.titleSnapshot == instance.titleSnapshot && exec.activityIdSnapshot == getDefinitionId(target.id, instance))
+            }
+            is ScheduleTarget.Definition -> exec.activityIdSnapshot == target.id
+            else -> false
+        }
+    }
+
+    private fun getDefinitionId(nodeId: String, instance: DailyInstance): String? {
+        // Fallback for getting definition ID from instance context if possible
+        // For now, we assume the snapshot in execution is the source of truth
+        return null 
     }
 }

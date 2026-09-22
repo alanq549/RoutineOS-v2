@@ -41,6 +41,7 @@ data class ActivityDetailUiState(
     val isSchedulingSheetOpen: Boolean = false,
     val schedulingTarget: ScheduleTarget? = null,
     val targetRules: List<ScheduleRule> = emptyList(),
+    val allActivityRules: List<ScheduleRule> = emptyList(), // Added for Stage 02 summary
     val schedulingErrorMessage: String? = null,
     val isMetadataSheetOpen: Boolean = false,
     val metadataTarget: ScheduleTarget? = null,
@@ -88,6 +89,7 @@ class ActivityDetailViewModel @Inject constructor(
             val activityFlow = flow { emit(repository.getActivityDefinitionById(activityId)) }
             val treeFlow = getActivityTreeUseCase(activityId, referenceDate)
             val systemsFlow = repository.getAllSystems()
+            val allRulesFlow = repository.getRulesForActivityTree(activityId)
 
             combine(
                 activityFlow, 
@@ -95,7 +97,8 @@ class ActivityDetailViewModel @Inject constructor(
                 expandedNodes, 
                 _schedulingTarget,
                 _metadataTarget,
-                systemsFlow
+                systemsFlow,
+                allRulesFlow
             ) { flows ->
                 val activity = flows[0] as? ActivityDefinition
                 val tree = flows[1] as List<com.alan.routineos.domain.model.ActivityNodeTree>
@@ -111,6 +114,7 @@ class ActivityDetailViewModel @Inject constructor(
                 val schTarget = flows[3] as? ScheduleTarget
                 val metaTarget = flows[4] as? ScheduleTarget
                 val systems = flows[5] as List<LifeSystem>
+                val allRules = flows[6] as List<ScheduleRule>
 
                 ActivityDetailUiState(
                     activity = activity,
@@ -120,7 +124,8 @@ class ActivityDetailViewModel @Inject constructor(
                     schedulingTarget = schTarget,
                     isMetadataSheetOpen = metaTarget != null,
                     metadataTarget = metaTarget,
-                    allSystems = systems
+                    allSystems = systems,
+                    allActivityRules = allRules
                 )
             }.collect { newState ->
                 _uiState.value = newState
@@ -249,7 +254,15 @@ class ActivityDetailViewModel @Inject constructor(
                     repository.deleteExecutionsForNodeOnDate(nodeId, referenceDate)
                     _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso marcado como pendiente", "Deshacer", nodeId))
                 } else {
-                    repository.registerExecution(nodeId, referenceDate, "{}")
+                    val instance = repository.getDailyInstanceByTarget(nodeId, referenceDate)
+                        ?: com.alan.routineos.domain.model.DailyInstance(
+                            id = UUID.randomUUID().toString(),
+                            target = ScheduleTarget.Node(nodeId),
+                            scheduledDate = referenceDate,
+                            titleSnapshot = nodeProjection?.title ?: "",
+                            descriptionSnapshot = ""
+                        )
+                    repository.registerInstanceExecution(instance, "{}")
                     _uiEvent.emit(ActivityDetailUiEvent.ShowSnackbar("Paso completado", "Deshacer", nodeId))
                 }
             } catch (e: Exception) {

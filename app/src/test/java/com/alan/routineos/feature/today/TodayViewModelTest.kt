@@ -57,7 +57,14 @@ class TodayViewModelTest {
         val getHierarchicalTimelineUseCase = GetHierarchicalTimelineUseCase(repository, resolveTimelineUseCase)
         val registerDailyActionUseCase = RegisterDailyActionUseCase(repository, MaterializeInstanceUseCase(repository))
         
-        viewModel = TodayViewModel(repository, getHierarchicalTimelineUseCase, registerDailyActionUseCase, timeProvider)
+        viewModel = TodayViewModel(
+            repository, 
+            getHierarchicalTimelineUseCase, 
+            registerDailyActionUseCase,
+            DistributeChildrenInWindowUseCase(),
+            SimulateMoveUseCase(conflictDetector),
+            timeProvider
+        )
         timeProvider.tick()
         advanceUntilIdle()
 
@@ -93,7 +100,7 @@ class TodayViewModelTest {
         override suspend fun deleteNode(node: ActivityNode) {}
         override suspend fun reorderNodes(nodeIds: List<String>) {}
         override suspend fun moveNode(nodeId: String, newParentId: String?) {}
-        override suspend fun registerExecution(nodeId: String, scheduledDate: Long, metadataJson: String, dailyInstanceId: String?) {}
+        override suspend fun registerInstanceExecution(instance: DailyInstance, metadataJson: String) {}
         override fun getAllExecutions(): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>> = flowOf(emptyList())
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>> = flowOf(emptyList())
@@ -113,7 +120,12 @@ class TodayViewModelTest {
         override fun getDailyInstancesForDate(date: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override fun getDailyInstancesForDateRange(start: Long, end: Long): Flow<List<DailyInstance>> = flowOf(emptyList())
         override suspend fun upsertDailyInstance(instance: DailyInstance) {}
+        override suspend fun deleteDailyInstance(id: String) {}
         override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? = null
+        override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<Note>> = flowOf(emptyList())
+        override fun getNotesForDate(date: Long): Flow<List<Note>> = flowOf(emptyList())
+        override suspend fun upsertNote(note: Note) {}
+        override suspend fun deleteNote(note: Note) {}
         override fun getMetadataSchema(targetId: String, targetType: String): Flow<MetadataSchema?> = flowOf(null)
         override suspend fun upsertMetadataSchema(schema: MetadataSchema) {}
         override suspend fun deleteMetadataSchema(targetId: String, targetType: String) {}

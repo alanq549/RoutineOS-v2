@@ -11,7 +11,8 @@ data class ResolvedOccurrence(
     val isMaterialized: Boolean,
     val date: LocalDate,
     val activityTitle: String? = null,
-    val isAdHoc: Boolean = false
+    val isAdHoc: Boolean = false,
+    val execution: ActivityExecution? = null
 )
 
 /**

@@ -1,5 +1,6 @@
 package com.alan.routineos.domain.usecase
 
+import com.alan.routineos.data.local.RoutineOSDatabase
 import com.alan.routineos.data.local.dao.ActivityDefinitionDao
 import com.alan.routineos.data.local.dao.ActivityExecutionDao
 import com.alan.routineos.data.local.dao.ActivityNodeDao
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.mockito.Mockito.mock
 
 class ReorderNodesTest {
 
@@ -48,6 +50,7 @@ class ReorderNodesTest {
         }
         
         val repository = OfflineActivityRepository(
+            database = mock(RoutineOSDatabase::class.java),
             activityDefinitionDao = FakeActivityDefinitionDao(),
             activityNodeDao = nodeDao,
             activityExecutionDao = FakeActivityExecutionDao(),
@@ -56,6 +59,9 @@ class ReorderNodesTest {
             dailyInstanceDao = FakeDailyInstanceDao(),
             metadataSchemaDao = FakeMetadataSchemaDao(),
             systemDao = FakeSystemDao(),
+            noteDao = FakeNoteDao(),
+            backlogItemDao = FakeBacklogItemDao(),
+            deadlineDao = FakeDeadlineDao(),
             validateActivityNodeUseCase = ValidateActivityNodeUseCase(),
             validateScheduleRuleUseCase = ValidateScheduleRuleUseCase(),
             validateMetadataSchemaUseCase = ValidateMetadataSchemaUseCase()
@@ -116,12 +122,37 @@ class ReorderNodesTest {
         override suspend fun deleteException(exception: ScheduleExceptionEntity) {}
     }
 
-    private class FakeDailyInstanceDao : DailyInstanceDao {
+        private class FakeDailyInstanceDao : DailyInstanceDao {
         override fun getInstancesForDate(date: Long): Flow<List<DailyInstanceEntity>> = TODO()
         override fun getInstancesInRange(start: Long, end: Long): Flow<List<DailyInstanceEntity>> = flowOf(emptyList())
         override suspend fun getInstanceByTarget(targetId: String, date: Long): DailyInstanceEntity? = null
         override suspend fun insertInstance(instance: DailyInstanceEntity) {}
+        override suspend fun insertInstanceStrict(instance: DailyInstanceEntity) {}
         override suspend fun deleteInstance(instance: DailyInstanceEntity) {}
+        override suspend fun deleteInstanceById(id: String) {}
+        override fun getInstancesByProtocol(protocol: String): Flow<List<DailyInstanceEntity>> = flowOf(emptyList())
+    }
+
+    private class FakeNoteDao : com.alan.routineos.data.local.dao.NoteDao {
+        override fun getAllNotes(): Flow<List<com.alan.routineos.data.local.entities.NoteEntity>> = flowOf(emptyList())
+        override fun getNotesByQuery(instanceId: String?, date: Long, title: String): Flow<List<com.alan.routineos.data.local.entities.NoteEntity>> = flowOf(emptyList())
+        override suspend fun upsertNote(note: com.alan.routineos.data.local.entities.NoteEntity) {}
+        override suspend fun deleteNote(note: com.alan.routineos.data.local.entities.NoteEntity) {}
+        override suspend fun deleteNoteByInstanceId(instanceId: String) {}
+        override fun getNotesForDate(date: Long): Flow<List<com.alan.routineos.data.local.entities.NoteEntity>> = flowOf(emptyList())
+        override suspend fun getNoteByInstanceId(instanceId: String): com.alan.routineos.data.local.entities.NoteEntity? = null
+    }
+
+    private class FakeBacklogItemDao : com.alan.routineos.data.local.dao.BacklogItemDao {
+        override fun getAllBacklogItems(): Flow<List<com.alan.routineos.data.local.entities.BacklogItemEntity>> = flowOf(emptyList())
+        override suspend fun upsertBacklogItem(item: com.alan.routineos.data.local.entities.BacklogItemEntity) {}
+        override suspend fun deleteBacklogItem(item: com.alan.routineos.data.local.entities.BacklogItemEntity) {}
+    }
+
+    private class FakeDeadlineDao : com.alan.routineos.data.local.dao.DeadlineDao {
+        override fun getAllDeadlines(): Flow<List<com.alan.routineos.data.local.entities.DeadlineEntity>> = flowOf(emptyList())
+        override suspend fun upsertDeadline(deadline: com.alan.routineos.data.local.entities.DeadlineEntity) {}
+        override suspend fun deleteDeadline(deadline: com.alan.routineos.data.local.entities.DeadlineEntity) {}
     }
 
     private class FakeMetadataSchemaDao : MetadataSchemaDao {

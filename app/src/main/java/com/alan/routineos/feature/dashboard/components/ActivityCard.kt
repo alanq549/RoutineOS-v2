@@ -3,32 +3,26 @@ package com.alan.routineos.feature.dashboard.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.style.TextOverflow
 import com.alan.routineos.core.designsystem.component.RoutineCard
-import com.alan.routineos.core.designsystem.component.RoutinePrimaryButton
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.dashboard.model.ActivityCardModel
 
@@ -38,158 +32,225 @@ fun ActivityCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val semanticColor = try { Color(android.graphics.Color.parseColor(activity.iconColorHex)) } catch (e: Exception) { RoutineTheme.colors.primary }
+
     RoutineCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        containerColor = RoutineTheme.colors.surface3,
-        border = androidx.compose.foundation.BorderStroke(1.dp, RoutineTheme.colors.border)
+        containerColor = Color(0xFF0B0E14), // Deep background for layering
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = semanticColor.copy(alpha = 0.2f)
+        )
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            // TOP HEADER: Icon + Identity info
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                val (icon, color) = when(activity.iconName) {
-                    "school" -> Icons.Default.School to RoutineTheme.colors.secondary
-                    "fitness_center" -> Icons.Default.FitnessCenter to RoutineTheme.colors.tertiary
-                    "wb_sunny" -> Icons.Default.WbSunny to RoutineTheme.colors.primary
-                    else -> Icons.Default.School to RoutineTheme.colors.secondary
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(semanticColor.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                            .border(1.dp, semanticColor.copy(alpha = 0.2f), RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = getTechnicalIcon(activity.iconName),
+                            contentDescription = null,
+                            tint = semanticColor.copy(alpha = 0.9f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = activity.systemTitle ?: "SIN SISTEMA",
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, color = semanticColor, fontWeight = FontWeight.Bold),
+                        )
+                        Text(
+                            text = activity.title,
+                            style = RoutineTheme.typography.headlineMedium.copy(fontSize = 19.sp, fontWeight = FontWeight.ExtraBold),
+                            color = Color.White
+                        )
+                    }
                 }
-                
-                BoxWithIcon(icon = icon, color = color)
                 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = activity.frequency,
-                        style = RoutineTheme.typography.labelCaps,
-                        color = RoutineTheme.colors.onSurfaceVariant
+                        text = activity.frequency.uppercase(),
+                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, letterSpacing = 1.sp),
+                        color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
                     )
                     Text(
                         text = activity.durationText,
-                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
-                        color = RoutineTheme.colors.primary
+                        style = RoutineTheme.typography.dataLarge.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                        color = semanticColor
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            if (activity.subtitle.isNotBlank()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = activity.subtitle,
+                    style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
+                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(start = 58.dp)
+                )
+            }
             
-            Text(
-                text = activity.title,
-                style = RoutineTheme.typography.headlineMedium,
-                color = RoutineTheme.colors.onSurface,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Text(
-                text = activity.subtitle,
-                style = RoutineTheme.typography.labelCaps,
-                color = RoutineTheme.colors.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = activity.statsLine,
-                style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp),
-                color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
-            )
+            if (activity.statsLine.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = activity.statsLine.uppercase(),
+                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, letterSpacing = 0.5.sp),
+                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(start = 58.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(RoutineTheme.colors.surface1.copy(alpha = 0.5f), RoutineTheme.shapes.small)
-                    .border(1.dp, RoutineTheme.colors.border, RoutineTheme.shapes.small)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-               activity.summaryItems.forEach { summary ->
-                   Column {
-                       Row(
-                           modifier = Modifier.fillMaxWidth(),
-                           horizontalArrangement = Arrangement.SpaceBetween,
-                           verticalAlignment = Alignment.CenterVertically
-                       ) {
-                           Text(
-                               text = summary.dayName,
-                               style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
-                               color = RoutineTheme.colors.primary
-                           )
-                           summary.detailText?.let {
+            // SUMMARY TREE (Compact Technical Layout)
+            if (activity.summaryItems.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF070A0F), RoundedCornerShape(12.dp))
+                        .border(1.dp, RoutineTheme.colors.border.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                   activity.summaryItems.forEach { summary ->
+                       Column {
+                           Row(
+                               modifier = Modifier.fillMaxWidth(),
+                               horizontalArrangement = Arrangement.SpaceBetween,
+                               verticalAlignment = Alignment.CenterVertically
+                           ) {
                                Text(
-                                   text = it,
-                                   style = RoutineTheme.typography.dataLarge.copy(fontSize = 13.sp),
-                                   color = RoutineTheme.colors.onSurfaceVariant
+                                   text = summary.dayName.uppercase(),
+                                   style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                                   color = semanticColor.copy(alpha = 0.9f)
                                )
                            }
-                       }
-                       
-                       if (summary.detailText == null) {
-                           summary.activities.forEachIndexed { index, activityName ->
+                           
+                           summary.activities.forEach { activityName ->
                                Row(
-                                   modifier = Modifier.padding(start = 12.dp, top = 4.dp),
+                                   modifier = Modifier.padding(start = 8.dp, top = 6.dp),
                                    verticalAlignment = Alignment.CenterVertically
                                ) {
-                                   Text(
-                                       text = if (index == summary.activities.lastIndex) "└─" else "├─",
-                                       style = RoutineTheme.typography.labelCaps.copy(fontSize = 13.sp),
-                                       color = RoutineTheme.colors.border,
-                                       modifier = Modifier.padding(top = 2.dp)
+                                   // Technical Tree Connector (Circuit Style)
+                                   Box(
+                                       modifier = Modifier
+                                           .width(1.5.dp)
+                                           .height(14.dp)
+                                           .background(RoutineTheme.colors.border.copy(alpha = 0.3f))
                                    )
-                                   Spacer(modifier = Modifier.width(8.dp))
+                                   Box(
+                                       modifier = Modifier
+                                           .width(8.dp)
+                                           .height(1.5.dp)
+                                           .background(RoutineTheme.colors.border.copy(alpha = 0.3f))
+                                   )
+                                   Spacer(modifier = Modifier.width(10.dp))
+                                   
+                                   // CIRCLE INDICATOR (Stitch style)
+                                   Box(
+                                       modifier = Modifier.size(6.dp).background(semanticColor.copy(alpha = 0.5f), CircleShape)
+                                   )
+                                   Spacer(modifier = Modifier.width(10.dp))
+
                                    Text(
                                        text = activityName,
                                        style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp),
                                        color = RoutineTheme.colors.onSurface.copy(alpha = 0.8f),
                                        maxLines = 1,
-                                       overflow = TextOverflow.Ellipsis
+                                       overflow = TextOverflow.Ellipsis,
+                                       modifier = Modifier.weight(1f)
                                    )
                                }
                            }
                        }
                    }
-               }
+
+                   if (activity.moreDaysCount > 0) {
+                       Row(
+                           verticalAlignment = Alignment.CenterVertically,
+                           modifier = Modifier.padding(top = 4.dp)
+                       ) {
+                           Icon(
+                               imageVector = Icons.Default.ChevronRight,
+                               contentDescription = null,
+                               tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f),
+                               modifier = Modifier.size(14.dp)
+                           )
+                           Spacer(modifier = Modifier.width(8.dp))
+                           Text(
+                               text = "+ ${activity.moreDaysCount} DÍAS",
+                               style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold),
+                               color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+                           )
+                       }
+                   }
+                }
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RoutinePrimaryButton(onClick = onClick) {
-                    Text("ABRIR", style = RoutineTheme.typography.labelCaps)
+                // Technical Control: ABRIR
+                Surface(
+                    onClick = onClick,
+                    color = RoutineTheme.colors.primary,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.height(44.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "ABRIR",
+                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 12.sp, fontWeight = FontWeight.Black),
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
-                
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = null,
-                    tint = RoutineTheme.colors.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
             }
         }
     }
 }
 
 @Composable
-private fun BoxWithIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, color: androidx.compose.ui.graphics.Color) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .background(color.copy(alpha = 0.2f), RoutineTheme.shapes.medium),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = color,
-            modifier = Modifier.size(30.dp)
-        )
+fun getTechnicalIcon(name: String): ImageVector {
+    return when (name.lowercase()) {
+        "fitness_center" -> Icons.Default.FitnessCenter
+        "school" -> Icons.Default.School
+        "work" -> Icons.Default.Work
+        "favorite" -> Icons.Default.Favorite
+        "bedtime" -> Icons.Default.Bedtime
+        "rocket" -> Icons.Default.RocketLaunch
+        "account_tree" -> Icons.Default.AccountTree
+        "science" -> Icons.Default.Science
+        "psychology" -> Icons.Default.Psychology
+        "palette" -> Icons.Default.Palette
+        else -> Icons.Default.AccountTree
     }
 }

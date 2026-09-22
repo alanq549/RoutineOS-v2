@@ -16,52 +16,77 @@ class FakeSystemRepository {
 
     fun getLifeAreas(): Flow<List<LifeArea>> = flowOf(
         listOf(
-            LifeArea.Large(
+            LifeArea(
                 id = "1",
                 title = "Universidad",
                 iconName = "school",
                 status = LifeAreaStatus.ACTIVE,
-                routinesCount = 5,
-                subjectsCount = 8,
-                nextExecution = "Lunes 07:00"
+                colorHex = "#34D399",
+                activityCount = 5,
+                completedCount = 8,
+                skippedCount = 1,
+                pendingCount = 2,
+                successRate = 0.88f
             ),
-            LifeArea.Medium(
+            LifeArea(
                 id = "2",
                 title = "Gym",
                 iconName = "fitness_center",
                 status = LifeAreaStatus.ACTIVE,
-                sessionsCount = 4,
-                exercisesCount = 18,
-                templatesCount = 3,
-                nextExecution = "Hoy 16:00"
+                colorHex = "#818CF8",
+                activityCount = 4,
+                completedCount = 18,
+                skippedCount = 2,
+                pendingCount = 0,
+                successRate = 0.9f
             ),
-            LifeArea.Small(
+            LifeArea(
                 id = "3",
                 title = "Trabajo",
                 iconName = "work",
                 status = LifeAreaStatus.ACTIVE,
-                description = "9:00 - 18:00"
+                colorHex = "#FBBF24",
+                activityCount = 3,
+                completedCount = 10,
+                skippedCount = 0,
+                pendingCount = 5,
+                successRate = 1.0f
             ),
-            LifeArea.Small(
+            LifeArea(
                 id = "4",
                 title = "Salud",
                 iconName = "favorite",
                 status = LifeAreaStatus.ACTIVE,
-                description = "Check-up semanal"
+                colorHex = "#F87171",
+                activityCount = 2,
+                completedCount = 4,
+                skippedCount = 0,
+                pendingCount = 1,
+                successRate = 1.0f
             ),
-            LifeArea.Small(
+            LifeArea(
                 id = "5",
                 title = "Proyecto Personal",
-                iconName = "rocket_launch",
+                iconName = "rocket",
                 status = LifeAreaStatus.PAUSED,
-                description = "Pausado"
+                colorHex = "#94A3B8",
+                activityCount = 1,
+                completedCount = 0,
+                skippedCount = 0,
+                pendingCount = 0,
+                successRate = null
             ),
-            LifeArea.Small(
+            LifeArea(
                 id = "6",
                 title = "Descanso",
                 iconName = "bedtime",
                 status = LifeAreaStatus.TEMPORARY,
-                description = "Sábados libres"
+                colorHex = "#64748B",
+                activityCount = 2,
+                completedCount = 2,
+                skippedCount = 0,
+                pendingCount = 0,
+                successRate = 1.0f
             )
         )
     )

@@ -13,8 +13,8 @@ class ConflictDetectorTest {
     @Test
     fun `detects overlapping instances`() {
         val instances = listOf(
-            createInstance("1", 480), // 08:00
-            createInstance("2", 500)  // 08:20 (Overlaps with 08:00 if duration is 30)
+            createInstance("1", 480).copy(plannedDurationMinutes = 60), // 08:00 - 09:00
+            createInstance("2", 500).copy(plannedDurationMinutes = 60)  // 08:20 - 09:20
         )
         
         val results = detector.detectConflicts(instances)
@@ -26,8 +26,8 @@ class ConflictDetectorTest {
     @Test
     fun `no conflict for adjacent instances`() {
         val instances = listOf(
-            createInstance("1", 480), // 08:00 - 08:30
-            createInstance("2", 510)  // 08:30 - 09:00
+            createInstance("1", 480).copy(plannedDurationMinutes = 30), // 08:00 - 08:30
+            createInstance("2", 510).copy(plannedDurationMinutes = 30)  // 08:30 - 09:00
         )
         
         val results = detector.detectConflicts(instances)
