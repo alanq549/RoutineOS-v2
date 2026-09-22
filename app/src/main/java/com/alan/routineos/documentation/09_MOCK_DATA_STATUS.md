@@ -1,14 +1,19 @@
-# Estado de datos simulados (Fake Repositories)
+# Estado de Datos Simulados y Persistencia (Room DB)
 
-Este documento rastrea qué pantallas/features usan repositorios falsos (Fake*Repository)
-en vez de la capa Room real, para evitar que queden como deuda técnica invisible.
+Este documento rastrea el estado real de la infraestructura de datos y persistencia en RoutineOS v2.
 
-| Feature | Archivo | Repositorio Fake | EC que lo introdujo | Fecha límite de reemplazo | Estado |
-|---|---|---|---|---|---|
-| Planning | FakePlanningRepository | Sí | Pre-existente (commit 7525a2a, 2026-07-19) — detectado en auditoría de EC-006 | Pendiente | 🟡 Activo |
-| Today | FakeTodayRepository | Sí | Pre-existente (commit 7525a2a, 2026-07-19) — detectado en auditoría de EC-006 | EC-012 | 🟡 Activo |
-| Stats | FakeStatsRepository | Sí | Pre-existente (commit 7525a2a, 2026-07-19) — detectado en auditoría de EC-006 | Pendiente | 🟡 Activo |
-| System | FakeSystemRepository | Sí | Pre-existente (commit 7525a2a, 2026-07-19) — detectado en auditoría de EC-006 | Pendiente | 🟡 Activo |
+## Estado de Repositorios
+
+| Feature | Repositorio Actual | Persistencia Real | Estado |
+|---|---|---|---|
+| Activities / Catalog | ActivityRepositoryImpl | Room Database (Local) | 🟢 Real DB |
+| Today Workspace | ActivityRepositoryImpl | Room Database (Local) | 🟢 Real DB |
+| Planning Workspace | ActivityRepositoryImpl | Room Database (Local) | 🟢 Real DB |
+| Systems / Domains | ActivityRepositoryImpl | Room Database (Local) | 🟢 Real DB |
+| Stats Engine | ActivityRepositoryImpl | Room Database (Local) | 🟢 Real DB |
+
+> [!NOTE]
+> Todos los antiguos repositorios simulados (`FakePlanningRepository`, `FakeTodayRepository`, `FakeStatsRepository`, `FakeSystemRepository`) han sido completamente eliminados del proyecto.
 
 ## Datos Semilla (Development Seed)
 
@@ -16,12 +21,14 @@ en vez de la capa Room real, para evitar que queden como deuda técnica invisibl
 |---|---|---|---|
 | Universidad (Demo Jerárquica) | DatabaseSeed.kt | Validar jerarquía de 3 niveles en Dashboard/Detalle. | 🟢 Activo (Dev only) |
 
-## Deuda Técnica de Infraestructura
+## Infraestructura y Migraciones de Base de Datos (Room v10)
 
-| Tarea | Origen | Impacto | Estado |
+La versión actual del esquema de base de datos es **Room DB v10**. Todas las migraciones son no destructivas y están activas en `DatabaseModule.kt`:
+
+| Migración | Versiones | Propósito | Estado |
 |---|---|---|---|
-| Migración destructiva a DB v3 | EC-009 | Pérdida de datos locales existentes tras actualización. Requiere implementación de migraciones reales antes de producción. | 🔴 Pendiente |
-| Migración destructiva a DB v4 | EC-011 | Agregado de `scheduledDate` a `ActivityExecutionEntity`. Rompe compatibilidad con v3. | 🔴 Pendiente |
-
-Regla: ningún EC puede marcarse como COMPLETED si introduce o mantiene un Fake*Repository
-sin una entrada en esta tabla con fecha límite de reemplazo.
+| `MIGRATION_5_6` | v5 ➔ v6 | Creación de backlog_items, refactor de daily_instances y executions | 🟢 Operativo |
+| `MIGRATION_6_7` | v6 ➔ v7 | Incorporación de `actionProtocol` en `daily_instances` | 🟢 Operativo |
+| `MIGRATION_7_8` | v7 ➔ v8 | Creación de snapshots en `notes` | 🟢 Operativo |
+| `MIGRATION_8_9` | v8 ➔ v9 | Incorporación de `associatedInstanceId` en `daily_instances` | 🟢 Operativo |
+| `MIGRATION_9_10` | v9 ➔ v10 | Incorporación de `role` (`ACTIVITY`, `TASK`, `REMINDER`) en `daily_instances` | 🟢 Operativo |

@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                         BottomNavItem(
                             label = "Planning",
                             icon = Icons.Default.CalendarMonth,
-                            isSelected = isPlanningRoute(currentRoute),
+                            isSelected = currentRoute == AppRoutes.Planning.route,
                             onClick = { 
                                 navController.navigate(AppRoutes.Planning.route) {
                                     popUpTo(navController.graph.startDestinationId) {
@@ -111,12 +111,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-private fun isPlanningRoute(route: String?): Boolean {
-    return route == AppRoutes.Planner.route || 
-           route == AppRoutes.Activities.route || 
-           route == AppRoutes.Planning.route
 }
 
 @Composable

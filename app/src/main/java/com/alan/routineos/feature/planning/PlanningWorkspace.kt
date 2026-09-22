@@ -19,7 +19,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.alan.routineos.core.designsystem.component.RoutineScaffold
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.core.navigation.AppRoutes
 import com.alan.routineos.feature.dashboard.DashboardRoute
 
 @Composable
@@ -31,7 +30,7 @@ fun PlanningWorkspace(
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: AppRoutes.Planner.route
+    val currentRoute = navBackStackEntry?.destination?.route ?: "planner"
 
     RoutineScaffold(
         modifier = modifier,
@@ -60,7 +59,7 @@ fun PlanningWorkspace(
                         currentRoute = currentRoute,
                         onNavigateToMode = { route ->
                             navController.navigate(route) {
-                                popUpTo(AppRoutes.Planner.route) {
+                                popUpTo("planner") {
                                     saveState = true
                                 }
                                 launchSingleTop = true
@@ -78,15 +77,15 @@ fun PlanningWorkspace(
         // NavHost will start exactly below the TopBar Column
         NavHost(
             navController = navController,
-            startDestination = AppRoutes.Planner.route,
+            startDestination = "planner",
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            composable(AppRoutes.Planner.route) {
+            composable("planner") {
                 PlanningRoute()
             }
-            composable(AppRoutes.Activities.route) {
+            composable("activities") {
                 DashboardRoute(
                     onAddActivity = onAddActivity,
                     onActivityClick = onActivityClick
@@ -111,14 +110,14 @@ private fun PlanningSegmentedSelector(
     ) {
         SegmentModeButton(
             title = "PLANIFICADOR",
-            isSelected = currentRoute == AppRoutes.Planner.route,
-            onClick = { onNavigateToMode(AppRoutes.Planner.route) },
+            isSelected = currentRoute == "planner",
+            onClick = { onNavigateToMode("planner") },
             modifier = Modifier.weight(1f)
         )
         SegmentModeButton(
             title = "ACTIVIDADES",
-            isSelected = currentRoute == AppRoutes.Activities.route,
-            onClick = { onNavigateToMode(AppRoutes.Activities.route) },
+            isSelected = currentRoute == "activities",
+            onClick = { onNavigateToMode("activities") },
             modifier = Modifier.weight(1f)
         )
     }

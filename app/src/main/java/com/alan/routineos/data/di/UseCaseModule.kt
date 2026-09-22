@@ -118,12 +118,6 @@ object UseCaseModule {
 
     @Provides
     @Singleton
-    fun provideGetSystemsWithStatsUseCase(repository: ActivityRepository): GetSystemsWithStatsUseCase {
-        return GetSystemsWithStatsUseCase(repository)
-    }
-
-    @Provides
-    @Singleton
     fun provideAssignActivityToSystemUseCase(repository: ActivityRepository): AssignActivityToSystemUseCase {
         return AssignActivityToSystemUseCase(repository)
     }
