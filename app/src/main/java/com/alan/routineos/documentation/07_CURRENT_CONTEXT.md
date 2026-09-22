@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/planning` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Iniciar siguiente tarea del Roadmap |
-| **Current EC** | Ninguna |
-| **Status** | `CLOSED` |
-| **Next EC** | [EC-013: Planning Workspace Consolidation] |
+| **Current Goal** | Preparar inicio de EC-014 (Planning Workspace Consolidation) |
+| **Current EC** | [EC-014: Planning Workspace Consolidation](../EC/EC-014_PLANNING_CONSOLIDATION.md) |
+| **Status** | `READY` |
+| **Next EC** | [EC-014: Planning Workspace Consolidation] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/planning/` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
