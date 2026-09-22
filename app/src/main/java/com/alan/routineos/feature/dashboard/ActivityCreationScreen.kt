@@ -48,6 +48,7 @@ fun ActivityCreationRoute(
         uiState = uiState,
         onTitleChanged = viewModel::onTitleChanged,
         onDescriptionChanged = viewModel::onDescriptionChanged,
+        onSystemSelected = viewModel::onSystemSelected,
         onSaveClick = viewModel::saveActivity,
         onBackClick = onBack
     )
@@ -58,6 +59,7 @@ fun ActivityCreationScreen(
     uiState: ActivityCreationUiState,
     onTitleChanged: (String) -> Unit,
     onDescriptionChanged: (String) -> Unit,
+    onSystemSelected: (String?) -> Unit,
     onSaveClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -75,33 +77,21 @@ fun ActivityCreationScreen(
             
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "PROTOCOLO DE CONSTRUCCIÓN",
+                    text = "CONFIGURACIÓN DE ACTIVIDAD",
                     style = RoutineTheme.typography.labelCaps.copy(
                         letterSpacing = 2.sp,
                         fontWeight = FontWeight.Black,
                         color = RoutineTheme.colors.primary.copy(alpha = 0.6f)
                     )
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "V2.4",
-                    style = RoutineTheme.typography.dataLarge.copy(fontSize = 10.sp),
-                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
-                )
             }
-            Text(
-                text = "DEFINICIÓN TÉCNICA DE MOLDE",
-                style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, letterSpacing = 1.sp),
-                color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-
             Spacer(modifier = Modifier.height(40.dp))
 
             ActivityFormFields(
-                title = uiState.title,
+                uiState = uiState,
                 onTitleChanged = onTitleChanged,
-                description = uiState.description,
                 onDescriptionChanged = onDescriptionChanged,
+                onSystemSelected = onSystemSelected,
                 enabled = !uiState.isSaving
             )
             
@@ -111,16 +101,6 @@ fun ActivityCreationScreen(
                 onClick = onSaveClick,
                 isSaving = uiState.isSaving,
                 enabled = uiState.title.isNotBlank()
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "GUARDAR COMO BORRADOR SILENCIOSO",
-                style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, letterSpacing = 1.sp),
-                color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.3f),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -149,10 +129,10 @@ private fun ActivityCreationTopBar(onBackClick: () -> Unit) {
 
 @Composable
 fun ActivityFormFields(
-    title: String,
+    uiState: ActivityCreationUiState,
     onTitleChanged: (String) -> Unit,
-    description: String,
     onDescriptionChanged: (String) -> Unit,
+    onSystemSelected: (String?) -> Unit,
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -166,17 +146,39 @@ fun ActivityFormFields(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "SISTEMA / DOMINIO PRIMARIO",
+                    text = "SISTEMA",
                     style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, letterSpacing = 1.sp),
                     color = Color.White
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Mock System Grid (Technical Tiles)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SystemTile("Carrera", "Deep Work", RoutineTheme.colors.secondary, Modifier.weight(1f))
-                SystemTile("Salud", "Bio-regulación", RoutineTheme.colors.roleEvent, Modifier.weight(1f))
+            // Dynamic System Grid (Technical Tiles)
+            if (uiState.allSystems.isEmpty()) {
+                Text(
+                    "No hay sistemas configurados.",
+                    style = RoutineTheme.typography.bodyBase.copy(fontSize = 12.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f))
+                )
+            } else {
+                uiState.allSystems.chunked(2).forEach { rowSystems ->
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        rowSystems.forEach { system ->
+                            SystemTile(
+                                title = system.title,
+                                sub = system.description.ifBlank { "Área de enfoque" },
+                                color = try { Color(android.graphics.Color.parseColor(system.colorHex)) } catch (e: Exception) { RoutineTheme.colors.primary },
+                                iconKey = system.iconKey,
+                                isSelected = uiState.selectedSystemId == system.id,
+                                onClick = { onSystemSelected(system.id) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (rowSystems.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
         }
 
@@ -189,16 +191,16 @@ fun ActivityFormFields(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "TÍTULO DE LA PLANTILLA",
+                    text = "TÍTULO",
                     style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, letterSpacing = 1.sp),
                     color = Color.White
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
             TextField(
-                value = title,
+                value = uiState.title,
                 onValueChange = onTitleChanged,
-                placeholder = { Text("Gimnasio Hipertrofia // Bloque A", fontSize = 16.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)) },
+                placeholder = { Text("Nombre de la rutina...", fontSize = 16.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
@@ -225,14 +227,14 @@ fun ActivityFormFields(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "PROPÓSITO & FUNCIÓN SISTÉMICA",
+                    text = "PROPÓSITO",
                     style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, letterSpacing = 1.sp),
                     color = Color.White
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
             TextField(
-                value = description,
+                value = uiState.description,
                 onValueChange = onDescriptionChanged,
                 placeholder = { Text("Consolidar adaptación neuromuscular...", fontSize = 14.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.3f)) },
                 modifier = Modifier
@@ -255,15 +257,28 @@ fun ActivityFormFields(
 }
 
 @Composable
-private fun SystemTile(title: String, sub: String, color: Color, modifier: Modifier = Modifier) {
+private fun SystemTile(
+    title: String,
+    sub: String,
+    color: Color,
+    iconKey: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Surface(
-        color = Color(0xFF141B25),
+        color = if (isSelected) color.copy(alpha = 0.1f) else Color(0xFF141B25),
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.2f)),
-        modifier = modifier
+        border = BorderStroke(1.dp, if (isSelected) color else color.copy(alpha = 0.2f)),
+        modifier = modifier.clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Icon(Icons.Default.School, null, tint = color, modifier = Modifier.size(20.dp))
+            Icon(
+                imageVector = com.alan.routineos.feature.dashboard.components.getTechnicalIcon(iconKey),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(20.dp)
+            )
             Spacer(modifier = Modifier.height(12.dp))
             Text(title, style = RoutineTheme.typography.labelCaps.copy(fontSize = 12.sp), color = Color.White)
             Text(sub, style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp), color = color.copy(alpha = 0.6f))
@@ -313,6 +328,7 @@ fun ActivityCreationScreenPreview() {
             uiState = ActivityCreationUiState(title = "Mi nueva actividad"),
             onTitleChanged = {},
             onDescriptionChanged = {},
+            onSystemSelected = {},
             onSaveClick = {},
             onBackClick = {}
         )

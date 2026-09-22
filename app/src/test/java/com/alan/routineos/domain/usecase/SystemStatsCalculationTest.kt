@@ -17,7 +17,7 @@ class SystemStatsCalculationTest {
         val activity = ActivityDefinition("a1", "Gym", "Desc", systemId = "s1")
         val node = ActivityNode("n1", "a1", null, 0, "Push")
         
-        val instance = DailyInstance("di1", ScheduleTarget.Node("n1"), 0L, "Snapshot", "")
+        val instance = DailyInstance("di1", ScheduleTarget.Node("n1"), 0L, "Snapshot", "", status = DailyInstanceStatus.COMPLETED)
         val execution = ActivityExecution("e1", "n1", "di1", 0L, 0L, "{}", "a1", "s1", "Push")
 
         val repository = object : FakeActivityRepository() {

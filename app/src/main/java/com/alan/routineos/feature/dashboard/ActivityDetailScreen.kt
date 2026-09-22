@@ -220,11 +220,7 @@ private fun EngineeringTopBar(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "SYS-MOLD-2026",
-                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, color = RoutineTheme.colors.primary.copy(alpha = 0.5f))
-                        )
-                        Text(
-                            text = "CONFIG // INGENIERÍA",
+                            text = "DETALLE DE ACTIVIDAD",
                             style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, letterSpacing = 1.sp),
                             color = Color.White
                         )
@@ -232,11 +228,6 @@ private fun EngineeringTopBar(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "VER: 4.8.2_STABLE",
-                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)),
-                        modifier = Modifier.padding(end = 12.dp)
-                    )
                     Button(
                         onClick = onSaveClick,
                         colors = ButtonDefaults.buttonColors(containerColor = RoutineTheme.colors.primary),
@@ -331,7 +322,7 @@ private fun NodesList(
             EngineeringSection(
                 number = "01",
                 title = "Contexto",
-                subtitle = "Identidad y propósito del molde"
+                subtitle = "Identidad del molde"
             ) {
                 DetailHeader(
                     description = uiState.activity?.description ?: "",
@@ -347,7 +338,7 @@ private fun NodesList(
             EngineeringSection(
                 number = "02",
                 title = "Horario",
-                subtitle = "Programación técnica de sesiones"
+                subtitle = "Programación de sesiones"
             ) {
                 SchedulingSummarySection(
                     rules = uiState.allActivityRules,
@@ -361,7 +352,7 @@ private fun NodesList(
             EngineeringSection(
                 number = "03",
                 title = "Estructura",
-                subtitle = "Jerarquía de pasos e ingeniería de flujo"
+                subtitle = "Jerarquía de pasos"
             ) {
                 Column {
                     QuickAddNodeForm(
@@ -503,7 +494,7 @@ private fun DetailHeader(
     ) {
         // SUBSISTEMA SECTION
         Text(
-            text = "SUBSISTEMA DE ASIGNACIÓN",
+            text = "SISTEMA",
             style = RoutineTheme.typography.labelCaps.copy(fontSize = 9.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f))
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -517,7 +508,7 @@ private fun DetailHeader(
         
         // PROPÓSITO SECTION
         Text(
-            text = "IDENTIFICADOR DEL MOLDE (PROPÓSITO)",
+            text = "PROPÓSITO",
             style = RoutineTheme.typography.labelCaps.copy(
                 fontSize = 9.sp, 
                 color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
@@ -531,7 +522,7 @@ private fun DetailHeader(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = description.ifBlank { "Sin descripción técnica de propósito registrada." },
+                text = description.ifBlank { "Sin descripción registrada." },
                 style = RoutineTheme.typography.bodyBase.copy(fontSize = 13.sp, lineHeight = 18.sp),
                 color = RoutineTheme.colors.onSurfaceVariant,
                 modifier = Modifier.padding(12.dp)

@@ -222,7 +222,8 @@ class DashboardViewModel @Inject constructor(
             subtitle = def.description,
             statsLine = statsLine,
             summaryItems = visibleSummary,
-            moreDaysCount = moreDays
+            moreDaysCount = moreDays,
+            systemTitle = linkedSystem?.title?.uppercase()
         )
     }
 

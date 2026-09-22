@@ -679,8 +679,8 @@ class PlanningViewModel @Inject constructor(
         val linkedOccurrence = _selectedContextualOccurrence.value
 
         val anchor = entry.root.instance.copy(
-            target = linkedSemantic?.target ?: entry.root.instance.target,
-            associatedInstanceId = linkedOccurrence?.id ?: entry.root.instance.associatedInstanceId,
+            target = linkedSemantic?.target,
+            associatedInstanceId = linkedOccurrence?.id,
             actionProtocol = when (role) {
                 EditorRole.EVENT -> ActionProtocol.TIMER
                 else -> ActionProtocol.CHECK
@@ -745,20 +745,24 @@ class PlanningViewModel @Inject constructor(
 
     private fun findEntry(id: String): HierarchicalTimelineEntry? {
         currentEntries.forEach { entry ->
-            if (entry.root.instance.id == id) return entry
-            val foundChild = findChild(entry.children, id)
-            if (foundChild != null) return foundChild
+            val found = searchEntryRecursively(entry, id)
+            if (found != null) return found
         }
         return null
     }
 
-    private fun findChild(
-        children: List<HierarchicalTimelineEntry>,
+    private fun searchEntryRecursively(
+        entry: HierarchicalTimelineEntry,
         id: String
     ): HierarchicalTimelineEntry? {
-        children.forEach { child ->
-            if (child.root.instance.id == id) return child
-            findChildEntry(child.children, id)?.let { return it }
+        if (entry.root.instance.id == id) return entry
+        entry.children.forEach { child ->
+            val found = searchEntryRecursively(child, id)
+            if (found != null) return found
+        }
+        entry.associatedItems.forEach { assoc ->
+            val found = searchEntryRecursively(assoc, id)
+            if (found != null) return found
         }
         return null
     }

@@ -316,6 +316,7 @@ class PlanningEventFlowTest {
         // 2. Create Task linked to Leg Day
         val task = createInstance("t1", "Test Task").copy(
             actionProtocol = ActionProtocol.CHECK,
+            role = DailyInstanceRole.TASK,
             target = ScheduleTarget.Definition("d1")
         )
         repository._instances.value = listOf(task)
@@ -357,6 +358,7 @@ class PlanningEventFlowTest {
         scheduledDate = LocalDate.now().toEpochDay(),
         titleSnapshot = title,
         descriptionSnapshot = "",
+        plannedStartTime = 720,
         status = DailyInstanceStatus.PLANNED,
         actionProtocol = ActionProtocol.TIMER
     )

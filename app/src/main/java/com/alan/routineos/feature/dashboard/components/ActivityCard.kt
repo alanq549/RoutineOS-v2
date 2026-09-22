@@ -69,7 +69,7 @@ fun ActivityCard(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column {
                         Text(
-                            text = if (activity.iconName == "account_tree") "SIN SISTEMA" else "UNIVERSIDAD", // Mocking from img
+                            text = activity.systemTitle ?: "SIN SISTEMA",
                             style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, color = semanticColor, fontWeight = FontWeight.Bold),
                         )
                         Text(
@@ -104,16 +104,14 @@ fun ActivityCard(
                 )
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // STATS BAR (Stitch High-Density)
-            Row(
-                modifier = Modifier.padding(start = 58.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CardStatBadge("SESIONES", "05")
-                CardStatBadge("BLOQUES", "15")
-                CardStatBadge("CARGA SEM", "27.5h")
+            if (activity.statsLine.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = activity.statsLine.uppercase(),
+                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, letterSpacing = 0.5.sp),
+                    color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(start = 58.dp)
+                )
             }
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -139,10 +137,6 @@ fun ActivityCard(
                                    text = summary.dayName.uppercase(),
                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
                                    color = semanticColor.copy(alpha = 0.9f)
-                               )
-                               Text(
-                                   text = "5.5 hrs", // Mocking from img
-                                   style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f))
                                )
                            }
                            
@@ -180,12 +174,6 @@ fun ActivityCard(
                                        overflow = TextOverflow.Ellipsis,
                                        modifier = Modifier.weight(1f)
                                    )
-                                   
-                                   Text(
-                                       text = "07:00 - 10:00", // Mocking from img
-                                       style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp),
-                                       color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
-                                   )
                                }
                            }
                        }
@@ -220,7 +208,7 @@ fun ActivityCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Technical Control: ABRIR INGENIERÍA
+                // Technical Control: ABRIR
                 Surface(
                     onClick = onClick,
                     color = RoutineTheme.colors.primary,
@@ -232,7 +220,7 @@ fun ActivityCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "ABRIR INGENIERÍA",
+                            text = "ABRIR",
                             style = RoutineTheme.typography.labelCaps.copy(fontSize = 12.sp, fontWeight = FontWeight.Black),
                             color = Color.Black
                         )
@@ -245,39 +233,8 @@ fun ActivityCard(
                         )
                     }
                 }
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Duplicate",
-                        tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(20.dp))
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Menu",
-                        tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
             }
         }
-    }
-}
-
-@Composable
-private fun CardStatBadge(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = RoutineTheme.typography.labelCaps.copy(fontSize = 8.sp, color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.5f))
-        )
-        Text(
-            text = value,
-            style = RoutineTheme.typography.dataLarge.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
-            color = Color.White
-        )
     }
 }
 

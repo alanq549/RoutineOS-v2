@@ -10,7 +10,8 @@ data class ActivityCardModel(
     val subtitle: String,
     val statsLine: String = "",
     val summaryItems: List<ActivitySummaryDay> = emptyList(),
-    val moreDaysCount: Int = 0
+    val moreDaysCount: Int = 0,
+    val systemTitle: String? = null
 )
 
 data class ActivitySummaryDay(
