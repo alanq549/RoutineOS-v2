@@ -3,22 +3,24 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `develop` |
+| **Current Branch** | `feature/ec-re-014-project-cleanup` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Preparar inicio de EC-014 (Planning Workspace Consolidation) |
-| **Current EC** | [EC-014: Planning Workspace Consolidation](../EC/EC-014_PLANNING_CONSOLIDATION.md) |
-| **Status** | `READY` |
+| **Current Goal** | Saneamiento y limpieza de código huérfano finalizados |
+| **Current EC** | [EC-RE-014: Project Cleanup & Consistency](../EC/EC-RE-014_PROJECT_CLEANUP.md) |
+| **Status** | `CLOSED` |
 | **Next EC** | [EC-014: Planning Workspace Consolidation] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `develop` |
+| **Working Directory** | `feature/ec-re-014-project-cleanup` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
 ---
 
 ## Notas Inmediatas
-- **EC-RE-012 CERRADA**: Planificador (Planner) MVP interactivo y preventivo verificado.
-- **EC-RE-013 CERRADA**: Refinamiento de Catálogo y Creador de Actividades finalizado y verificado (PASS en auditoría técnica).
-- **Siguiente paso**: Iniciar la siguiente Engineering Card del roadmap: `EC-013: Planning Workspace Consolidation`.
-
-
+- **EC-RE-014 CERRADA (PASS)**: Se verificó la eliminación completa de código muerto y artefactos huérfanos:
+  - Eliminado el paquete `feature/system` (`FakeSystemRepository.kt` y `SystemModels.kt`).
+  - Eliminado el caso de uso y test obsoleto `ResolveTimelineForDateRange.kt`.
+  - Eliminado el caso de uso y proveedor `GetSystemsWithStatsUseCase.kt` y su test `SystemStatsCalculationTest.kt`.
+  - Limpiadas las rutas obsoletas `AppRoutes.Planner`, `AppRoutes.Activities` e `isPlanningRoute()` en `MainActivity.kt`.
+  - Actualizada la documentación en `09_MOCK_DATA_STATUS.md` reflejando el esquema real Room DB v10 con migraciones y eliminación total de repositorios fake.
+  - Informe de auditoría finalizado en `AUDITS/AUDIT_EC-RE-014_PROJECT_CLEANUP.md` con dictamen PASS.
