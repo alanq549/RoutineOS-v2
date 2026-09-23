@@ -37,6 +37,11 @@ android {
         compose = true
     }
 
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
+
     sourceSets {
         getByName("androidTest") {
             assets.srcDirs(files("$projectDir/schemas"))

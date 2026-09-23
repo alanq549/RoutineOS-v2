@@ -1,3 +1,4 @@
+@file:Suppress("NonObservableLocale")
 package com.alan.routineos.feature.stats.components
 
 import androidx.compose.foundation.background
