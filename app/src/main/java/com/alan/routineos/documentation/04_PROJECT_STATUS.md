@@ -29,7 +29,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-011 | Intelligence Dashboard | High | Medium | AI Agent | EC-RE-010 | CLOSED | PASS. Visual analytics, weekly rhythm and adherence charts implemented. |
 | EC-RE-012 | Planificador (Planner) MVP | High | Large | AI Agent | EC-RE-011 | CLOSED | PASS. Interactive timeline with Move, Skip and Catalog integration. |
 | EC-RE-013 | Systems & Activities Refinement | High | Medium | AI Agent | EC-RE-012 | CLOSED | PASS. Real system selection in Activity Builder, dynamic system titles, no UI mocks, 80/80 tests passing. |
-| EC-RE-014 | Project Cleanup & Consistency | Medium | Small | AI Agent | EC-RE-013 | AUDIT_PENDING | Removal of orphan files, dead use-cases, navigation residue and doc updates. |
+| EC-RE-014 | Project Cleanup & Consistency | Medium | Small | AI Agent | EC-RE-013 | CLOSED | PASS. Removal of orphan files, dead use-cases, navigation residue and doc updates. |
 | EC-013 | Planning Workspace Consolidation | High | Large | AI Agent | EC-RE-013 | READY | Unify Planning workspace, bottom sheet catalog, remove sub-tabs. |
 
 ---
