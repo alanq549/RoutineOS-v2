@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/ec-re-014-project-cleanup` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
 | **Current Goal** | Saneamiento y limpieza de código huérfano finalizados |
 | **Current EC** | [EC-RE-014: Project Cleanup & Consistency](../EC/EC-RE-014_PROJECT_CLEANUP.md) |
 | **Status** | `CLOSED` |
 | **Next EC** | [EC-014: Planning Workspace Consolidation] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/ec-re-014-project-cleanup` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
