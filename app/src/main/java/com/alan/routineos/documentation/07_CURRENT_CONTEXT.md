@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/ec-re-015-today-refinement` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Finalizar cierre de EC-RE-015 e iniciar EC-014 |
-| **Current EC** | [EC-RE-015: Today Execution Surface Refinement](../EC/EC-RE-015_TODAY_EXECUTION_SURFACE_REFINEMENT.md) |
-| **Status** | `CLOSED` |
+| **Current Goal** | Preparar inicio de EC-014 (Planning Workspace Consolidation) |
+| **Current EC** | [EC-014: Planning Workspace Consolidation](../EC/EC-014_PLANNING_CONSOLIDATION.md) |
+| **Status** | `READY` |
 | **Next EC** | [EC-014: Planning Workspace Consolidation] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/ec-re-015-today-refinement` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
