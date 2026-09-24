@@ -514,8 +514,8 @@ private fun SegmentedRoleSelector(
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF0B0E14))
-            .border(1.dp, Color(0xFF1E2332), RoundedCornerShape(14.dp))
+            .background(RoutineTheme.colors.background)
+            .border(1.dp, RoutineTheme.colors.border, RoundedCornerShape(14.dp))
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -825,7 +825,7 @@ private fun ReminderPill(
 ) {
     Surface(
         onClick = onClick,
-        color = if (isSelected) accentColor.copy(alpha = 0.15f) else Color(0xFF141722),
+        color = if (isSelected) accentColor.copy(alpha = 0.15f) else RoutineTheme.colors.surface2,
         shape = RoundedCornerShape(12.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) accentColor.copy(alpha = 0.4f) else RoutineTheme.colors.border.copy(alpha = 0.1f))
     ) {
