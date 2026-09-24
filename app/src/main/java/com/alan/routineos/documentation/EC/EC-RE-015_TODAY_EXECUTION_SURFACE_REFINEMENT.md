@@ -5,7 +5,7 @@ phase: 6
 priority: High
 effort: Medium
 owner: AI Agent
-status: USER_REVIEW_PENDING
+status: CLOSED
 depends_on: [EC-RE-014]
 branch: feature/ec-re-015-today-refinement
 audit: Approved
