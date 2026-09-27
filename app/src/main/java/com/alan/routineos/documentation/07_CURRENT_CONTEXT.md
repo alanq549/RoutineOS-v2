@@ -3,24 +3,25 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `develop` |
+| **Current Branch** | `feature/ec-re-016-domain-analysis` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Preparar inicio de EC-014 (Planning Workspace Consolidation) |
-| **Current EC** | [EC-014: Planning Workspace Consolidation](../EC/EC-014_PLANNING_CONSOLIDATION.md) |
-| **Status** | `READY` |
-| **Next EC** | [EC-014: Planning Workspace Consolidation] |
+| **Current Goal** | Análisis de dominio formal sobre el Elemento Planificable Universal |
+| **Current EC** | [EC-RE-016: Plannable Element Domain Analysis](../EC/EC-RE-016_PLANNABLE_ELEMENT_DOMAIN_ANALYSIS.md) |
+| **Status** | `AUDIT_PENDING` |
+| **Next EC** | [EC-013: Planning Workspace Consolidation] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `develop` |
+| **Working Directory** | `feature/ec-re-016-domain-analysis` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
 ---
 
 ## Notas Inmediatas
-- **EC-RE-015 CERRADA**: Auditoría técnica `PASS` y Validación Manual `PASS` (Aprobada por el Project Lead).
-  - Espina temporal unificada en un único eje global neutro continuo (`TodayTimeline`).
-  - Normalización de tarjetas (`Activity`, `Task`, `Reminder`) alineadas sobre la espina global sin duplicar rieles.
-  - Accordion sintetizado para `ContextFooter` (`+ N tareas · + 1 nota`) expandible bajo demanda.
-  - Reemplazados todos los colores Hex hardcodeados por tokens de `RoutineTheme.colors`.
-  - Suite de pruebas unitarias y compilación 100% verde (76/76 tests pasando).
-  - Cero cambios en el dominio, DB o lógica de ejecución.
+- **EC-RE-015 CERRADA**: Refinamiento de la superficie de ejecución de Today verificado y cerrado.
+- **EC-RE-016 COMPLETADA (`AUDIT_PENDING`)**: Análisis conceptual y de dominio finalizado:
+  - Documento formalizado en `EC-RE-016_PLANNABLE_ELEMENT_DOMAIN_ANALYSIS.md`.
+  - Confirmado `DailyInstance` como núcleo universal operativo sin alteración de esquema de DB.
+  - Formalizadas las dimensiones de `role` (`ACTIVITY`, `TASK`, `REMINDER`) y `actionProtocol` (`TIMER`, `CHECK`).
+  - Delimitadas las entidades externas: `ActivityDefinition`, `BacklogItem`, `Deadline`, `Note`.
+  - Distinguidos explícitamente HECHOS, HIPÓTESIS, DECISIONES y PREGUNTAS ABIERTAS.
+  - Cero cambios en código de producción, base de datos o tests.
