@@ -5,10 +5,10 @@ phase: 6
 priority: High
 effort: Medium
 owner: AI Agent
-status: AUDIT_PENDING
+status: CLOSED
 depends_on: [EC-RE-015]
 branch: feature/ec-re-016-domain-analysis
-audit: Pending
+audit: PASS
 created: 2026-09-06
 updated: 2026-09-06
 ---
@@ -27,17 +27,22 @@ A lo largo de la evolución de RoutineOS v2, se incorporaron conceptos como `Act
 
 ### **Conclusión Principal del Análisis**
 1. **`DailyInstance` es el Núcleo Operativo Universal**: Toda unidad de intención operativa que ocupa o solicita un lugar en el tiempo (fecha, bloque horario o lista sin horario para un día) se representa de forma unificada mediante `DailyInstance`.
-2. **Diferenciación por Rol y Protocolo**: `DailyInstance` no se duplica en múltiples entidades para eventos, tareas o recordatorios. En su lugar, utiliza dos dimensiones ortogonales:
+2. **Diferenciación por Rol y Protocolo**: `DailyInstance` no se duplica en múltiples entidades para eventos, tareas o recordatorios. No existen `TaskEntity` ni `ReminderEntity`. En su lugar, utiliza dos dimensiones ortogonales:
    - **`role`** (`ACTIVITY`, `TASK`, `REMINDER`): Define la naturaleza funcional del elemento.
    - **`actionProtocol`** (`TIMER`, `CHECK`): Define el mecanismo de interacción/ejecución.
-3. **Entidades Externas Especializadas**: Permanecen fuera de `DailyInstance` los conceptos que representan moldes/reutilización (`ActivityDefinition`), contenedores sin fecha (`BacklogItem`), restricciones temporales absolutas (`Deadline`), y anotaciones textuales (`Note`).
+3. **Contratos de Ejecución**:
+   - `ACTIVITY` + `TIMER` ➔ Genera `ActivityExecution`.
+   - `TASK` + `CHECK` ➔ Genera `ActivityExecution`.
+   - `REMINDER` + `CHECK` ➔ **NO** genera `ActivityExecution`.
+   - `Note`, `Deadline` y `BacklogItem` **NO** generan `ActivityExecution`.
+4. **Entidades Externas Especializadas**: Permanecen fuera de `DailyInstance` los conceptos que representan moldes/reutilización (`ActivityDefinition`), contenedores sin fecha (`BacklogItem`), restricciones temporales absolutas (`Deadline`), y anotaciones textuales (`Note`).
 
 ---
 
 ## 2. Definition of Plannable Element (Elemento Planificable)
 
 - **[HECHO]**: RoutineOS v2 separa conceptual y físicamente el espacio de intención e intervención futura (**Planning**) del espacio de ejecución y registro en tiempo real (**Today**).
-- **[DECISIÓN - DEC-01]**: Se define como **Elemento Planificable (*Plannable Element*)** a cualquier unidad de intención que pueda ser asignada, proyectada, intervenida o creada para una fecha determinada (`scheduledDate`).
+- **[DECISIÓN - DEC-01]**: Se define como **Elemento Planificable (*Plannable Element*)** a cualquier unidad de intención conceptual que pueda ser asignada, proyectada, intervenida o creada para una fecha determinada (`scheduledDate`). No se trata de una interfaz o clase de código Kotlin nueva, sino de la categoría semántica que abarca las ocurrencias en agenda.
 
 ### **Atributos Fundamentales de un Elemento Planificable**
 Un elemento es planificable si posee:
@@ -54,88 +59,63 @@ Un elemento es planificable si posee:
 
 ## 3. Analysis by Concept (Análisis Concepto por Concepto)
 
-Analizamos individualmente los 7 conceptos contra las dimensiones clave del sistema:
-
 ### **3.1 Activity (Actividad Recurrente / Rutina)**
 - **[HECHO]**: Se define como plantilla en `ActivityDefinition` + `ActivityNode` y se materializa en días específicos como `DailyInstance`.
+- **Contrato de Ejecución**: `ACTIVITY` + `TIMER` ➔ Genera `ActivityExecution`.
 - **¿Necesita entidad propia?**: Sí para el molde (`ActivityDefinition` + `ActivityNode`), pero su ocurrencia diaria es una `DailyInstance` (`role = ACTIVITY`).
 - **¿Reutilizable?**: Sí, vía `ActivityDefinition`.
 - **¿Necesita `ScheduleRule`?**: Sí para la generación recurrente.
-- **¿Puede tener hijos?**: Sí. Tiene estructura interna (`ActivityNode`) y puede alojar contexto asociado (`associatedInstanceId`).
+- **¿Puede tener hijos?**: Sí. Tiene estructura interna de pasos (`ActivityNode`) y puede alojar contexto asociado (`associatedInstanceId`).
 - **¿Aparece en Planning y Today?**: Sí.
-- **¿Genera `ActivityExecution` e historial?**: Sí, la ejecución registra los metadatos y tiempos reales.
-- **Temporalidad**: Típicamente `BLOCK` o `UNSCHEDULED`.
 
 ### **3.2 Spontaneous Event (Evento Espontáneo / Ad-Hoc)**
 - **[HECHO]**: Es un evento creado sobre la marcha en Today o Planning sin depender de una `ActivityDefinition` ni de una `ScheduleRule`.
+- **Origen/Naturaleza**: `isAdHoc = true` (campo booleano existente). No existen campos `isSpontaneous` ni `isOneShot`, ni un rol `SPONTANEOUS_EVENT`.
+- **Contrato de Ejecución**: Mantiene el protocolo de su rol (`ACTIVITY` + `TIMER` o `TASK` + `CHECK`) ➔ Genera `ActivityExecution` al completarse.
 - **¿Necesita entidad propia?**: No. Se representa como `DailyInstance` con `isAdHoc = true` y `target = null`.
 - **¿Reutilizable?**: No (ocurrencia única).
 - **¿Necesita `ScheduleRule`?**: No.
-- **¿Puede tener hijos?**: Puede tener ítems asociados contextualmente (`associatedInstanceId`) y notas.
-- **¿Aparece en Planning y Today?**: Sí.
-- **¿Genera `ActivityExecution` e historial?**: Sí, al completarse registra su ejecución.
-- **Temporalidad**: `BLOCK`, `POINT` o `UNSCHEDULED`.
 
 ### **3.3 Task (Tarea Puntual)**
-- **[HECHO]**: Acción de completado binario. Puede existir de forma independiente o estar vinculada a una Actividad o a un `BacklogItem`.
-- **¿Necesita entidad propia?**: No. Se representa como `DailyInstance` con `role = TASK` y `actionProtocol = CHECK`.
-- **¿Reutilizable?**: No por sí misma (es una instancia única para un día).
-- **¿Necesita `ScheduleRule`?**: No.
-- **¿Puede tener hijos?**: No posee nodos estructurales (`Task != ActivityNode`).
-- **¿Aparece en Planning y Today?**: Sí.
-- **¿Genera `ActivityExecution` e historial?**: Sí, la acción de completado registra el evento de ejecución.
-- **Temporalidad**: `POINT` o `UNSCHEDULED` (raramente `BLOCK`).
+- **[HECHO]**: Acción de completado binario. Puede existir de forma independiente o estar vinculada contextualmente a una Actividad o a un `BacklogItem`.
+- **Contrato de Ejecución**: `TASK` + `CHECK` ➔ Genera `ActivityExecution`.
+- **Separación de Invariante**: `ActivityNode != Task != Reminder`. Una Tarea NO es un sub-nodo estructural (`ActivityNode`) de una Actividad.
+- **¿Necesita entidad propia?**: No (no existe `TaskEntity`). Se representa como `DailyInstance` con `role = TASK` y `actionProtocol = CHECK`.
 
 ### **3.4 Reminder (Recordatorio / Alerta)**
 - **[HECHO]**: Aviso puntual de atención para una hora fija o relativa.
-- **¿Necesita entidad propia?**: No. Se representa como `DailyInstance` con `role = REMINDER`, `actionProtocol = CHECK` y campos `reminderAbs`/`reminderRel`.
-- **¿Reutilizable?**: No.
-- **¿Necesita `ScheduleRule`?**: No.
-- **¿Puede tener hijos?**: No.
-- **¿Aparece en Planning y Today?**: Sí (como banner/alerta visual).
-- **¿Genera `ActivityExecution` e historial?**: No requiere trazabilidad de ejecución compleja; cambia su estado en `DailyInstanceStatus`.
-- **Temporalidad**: `POINT`.
+- **Contrato de Ejecución**: `REMINDER` + `CHECK` ➔ **NO** genera `ActivityExecution`. Solo cambia su estado en `DailyInstanceStatus`.
+- **Separación de Invariante**: `Reminder != ActivityNode`.
+- **¿Necesita entidad propia?**: No (no existe `ReminderEntity`). Se representa como `DailyInstance` con `role = REMINDER`, `actionProtocol = CHECK` y campos `reminderAbs`/`reminderRel`.
 
 ### **3.5 Note (Nota / Anotación Textual)**
 - **[HECHO]**: Texto libre adjunto a una definición, elemento de backlog, instancia u ocurrencia.
+- **Contrato de Ejecución**: Note **NO** genera `ActivityExecution`.
 - **¿Necesita entidad propia?**: Sí (`Note` / `NoteEntity`).
-- **¿Reutilizable?**: No, es una anotación contextual vinculada mediante llaves foráneas (`definitionId`, `backlogId`, `instanceId`, `executionId`).
-- **¿Necesita `ScheduleRule`?**: No.
-- **¿Puede tener hijos?**: No.
-- **¿Aparece en Planning y Today?**: Aparece dentro de las tarjetas del elemento al que está adjunta.
-- **¿Genera `ActivityExecution`?**: No.
 
 ### **3.6 Deadline (Fecha Límite)**
 - **[HECHO]**: Restricción temporal objetiva (`dueAt` Epoch Ms) para una fecha u hora límite.
+- **Contrato de Ejecución**: Deadline **NO** genera `ActivityExecution`.
 - **¿Necesita entidad propia?**: Sí (`Deadline` / `DeadlineEntity`).
-- **¿Reutilizable?**: No, es un marcador de restricción asociado a un `definitionId`, `backlogId` o `instanceId`.
-- **¿Necesita `ScheduleRule`?**: No.
-- **¿Puede tener hijos?**: No.
-- **¿Aparece en Planning y Today?**: Se renderiza como un indicador visual de límite / advertencia de tiempo restante.
-- **¿Genera `ActivityExecution`?**: No.
 
 ### **3.7 Pending Item / BacklogItem (Bolsa de Pendientes)**
-- **[HECHO]**: Ítem que no tiene fecha asignada aún. Es un estanque de intenciones sin anclaje temporal diario.
+- **[HECHO]**: Ítem que no tiene fecha asignada aún. Es una intención sin anclaje temporal diario.
+- **Contrato de Ejecución**: BacklogItem **NO** genera `ActivityExecution` directamente. Cuando se instancia en un día determinado como `DailyInstance`, la completación de la `DailyInstance` genera la ejecución y resuelve el `BacklogItem`.
 - **¿Necesita entidad propia?**: Sí (`BacklogItem` / `BacklogItemEntity`).
-- **¿Reutilizable?**: Puede ser instanciado en un día determinado creando una `DailyInstance` vinculada vía `backlogId`.
-- **¿Necesita `ScheduleRule`?**: No.
-- **¿Puede tener hijos?**: No.
-- **¿Aparece en Planning y Today?**: Aparece en el panel de catálogo / pendientes de Planning. Cuando se asigna a un día, pasa al timeline como `DailyInstance`.
-- **¿Genera `ActivityExecution`?**: Al completarse la `DailyInstance` instanciada desde el backlog.
 
 ---
 
 ## 4. Behavioral Dimensions (Matriz Comparativa de Comportamiento)
 
-| Concepto | Entidad DB Principal | Mold / Template | Rol (`DailyInstanceRole`) | Protocolo (`ActionProtocol`) | Riel Temporal | Hijos Estructurales |
+| Concepto | Entidad DB Principal | Mold / Template | Rol (`DailyInstanceRole`) | Protocolo (`ActionProtocol`) | Genera `ActivityExecution` | Hijos Estructurales |
 |---|---|---|---|---|---|---|
-| **Activity** | `DailyInstanceEntity` | `ActivityDefinition` | `ACTIVITY` | `TIMER` | `BLOCK` / `UNSCHEDULED` | Sí (`ActivityNode`) |
-| **Spontaneous Event** | `DailyInstanceEntity` | Ninguno (Ad-hoc) | `ACTIVITY` / `TASK` | `TIMER` / `CHECK` | `BLOCK` / `POINT` | No |
-| **Task** | `DailyInstanceEntity` | Ninguno / `BacklogItem` | `TASK` | `CHECK` | `POINT` / `UNSCHEDULED` | No |
-| **Reminder** | `DailyInstanceEntity` | Ninguno | `REMINDER` | `CHECK` | `POINT` | No |
-| **Note** | `NoteEntity` | N/A (Anotación) | N/A | N/A | N/A | No |
-| **Deadline** | `DeadlineEntity` | N/A (Restricción) | N/A | N/A | N/A | No |
-| **BacklogItem** | `BacklogItemEntity` | Contenedor sin fecha | N/A | N/A | N/A | No |
+| **Activity** | `DailyInstanceEntity` | `ActivityDefinition` | `ACTIVITY` | `TIMER` | **SÍ** | Sí (`ActivityNode`) |
+| **Spontaneous Event** | `DailyInstanceEntity` | Ninguno (Ad-hoc) | `ACTIVITY` / `TASK` | `TIMER` / `CHECK` | **SÍ** | No |
+| **Task** | `DailyInstanceEntity` | Ninguno / `BacklogItem` | `TASK` | `CHECK` | **SÍ** | No |
+| **Reminder** | `DailyInstanceEntity` | Ninguno | `REMINDER` | `CHECK` | **NO** | No |
+| **Note** | `NoteEntity` | N/A (Anotación) | N/A | N/A | **NO** | No |
+| **Deadline** | `DeadlineEntity` | N/A (Restricción) | N/A | N/A | **NO** | No |
+| **BacklogItem** | `BacklogItemEntity` | Contenedor sin fecha | N/A | N/A | **NO** (vía Instance) | No |
 
 ---
 
@@ -174,7 +154,7 @@ Para evitar ambigüedades jerárquicas y mezclas estructurales, se preservan est
    - Define la relación padre-hijo entre instancias de la misma actividad/árbol.
    - **Regla Estricta**: `Task != ActivityNode`. Una Tarea NO es un sub-nodo de una Actividad.
 
-2. **`associatedInstanceId` = Asociación Contextual Explicita**:
+2. **`associatedInstanceId` = Asociación Contextual Explícita**:
    - Permite vincular una Tarea, Recordatorio o Evento a una ocurrencia concreta sin alterar la jerarquía de la rutina.
    - **Regla Estricta**: `associatedInstanceId != parentInstanceId`.
 
@@ -186,8 +166,8 @@ Para evitar ambigüedades jerárquicas y mezclas estructurales, se preservan est
 ## 6. ActivityDefinition vs DailyInstance
 
 ### **[HECHO]**:
-- `ActivityDefinition` + `ActivityNode` representan el **molde / diseño abstracto** de una rutina.
-- `DailyInstance` representa la **materialización / ocurrencia real** para un día específico.
+- `ActivityDefinition` + `ActivityNode` representan la **estructura del molde / diseño abstracto** de una rutina.
+- `DailyInstance` representa la **ocurrencia temporal concreta** para un día específico.
 
 ### **Matriz de Diferenciación**:
 ```text
@@ -207,10 +187,10 @@ Para evitar ambigüedades jerárquicas y mezclas estructurales, se preservan est
 
 ## 7. BacklogItem (Bolsa de Pendientes)
 
-- **[HECHO]**: `BacklogItem` representa intenciones que el usuario desea realizar pero aún no ha decidido cuándo.
+- **[HECHO]**: `BacklogItem` representa intenciones sin fecha asignada.
 - **[DECISIÓN - DEC-04]**:
   - `BacklogItem` es una entidad fuera de `DailyInstance` porque no posee un `scheduledDate`.
-  - Cuando el usuario arrastra o asigna un `BacklogItem` a un día en Planning o Today, el sistema **crea una `DailyInstance`** con `backlogId = backlogItem.id`.
+  - Cuando el usuario asigna un `BacklogItem` a un día en Planning o Today, el sistema **crea una `DailyInstance`** con `backlogId = backlogItem.id`.
   - Completar la `DailyInstance` en Today actualiza el estado del `BacklogItem` a `RESOLVED`.
 
 ---
@@ -236,7 +216,7 @@ Para evitar ambigüedades jerárquicas y mezclas estructurales, se preservan est
 ## 9. Planning vs Today
 
 ### **[HECHO]**:
-- **Planning** opera sobre la **intención futura**. Modifica `DailyInstance` en estado `PLANNED` o `MODIFIED`, crea excepciones (`ScheduleException`) y manipula el backlog. **Planning nunca genera `ActivityExecution`**.
+- **Planning** opera sobre la **organización e intención temporal futura**. Modifica `DailyInstance` en estado `PLANNED` o `MODIFIED`, crea excepciones (`ScheduleException`) y manipula el backlog. **Planning nunca genera `ActivityExecution`**.
 - **Today** opera sobre la **ejecución en tiempo real**. Registra la realidad, completa instancias, captura metadatos cuantitativos (`metadataJson`) y escribe registros en `ActivityExecution`.
 
 ### **Tabla de Responsabilidades por Espacio**:
@@ -277,7 +257,7 @@ data class DailyInstance(
     val role: DailyInstanceRole = DailyInstanceRole.ACTIVITY,   // ACTIVITY / TASK / REMINDER
     val reminderAbs: Int? = null,
     val reminderRel: Int? = null,
-    val associatedInstanceId: String? = null // Asociación Contextual Explicita
+    val associatedInstanceId: String? = null // Asociación Contextual Explícita
 )
 ```
 
@@ -291,29 +271,19 @@ data class DailyInstance(
 
 ---
 
-## 12. Proposed Domain Contract (Contrato de Dominio Propuesto)
+## 12. Proposed Domain Contract (Contrato Conceptual Propuesto)
 
-Se formaliza el siguiente contrato conceptual para el manejo de elementos planificables en RoutineOS v2:
+Se formaliza el siguiente contrato conceptual (definición de arquitectura, no una interfaz nueva en código):
 
-```kotlin
-/**
- * Representación unificada de cualquier unidad de intención asignable en Planning o Today.
- */
-interface PlannableElement {
-    val id: String
-    val scheduledDate: Long
-    val title: String
-    val role: DailyInstanceRole
-    val actionProtocol: ActionProtocol
-    val temporalFormat: TemporalFormat
-    val isAdHoc: Boolean
-}
+```text
+Contrato Conceptual: Elemento Planificable Universal
 
-enum class TemporalFormat {
-    BLOCK,       // Rango de tiempo explícito
-    POINT,       // Momento puntual
-    UNSCHEDULED  // Asignado al día sin hora fija
-}
+Cualquier ocurrencia en agenda posee:
+1. Anclaje temporal (scheduledDate)
+2. Rol funcional (DailyInstanceRole: ACTIVITY, TASK, REMINDER)
+3. Protocolo de acción (ActionProtocol: TIMER, CHECK)
+4. Formato de ocupación temporal (BLOCK, POINT, UNSCHEDULED)
+5. Origen (isAdHoc: Boolean)
 ```
 
 ---
@@ -328,7 +298,7 @@ enum class TemporalFormat {
 | **DEC-04** | Integración de Backlog | `BacklogItem` vive fuera de `DailyInstance` hasta ser asignado a una fecha. | Mantiene limpia la tabla de agenda diaria sin contaminarla con pendientes sin fecha. |
 | **DEC-05** | Formato Temporal | Se deduce de `plannedStartTime`, `plannedEndTime` y `plannedDurationMinutes`. | No requiere nuevos enums ni columnas en base de datos. |
 | **DEC-06** | Rol vs Protocolo | `role` (`ACTIVITY`/`TASK`/`REMINDER`) es independiente de `actionProtocol` (`TIMER`/`CHECK`). | Permite tareas con temporizador o actividades con completado binario. |
-| **DEC-07** | Notas y Límite | `Note` y `Deadline` permanecen como entidades externas relacionales. | Preserva la responsabilidad única de cada entidad. |
+| **DEC-07** | Notas, Límite y Ejecución | `Note`, `Deadline` y `BacklogItem` no generan `ActivityExecution`. | Preserva la responsabilidad única de cada entidad. |
 | **DEC-08** | Cero Cambios de Código en EC-16 | Esta EC no modifica ningún archivo de código fuente del proyecto. | Garantiza un análisis formal riguroso antes de cualquier implementación. |
 
 ---
