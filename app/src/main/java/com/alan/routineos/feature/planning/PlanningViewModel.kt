@@ -15,6 +15,7 @@ import com.alan.routineos.domain.model.PendingMove
 import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.domain.model.TemporalImpact
 import com.alan.routineos.domain.repository.ActivityRepository
+import com.alan.routineos.domain.usecase.AddActivityToDayUseCase
 import com.alan.routineos.domain.usecase.DailyAction
 import com.alan.routineos.domain.usecase.GetHierarchicalTimelineUseCase
 import com.alan.routineos.domain.usecase.RegisterDailyActionUseCase
@@ -55,7 +56,8 @@ class PlanningViewModel @Inject constructor(
     private val repository: ActivityRepository,
     private val getHierarchicalTimelineUseCase: GetHierarchicalTimelineUseCase,
     private val registerDailyActionUseCase: RegisterDailyActionUseCase,
-    private val simulateMoveUseCase: SimulateMoveUseCase
+    private val simulateMoveUseCase: SimulateMoveUseCase,
+    private val addActivityToDayUseCase: AddActivityToDayUseCase
 ) : ViewModel() {
 
     private val localeES = Locale.forLanguageTag("es-ES")
@@ -741,6 +743,16 @@ class PlanningViewModel @Inject constructor(
 
     fun jumpToDate(date: LocalDate) {
         _selectedDate.value = date
+    }
+
+    fun onAddActivityFromCatalog(activityId: String) {
+        viewModelScope.launch {
+            val def = repository.getActivityDefinitionById(activityId) ?: return@launch
+            addActivityToDayUseCase(
+                activity = def,
+                date = _selectedDate.value
+            )
+        }
     }
 
     private fun findEntry(id: String): HierarchicalTimelineEntry? {

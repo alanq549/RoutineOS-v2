@@ -7,6 +7,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun PlanningRoute(
+    onNavigateToActivityCreation: () -> Unit = {},
     viewModel: PlanningViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -37,6 +38,8 @@ fun PlanningRoute(
         onUpdateDraftReminder = viewModel::onUpdateDraftReminder,
         onSetTimeToNow = viewModel::onSetTimeToNow,
         onConfirmPendingMove = viewModel::onConfirmPendingMove,
-        onCancelPendingMove = viewModel::onCancelPendingMove
+        onCancelPendingMove = viewModel::onCancelPendingMove,
+        onAddActivityFromCatalog = viewModel::onAddActivityFromCatalog,
+        onNavigateToActivityCreation = onNavigateToActivityCreation
     )
 }

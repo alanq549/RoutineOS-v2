@@ -84,7 +84,8 @@ class PlanningNavigationTest {
             repository = repository,
             getHierarchicalTimelineUseCase = GetHierarchicalTimelineUseCase(repository, ResolveTimelineUseCase(repository, TimelineResolutionEngine(), ConflictDetectorUseCase(), SuggestionEngine(ConflictDetectorUseCase()))),
             registerDailyActionUseCase = RegisterDailyActionUseCase(repository, MaterializeInstanceUseCase(repository)),
-            simulateMoveUseCase = SimulateMoveUseCase(ConflictDetectorUseCase())
+            simulateMoveUseCase = SimulateMoveUseCase(ConflictDetectorUseCase()),
+            addActivityToDayUseCase = AddActivityToDayUseCase(repository)
         )
     }
 
