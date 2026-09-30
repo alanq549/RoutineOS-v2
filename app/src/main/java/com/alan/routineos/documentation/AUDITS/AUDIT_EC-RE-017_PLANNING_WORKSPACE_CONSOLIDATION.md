@@ -2,20 +2,20 @@
 ec_id: EC-RE-017
 ronda: 1
 fecha: 2026-09-06
-resultado: AUDIT_PENDING
+resultado: PASS
 ---
 
 # Auditoría Técnica: EC-RE-017 - Planning Workspace Consolidation
 
 **Fecha:** 2026-09-06
-**Estado:** AUDIT_PENDING
+**Estado:** PASS (Aprobado)
 **Criterio de Evaluación:** Consolidación de Navegación, Integración Contextual del Catálogo, Invariantes de Dominio, Compilación y Suite de Pruebas
 
 ## 1. Archivos Modificados / Creados
 
 ### Refactorización de Navegación y UI
 - [x] **[PlanningWorkspace.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/planning/PlanningWorkspace.kt)**: Eliminado el `NavHost` anidado y la barra de sub-pestañas `PlanningSegmentedSelector`. Renders `PlanningRoute()` directamente en una superficie unificada.
-- [x] **[PlanningScreen.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/planning/PlanningScreen.kt)**: Implementado el menú Speed Dial en el FAB principal ("Añadir de Catálogo" y "Evento Espontáneo") e integrado el catálogo en un `ModalBottomSheet` contextual.
+- [x] **[PlanningScreen.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/planning/PlanningScreen.kt)**: Implementado el menú Speed Dial en el FAB principal ("AÑADIR DE CATÁLOGO" y "EVENTO ESPONTÁNEO") e integrado el catálogo en un `ModalBottomSheet` contextual.
 - [x] **[PlanningRoute.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/planning/PlanningRoute.kt)**: Conectado callback `onAddActivityFromCatalog` con `PlanningViewModel`.
 - [x] **[PlanningViewModel.kt](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/feature/planning/PlanningViewModel.kt)**: Inyectado `AddActivityToDayUseCase` para materializar directamente una `ActivityDefinition` seleccionada desde el catálogo hacia el `selectedDate` de la agenda diaria.
 
@@ -27,8 +27,8 @@ resultado: AUDIT_PENDING
 
 ### Documentación Sincronizada
 - [x] **[EC-RE-017_PLANNING_WORKSPACE_CONSOLIDATION.md](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/documentation/EC/EC-RE-017_PLANNING_WORKSPACE_CONSOLIDATION.md)**: Documento de la EC actualizado.
-- [x] **[07_CURRENT_CONTEXT.md](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/documentation/07_CURRENT_CONTEXT.md)**: Actualizado estado a `AUDIT_PENDING`.
-- [x] **[04_PROJECT_STATUS.md](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/documentation/04_PROJECT_STATUS.md)**: Registrada la EC-RE-017 en estado `AUDIT_PENDING`.
+- [x] **[07_CURRENT_CONTEXT.md](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/documentation/07_CURRENT_CONTEXT.md)**: Actualizado estado a `USER_REVIEW_PENDING`.
+- [x] **[04_PROJECT_STATUS.md](file:///C:/Users/alanq/AndroidStudioProjects/RoutineOS-v2/app/src/main/java/com/alan/routineos/documentation/04_PROJECT_STATUS.md)**: Registrada la EC-RE-017 en estado `USER_REVIEW_PENDING`.
 
 ---
 
@@ -49,5 +49,32 @@ resultado: AUDIT_PENDING
 
 ---
 
-## 3. Estado
-Informe finalizado y dejado en `AUDIT_PENDING` para la revisión formal del auditor.
+## 3. Dictamen Final
+
+> [!NOTE]
+> La consolidación de `PlanningWorkspace` se completó de forma impecable.
+> Se eliminó la duplicación de navegación por pestañas y el catálogo se integró como una herramienta contextual en `ModalBottomSheet` asignando actividades directamente a la fecha seleccionada.
+> El renombrado semántico a `ActivityCatalog*` resolvió la ambigüedad conceptual previa.
+
+**ESTADO:** **PASS** (En validación manual por el Project Lead)
+
+---
+
+## 4. Plan de Validación Manual (para el Project Lead)
+
+1. **Navegación Unificada de Planning**:
+   - Abrir la pestaña `Planning`.
+   - Confirmar que ya no existen las pestañas superiores `PLANIFICADOR` / `ACTIVIDADES`. La pantalla muestra directamente la agenda y cronograma del día.
+
+2. **Asignación Contextual desde el Catálogo**:
+   - Presionar el FAB principal (ícono `+`) para desplegar el menú de opciones.
+   - Seleccionar "AÑADIR DE CATÁLOGO".
+   - Confirmar que se despliegue un `ModalBottomSheet` con el catálogo de actividades.
+   - Tocar una actividad del catálogo: verificar que el sheet se cierre automáticamente y la rutina aparezca agregada de forma inmediata al día seleccionado en `Planning`.
+
+3. **Creación de Eventos Espontáneos**:
+   - En el menú del FAB, seleccionar "EVENTO ESPONTÁNEO".
+   - Confirmar que abra el editor de eventos ad-hoc (`SpontaneousEditorSheet`).
+
+---
+**Firma:** AI Auditor Agent
