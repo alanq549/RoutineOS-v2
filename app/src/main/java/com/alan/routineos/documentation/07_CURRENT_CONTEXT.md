@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/ec-re-017-planning-consolidation` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Cierre de EC-RE-017 e integración a develop |
+| **Current Goal** | Siguiente tarjeta del Roadmap: EC-RE-018 (Backlog Panel) |
 | **Current EC** | [EC-RE-017: Planning Workspace Consolidation](../EC/EC-RE-017_PLANNING_WORKSPACE_CONSOLIDATION.md) |
 | **Status** | `CLOSED` |
 | **Next EC** | [EC-RE-018: Backlog & Unscheduled Items Panel] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/ec-re-017-planning-consolidation` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
