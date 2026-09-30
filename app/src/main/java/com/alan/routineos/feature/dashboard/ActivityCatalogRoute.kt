@@ -6,14 +6,15 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun DashboardRoute(
+fun ActivityCatalogRoute(
     onAddActivity: () -> Unit,
     onActivityClick: (String) -> Unit,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: ActivityCatalogViewModel = hiltViewModel(),
+    isSheetMode: Boolean = false
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    DashboardScreen(
+    ActivityCatalogScreen(
         uiState = uiState,
         onAddActivity = onAddActivity,
         onActivityClick = onActivityClick,
@@ -23,6 +24,7 @@ fun DashboardRoute(
         onUpdateSystemFields = viewModel::onUpdateSystemFields,
         onSaveSystem = viewModel::onSaveSystem,
         onDeleteSystem = viewModel::onDeleteSystem,
-        onDismissSystemEditor = viewModel::onDismissSystemEditor
+        onDismissSystemEditor = viewModel::onDismissSystemEditor,
+        isSheetMode = isSheetMode
     )
 }

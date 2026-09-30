@@ -5,7 +5,7 @@ phase: 6
 priority: High
 effort: Medium
 owner: AI Agent
-status: IN_PROGRESS
+status: AUDIT_PENDING
 depends_on: [EC-RE-016]
 branch: feature/ec-re-017-planning-consolidation
 audit: Pending

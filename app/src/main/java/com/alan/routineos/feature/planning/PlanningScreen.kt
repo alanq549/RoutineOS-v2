@@ -1,5 +1,7 @@
 package com.alan.routineos.feature.planning
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,21 +15,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.feature.dashboard.ActivityCatalogRoute
 import com.alan.routineos.feature.planning.components.PlanningExceptionCard
 import com.alan.routineos.feature.planning.components.PlanningReminderCard
 import com.alan.routineos.feature.planning.components.PlanningTimeBlock
@@ -86,6 +96,8 @@ fun PlanningScreen(
     onSetTimeToNow: (String) -> Unit = {},
     onConfirmPendingMove: () -> Unit,
     onCancelPendingMove: () -> Unit,
+    onAddActivityFromCatalog: (String) -> Unit = {},
+    onNavigateToActivityCreation: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var moveTargetId by remember { mutableStateOf<String?>(null) }
@@ -93,6 +105,9 @@ fun PlanningScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+
+    var fabMenuExpanded by remember { mutableStateOf(false) }
+    var showCatalogSheet by remember { mutableStateOf(false) }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -240,7 +255,7 @@ fun PlanningScreen(
                 .padding(RoutineTheme.spacing.lg)
                 .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (!uiState.isShowingToday) {
                 SmallFloatingActionButton(
@@ -257,14 +272,102 @@ fun PlanningScreen(
                 }
             }
 
+            AnimatedVisibility(visible = fabMenuExpanded) {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Option 1: Catálogo de Actividades
+                    Surface(
+                        onClick = {
+                            fabMenuExpanded = false
+                            showCatalogSheet = true
+                        },
+                        color = RoutineTheme.colors.surface2,
+                        shape = RoutineTheme.shapes.pill,
+                        border = BorderStroke(1.dp, RoutineTheme.colors.border)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountTree,
+                                contentDescription = null,
+                                tint = RoutineTheme.colors.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "AÑADIR DE CATÁLOGO",
+                                style = RoutineTheme.typography.labelCaps.copy(fontWeight = FontWeight.Bold),
+                                color = RoutineTheme.colors.onSurface
+                            )
+                        }
+                    }
+
+                    // Option 2: Evento Espontáneo
+                    Surface(
+                        onClick = {
+                            fabMenuExpanded = false
+                            onAddEventClick()
+                        },
+                        color = RoutineTheme.colors.surface2,
+                        shape = RoutineTheme.shapes.pill,
+                        border = BorderStroke(1.dp, RoutineTheme.colors.border)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FlashOn,
+                                contentDescription = null,
+                                tint = RoutineTheme.colors.roleEvent,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "EVENTO ESPONTÁNEO",
+                                style = RoutineTheme.typography.labelCaps.copy(fontWeight = FontWeight.Bold),
+                                color = RoutineTheme.colors.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+
             FloatingActionButton(
-                onClick = onAddEventClick,
+                onClick = { fabMenuExpanded = !fabMenuExpanded },
                 containerColor = RoutineTheme.colors.primary,
-                contentColor = androidx.compose.ui.graphics.Color.Black,
+                contentColor = Color.Black,
                 shape = RoutineTheme.shapes.pill
             ) {
-                Icon(Icons.Default.Add, "Nuevo evento")
+                Icon(
+                    imageVector = if (fabMenuExpanded) Icons.Default.Close else Icons.Default.Add,
+                    contentDescription = "Opciones de nuevo elemento"
+                )
             }
+        }
+    }
+
+    if (showCatalogSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showCatalogSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = RoutineTheme.colors.background
+        ) {
+            ActivityCatalogRoute(
+                onAddActivity = {
+                    showCatalogSheet = false
+                    onNavigateToActivityCreation()
+                },
+                onActivityClick = { activityId ->
+                    onAddActivityFromCatalog(activityId)
+                    showCatalogSheet = false
+                },
+                isSheetMode = true
+            )
         }
     }
 

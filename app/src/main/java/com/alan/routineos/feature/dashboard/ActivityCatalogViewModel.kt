@@ -3,12 +3,12 @@ package com.alan.routineos.feature.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.domain.model.ActivityNode
 import com.alan.routineos.domain.model.LifeSystem
+import com.alan.routineos.domain.model.ScheduleRule
 import com.alan.routineos.domain.model.ScheduleTarget
 import com.alan.routineos.domain.repository.ActivityRepository
 import com.alan.routineos.feature.dashboard.model.*
-import com.alan.routineos.feature.dashboard.model.ActivityCardModel
-import com.alan.routineos.feature.dashboard.model.ActivitySummaryDay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -16,18 +16,14 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
-data class SystemDensity(
-    val systemId: String?,
-    val count: Int
-)
 
 @HiltViewModel
-class DashboardViewModel @Inject constructor(
+class ActivityCatalogViewModel @Inject constructor(
     private val repository: ActivityRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DashboardUiState(isLoading = true))
-    val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(ActivityCatalogUiState(isLoading = true))
+    val uiState: StateFlow<ActivityCatalogUiState> = _uiState.asStateFlow()
 
     private val _selectedSystemId = MutableStateFlow<String?>(null)
     private val _editingSystem = MutableStateFlow<LifeSystem?>(null)
@@ -50,7 +46,6 @@ class DashboardViewModel @Inject constructor(
                 _editingSystem,
                 _isCreatingNewSystem
             ) { systems, definitions, selectedId, editing, creating ->
-                // Calculate real counters for systems
                 val densities = systems.associate { system ->
                     system.id to definitions.count { it.systemId == system.id }
                 }
@@ -73,7 +68,7 @@ class DashboardViewModel @Inject constructor(
                     }.let { combine(it) { it.toList() }.first() }
                 }
 
-                DashboardUiState(
+                ActivityCatalogUiState(
                     isLoading = false,
                     myActivities = cards,
                     allSystems = systems,
@@ -148,8 +143,8 @@ class DashboardViewModel @Inject constructor(
 
     private fun mapToCardModel(
         def: ActivityDefinition,
-        nodes: List<com.alan.routineos.domain.model.ActivityNode>,
-        rules: List<com.alan.routineos.domain.model.ScheduleRule>,
+        nodes: List<ActivityNode>,
+        rules: List<ScheduleRule>,
         systems: List<LifeSystem>
     ): ActivityCardModel {
         val linkedSystem = systems.find { it.id == def.systemId }
@@ -225,11 +220,6 @@ class DashboardViewModel @Inject constructor(
             moreDaysCount = moreDays,
             systemTitle = linkedSystem?.title?.uppercase()
         )
-    }
-
-    private fun getDescendants(parentId: String, allNodes: List<com.alan.routineos.domain.model.ActivityNode>): List<com.alan.routineos.domain.model.ActivityNode> {
-        val children = allNodes.filter { it.parentId == parentId }
-        return children + children.flatMap { getDescendants(it.id, allNodes) }
     }
 
     fun onSearchQueryChanged(query: String) {

@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -22,8 +21,8 @@ import com.alan.routineos.feature.dashboard.components.ActivityCard
 import com.alan.routineos.feature.dashboard.components.LifeSystemEditorSheet
 
 @Composable
-fun DashboardScreen(
-    uiState: DashboardUiState,
+fun ActivityCatalogScreen(
+    uiState: ActivityCatalogUiState,
     onAddActivity: () -> Unit,
     onActivityClick: (String) -> Unit,
     onSystemSelected: (String?) -> Unit,
@@ -33,18 +32,23 @@ fun DashboardScreen(
     onSaveSystem: () -> Unit,
     onDeleteSystem: (String) -> Unit,
     onDismissSystemEditor: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSheetMode: Boolean = false
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = RoutineTheme.spacing.xl)
+                .padding(bottom = if (isSheetMode) 24.dp else RoutineTheme.spacing.xl)
         ) {
-            Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
+            if (!isSheetMode) {
+                Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
+            } else {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-            // My Activities Header
+            // Header Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -54,7 +58,7 @@ fun DashboardScreen(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Actividades",
+                        text = if (isSheetMode) "Catálogo de Actividades" else "Actividades",
                         style = RoutineTheme.typography.headlineMedium,
                         color = RoutineTheme.colors.onSurface,
                         fontWeight = FontWeight.Bold
@@ -137,18 +141,19 @@ fun DashboardScreen(
             }
         }
         
-        // FAB
-        FloatingActionButton(
-            onClick = onAddActivity,
-            containerColor = RoutineTheme.colors.primary,
-            contentColor = RoutineTheme.colors.onPrimary,
-            shape = RoutineTheme.shapes.medium,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(RoutineTheme.spacing.lg)
-                .size(56.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add activity")
+        if (!isSheetMode) {
+            FloatingActionButton(
+                onClick = onAddActivity,
+                containerColor = RoutineTheme.colors.primary,
+                contentColor = RoutineTheme.colors.onPrimary,
+                shape = RoutineTheme.shapes.medium,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(RoutineTheme.spacing.lg)
+                    .size(56.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add activity")
+            }
         }
 
         if (uiState.editingSystem != null) {
@@ -180,7 +185,7 @@ private fun SystemFilterChip(
 
     Surface(
         color = backgroundColor,
-        shape = RoundedCornerShape(10.dp), // Slightly more technical radius
+        shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, borderColor),
         modifier = Modifier
             .height(44.dp)
@@ -194,7 +199,6 @@ private fun SystemFilterChip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            // Technical Count Badge
             Surface(
                 color = if (isSelected) color.copy(alpha = 0.2f) else RoutineTheme.colors.background.copy(alpha = 0.6f),
                 shape = RoundedCornerShape(4.dp),
@@ -241,26 +245,5 @@ private fun getTechnicalIcon(name: String): ImageVector {
         "psychology" -> Icons.Default.Psychology
         "palette" -> Icons.Default.Palette
         else -> Icons.Default.AccountTree
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-fun DashboardScreenPreview() {
-    RoutineTheme {
-        DashboardScreen(
-            uiState = DashboardUiState(
-                myActivities = emptyList()
-            ),
-            onAddActivity = {},
-            onActivityClick = {},
-            onSystemSelected = {},
-            onAddSystem = {},
-            onEditSystem = {},
-            onUpdateSystemFields = { _, _, _ -> },
-            onSaveSystem = {},
-            onDeleteSystem = {},
-            onDismissSystemEditor = {}
-        )
     }
 }
