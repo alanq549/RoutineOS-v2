@@ -3,24 +3,24 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `develop` |
+| **Current Branch** | `feature/ec-re-018-backlog-integration` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Siguiente tarjeta del Roadmap: EC-RE-018 (Backlog Panel) |
-| **Current EC** | [EC-RE-017: Planning Workspace Consolidation](../EC/EC-RE-017_PLANNING_WORKSPACE_CONSOLIDATION.md) |
-| **Status** | `CLOSED` |
-| **Next EC** | [EC-RE-018: Backlog & Unscheduled Items Panel] |
+| **Current Goal** | Planificación formal de EC-RE-018 (Backlog Operativo e Integración con Planning) |
+| **Current EC** | [EC-RE-018: Backlog Operativo e Integración con Planning](../EC/EC-RE-018_BACKLOG_PLANNING_INTEGRATION.md) |
+| **Status** | `READY_FOR_IMPLEMENTATION` |
+| **Next EC** | [EC-RE-018: Backlog Operativo e Integración con Planning] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `develop` |
+| **Working Directory** | `feature/ec-re-018-backlog-integration` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
 ---
 
 ## Notas Inmediatas
-- **EC-RE-017 CERRADA**: Auditoría técnica `PASS` y Validación Manual `PASS` (Aprobada por el Project Lead).
-  - Eliminados el `NavHost` anidado y el selector de pestañas `PlanningSegmentedSelector` en `PlanningWorkspace.kt`.
-  - Integrado el Catálogo de Actividades (`ActivityCatalogScreen`) como `ModalBottomSheet` contextual desde el FAB de `PlanningScreen.kt`.
-  - Implementada la materialización directa al seleccionar una rutina desde el sheet hacia el `selectedDate` del planificador vía `AddActivityToDayUseCase`.
-  - Preservada la creación de eventos espontáneos/ad-hoc mediante menú Speed Dial en el FAB.
-  - Renombrado semántico completo: `Dashboard*` ➔ `ActivityCatalog*` (0 referencias activas al nombre antiguo).
-  - Cero cambios en la capa de dominio, esquemas de base de datos Room o migraciones.
+- **EC-RE-017 CERRADA**: Consolidación de PlanningWorkspace e integración del catálogo contextual verificado y cerrado.
+- **EC-RE-018 DOCUMENTADA (`READY_FOR_IMPLEMENTATION`)**: Creado el plan conceptual formal para integrar el Backlog en Planning:
+  - Documento `EC-RE-018_BACKLOG_PLANNING_INTEGRATION.md` completado con las 18 secciones requeridas.
+  - Definido el flujo de materialización `BacklogItem` ➔ `DailyInstance` con `backlogId` e integración en `PlanningScreen.kt`.
+  - Definida la matriz de estados y transiciones (`COMPLETE` ➔ `RESOLVED`, `RESET` ➔ `OPEN`, `SKIP` ➔ `OPEN`).
+  - Evaluada la compatibilidad futura con sincronización offline-first (UUIDs en cliente, claves foráneas `SET NULL`).
+  - Cero cambios en código de producción, esquema Room v10 o migraciones hasta la aprobación formal.
