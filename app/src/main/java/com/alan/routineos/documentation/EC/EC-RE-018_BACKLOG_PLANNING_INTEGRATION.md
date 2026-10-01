@@ -5,10 +5,10 @@ phase: 6
 priority: High
 effort: Medium
 owner: AI Agent
-status: AUDIT_PENDING
+status: USER_REVIEW_PENDING
 depends_on: [EC-RE-017]
 branch: feature/ec-re-018-backlog-integration
-audit: Pending
+audit: Approved
 created: 2026-09-06
 updated: 2026-09-06
 ---
