@@ -40,6 +40,9 @@ fun PlanningRoute(
         onConfirmPendingMove = viewModel::onConfirmPendingMove,
         onCancelPendingMove = viewModel::onCancelPendingMove,
         onAddActivityFromCatalog = viewModel::onAddActivityFromCatalog,
-        onNavigateToActivityCreation = onNavigateToActivityCreation
+        onNavigateToActivityCreation = onNavigateToActivityCreation,
+        onAssignBacklogItemToDay = viewModel::onAssignBacklogItemToDay,
+        onCreateBacklogItem = viewModel::onCreateBacklogItem,
+        onDeleteBacklogItem = viewModel::onDeleteBacklogItem
     )
 }

@@ -46,6 +46,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
+import com.alan.routineos.domain.model.BacklogItem
+import com.alan.routineos.domain.model.BacklogItemStatus
+import com.alan.routineos.domain.usecase.AssignBacklogItemToDayUseCase
 import java.util.Calendar
 import java.util.Locale
 import java.util.UUID
@@ -57,7 +60,8 @@ class PlanningViewModel @Inject constructor(
     private val getHierarchicalTimelineUseCase: GetHierarchicalTimelineUseCase,
     private val registerDailyActionUseCase: RegisterDailyActionUseCase,
     private val simulateMoveUseCase: SimulateMoveUseCase,
-    private val addActivityToDayUseCase: AddActivityToDayUseCase
+    private val addActivityToDayUseCase: AddActivityToDayUseCase,
+    private val assignBacklogItemToDayUseCase: AssignBacklogItemToDayUseCase
 ) : ViewModel() {
 
     private val localeES = Locale.forLanguageTag("es-ES")
@@ -121,7 +125,10 @@ class PlanningViewModel @Inject constructor(
             selectedContextual, allDefs, allNodes
         )
     }.flatMapLatest { p ->
-        getHierarchicalTimelineUseCase(p.date).map { entries ->
+        combine(
+            getHierarchicalTimelineUseCase(p.date),
+            repository.getAllBacklogItems()
+        ) { entries, backlogItems ->
             currentEntries = entries
             val scheduled = entries.filter { it.effectiveStartTimeMinutes != null }
             val unscheduled = entries.filter { it.effectiveStartTimeMinutes == null }
@@ -130,6 +137,8 @@ class PlanningViewModel @Inject constructor(
                         !it.root.instance.isAdHoc &&
                         it.root.instance.status != DailyInstanceStatus.PLANNED
             }
+
+            val openBacklog = backlogItems.filter { it.status == BacklogItemStatus.OPEN }
 
             val allUiTimelineModels =
                 (scheduled + unscheduled).map { it.toUiModel(p.expanded.contains(it.root.instance.id)) }
@@ -172,6 +181,7 @@ class PlanningViewModel @Inject constructor(
                 timelineEntries = scheduled.map { it.toUiModel(p.expanded.contains(it.root.instance.id)) },
                 unscheduledItems = unscheduled.map { it.toUiModel(p.expanded.contains(it.root.instance.id)) },
                 exceptions = exceptions.map { it.toUiModel(p.expanded.contains(it.root.instance.id)) },
+                openBacklogItems = openBacklog,
                 editingSpontaneousEntry = p.editing?.let { entry ->
                     // Enrich editing entry with current drafts
                     entry.copy(
@@ -752,6 +762,32 @@ class PlanningViewModel @Inject constructor(
                 activity = def,
                 date = _selectedDate.value
             )
+        }
+    }
+
+    fun onAssignBacklogItemToDay(item: BacklogItem) {
+        viewModelScope.launch {
+            assignBacklogItemToDayUseCase(item, _selectedDate.value)
+        }
+    }
+
+    fun onCreateBacklogItem(title: String) {
+        if (title.isBlank()) return
+        viewModelScope.launch {
+            repository.upsertBacklogItem(
+                BacklogItem(
+                    id = UUID.randomUUID().toString(),
+                    definitionId = null,
+                    title = title,
+                    status = BacklogItemStatus.OPEN
+                )
+            )
+        }
+    }
+
+    fun onDeleteBacklogItem(id: String) {
+        viewModelScope.launch {
+            repository.deleteBacklogItem(id)
         }
     }
 

@@ -1,6 +1,6 @@
 package com.alan.routineos.feature.planning
 
-import com.alan.routineos.domain.model.ActivityDefinition
+import com.alan.routineos.domain.model.BacklogItem
 import com.alan.routineos.domain.model.HierarchicalTimelineEntry
 import com.alan.routineos.feature.planning.model.PlanningDay
 import com.alan.routineos.feature.planning.model.SearchTargetUiModel
@@ -23,6 +23,7 @@ data class PlanningUiState(
     val timelineEntries: List<TodayTimelineUiModel> = emptyList(),
     val unscheduledItems: List<TodayTimelineUiModel> = emptyList(),
     val exceptions: List<TodayTimelineUiModel> = emptyList(),
+    val openBacklogItems: List<BacklogItem> = emptyList(),
     val editingSpontaneousEntry: HierarchicalTimelineEntry? = null,
     val editorRole: EditorRole = EditorRole.EVENT,
     val unifiedCatalog: List<UnifiedLinkingResult> = emptyList(),
