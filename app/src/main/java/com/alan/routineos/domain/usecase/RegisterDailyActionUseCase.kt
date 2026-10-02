@@ -47,6 +47,11 @@ class RegisterDailyActionUseCase @Inject constructor(
         
         // Register execution for the fact history (Blindaje de Historial CHECK/TIMER)
         repository.registerInstanceExecution(instance, metadataJson)
+
+        // Backlog Sync: Complete instance resolves BacklogItem
+        if (instance.backlogId != null) {
+            updateBacklogStatusOnComplete(instance.backlogId)
+        }
     }
 
     private suspend fun handleSkipRecursive(entry: HierarchicalTimelineEntry) {
@@ -93,17 +98,31 @@ class RegisterDailyActionUseCase @Inject constructor(
             // Rule Override: Delete the instance to revert to original rule projection
             repository.deleteDailyInstance(instance.id)
         } else {
-            // Pure Ad-hoc: Reset status to initial state
+            // Pure Ad-hoc / Backlog: Reset status to initial state
             val targetStatus = DailyInstanceStatus.MODIFIED
             repository.upsertDailyInstance(instance.copy(status = targetStatus))
         }
 
-        // IMPORTANT: Non-destructive RESET. We do NOT delete ActivityExecution records.
-        // History analysis will filter based on the final DailyInstance status.
+        // Backlog Sync: Reset instance reopens BacklogItem
+        if (instance.backlogId != null) {
+            updateBacklogStatusOnReset(instance.backlogId)
+        }
 
         entry.children.forEach { child ->
             handleResetRecursive(child)
         }
+    }
+
+    private suspend fun updateBacklogStatusOnComplete(backlogId: String?) {
+        if (backlogId == null) return
+        val item = repository.getBacklogItemById(backlogId) ?: return
+        repository.upsertBacklogItem(item.copy(status = BacklogItemStatus.RESOLVED))
+    }
+
+    private suspend fun updateBacklogStatusOnReset(backlogId: String?) {
+        if (backlogId == null) return
+        val item = repository.getBacklogItemById(backlogId) ?: return
+        repository.upsertBacklogItem(item.copy(status = BacklogItemStatus.OPEN))
     }
 
     private suspend fun materializeIfVirtual(entry: TimelineEntry): DailyInstance {

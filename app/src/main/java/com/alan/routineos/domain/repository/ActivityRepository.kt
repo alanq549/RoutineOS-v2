@@ -3,6 +3,7 @@ package com.alan.routineos.domain.repository
 import com.alan.routineos.domain.model.ActivityDefinition
 import com.alan.routineos.domain.model.ActivityExecution
 import com.alan.routineos.domain.model.ActivityNode
+import com.alan.routineos.domain.model.BacklogItem
 import com.alan.routineos.domain.model.DailyInstance
 import com.alan.routineos.domain.model.LifeSystem
 import com.alan.routineos.domain.model.MetadataSchema
@@ -10,6 +11,7 @@ import com.alan.routineos.domain.model.Note
 import com.alan.routineos.domain.model.ScheduleException
 import com.alan.routineos.domain.model.ScheduleRule
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 interface ActivityRepository {
     fun getActivityDefinitions(): Flow<List<ActivityDefinition>>
@@ -77,4 +79,10 @@ interface ActivityRepository {
     suspend fun getSystemById(id: String): LifeSystem?
     suspend fun upsertSystem(system: LifeSystem)
     suspend fun deleteSystem(system: LifeSystem)
+
+    // Backlog Items
+    fun getAllBacklogItems(): Flow<List<BacklogItem>> = flowOf(emptyList())
+    suspend fun getBacklogItemById(id: String): BacklogItem? = null
+    suspend fun upsertBacklogItem(item: BacklogItem) {}
+    suspend fun deleteBacklogItem(id: String) {}
 }

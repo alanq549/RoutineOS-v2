@@ -130,6 +130,12 @@ object UseCaseModule {
 
     @Provides
     @Singleton
+    fun provideAssignBacklogItemToDayUseCase(repository: ActivityRepository): AssignBacklogItemToDayUseCase {
+        return AssignBacklogItemToDayUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
     fun provideHistoricalOccurrenceResolver(
         repository: ActivityRepository,
         resolutionEngine: TimelineResolutionEngine

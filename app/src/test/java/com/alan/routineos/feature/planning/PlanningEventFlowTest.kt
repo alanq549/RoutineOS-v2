@@ -108,7 +108,8 @@ class PlanningEventFlowTest {
             getHierarchicalTimelineUseCase = GetHierarchicalTimelineUseCase(repository, ResolveTimelineUseCase(repository, TimelineResolutionEngine(), ConflictDetectorUseCase(), SuggestionEngine(ConflictDetectorUseCase()))),
             registerDailyActionUseCase = RegisterDailyActionUseCase(repository, MaterializeInstanceUseCase(repository)),
             simulateMoveUseCase = SimulateMoveUseCase(ConflictDetectorUseCase()),
-            addActivityToDayUseCase = AddActivityToDayUseCase(repository)
+            addActivityToDayUseCase = AddActivityToDayUseCase(repository),
+            assignBacklogItemToDayUseCase = AssignBacklogItemToDayUseCase(repository)
         )
     }
 

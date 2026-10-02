@@ -386,4 +386,25 @@ class OfflineActivityRepository @Inject constructor(
     override suspend fun deleteSystem(system: LifeSystem) {
         systemDao.deleteSystem(system.toEntity())
     }
+
+    override fun getAllBacklogItems(): Flow<List<BacklogItem>> {
+        return backlogItemDao.getAllBacklogItems().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun getBacklogItemById(id: String): BacklogItem? {
+        return backlogItemDao.getAllBacklogItems().firstOrNull()?.find { it.id == id }?.toDomain()
+    }
+
+    override suspend fun upsertBacklogItem(item: BacklogItem) {
+        backlogItemDao.upsertBacklogItem(item.toEntity())
+    }
+
+    override suspend fun deleteBacklogItem(id: String) {
+        val entity = backlogItemDao.getAllBacklogItems().firstOrNull()?.find { it.id == id }
+        if (entity != null) {
+            backlogItemDao.deleteBacklogItem(entity)
+        }
+    }
 }

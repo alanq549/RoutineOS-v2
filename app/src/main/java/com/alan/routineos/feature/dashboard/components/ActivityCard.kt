@@ -1,5 +1,6 @@
 package com.alan.routineos.feature.dashboard.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +12,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -26,13 +31,20 @@ import com.alan.routineos.core.designsystem.component.RoutineCard
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.dashboard.model.ActivityCardModel
 
+import com.alan.routineos.core.designsystem.component.RoutineDropdownMenu
+import com.alan.routineos.core.designsystem.component.RoutineDropdownMenuItem
+
 @Composable
 fun ActivityCard(
     activity: ActivityCardModel,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenDetail: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null,
+    isSheetMode: Boolean = false
 ) {
     val semanticColor = try { Color(android.graphics.Color.parseColor(activity.iconColorHex)) } catch (e: Exception) { RoutineTheme.colors.primary }
+    var showMenu by remember { mutableStateOf(false) }
 
     RoutineCard(
         modifier = modifier
@@ -208,29 +220,105 @@ fun ActivityCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Technical Control: ABRIR
-                Surface(
-                    onClick = onClick,
-                    color = RoutineTheme.colors.primary,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(44.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "ABRIR",
-                            style = RoutineTheme.typography.labelCaps.copy(fontSize = 12.sp, fontWeight = FontWeight.Black),
-                            color = Color.Black
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = Color.Black,
-                            modifier = Modifier.size(16.dp)
-                        )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (isSheetMode) {
+                        // Action 1: PLANIFICAR / ASIGNAR A HOY
+                        Surface(
+                            onClick = onClick,
+                            color = RoutineTheme.colors.primary,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.height(42.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "PLANIFICAR",
+                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, fontWeight = FontWeight.Black),
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.CalendarToday,
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+
+                        // Action 2: DETALLE (Opción secundaria)
+                        if (onOpenDetail != null) {
+                            Surface(
+                                onClick = onOpenDetail,
+                                color = RoutineTheme.colors.surface2,
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, RoutineTheme.colors.border),
+                                modifier = Modifier.height(42.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "DETALLE",
+                                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                                        color = RoutineTheme.colors.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // Fullscreen Mode: Primary ABRIR button
+                        Surface(
+                            onClick = onClick,
+                            color = RoutineTheme.colors.primary,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.height(44.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "ABRIR",
+                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 12.sp, fontWeight = FontWeight.Black),
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Delete Action Menu
+                if (onDeleteClick != null) {
+                    Box {
+                        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Opciones de actividad",
+                                tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                        RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            RoutineDropdownMenuItem(
+                                text = "Eliminar",
+                                onClick = {
+                                    showMenu = false
+                                    onDeleteClick()
+                                },
+                                icon = Icons.Default.Delete,
+                                iconColor = RoutineTheme.colors.error
+                            )
+                        }
                     }
                 }
             }

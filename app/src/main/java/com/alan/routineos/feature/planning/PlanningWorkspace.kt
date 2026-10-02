@@ -49,7 +49,8 @@ fun PlanningWorkspace(
                 .padding(paddingValues)
         ) {
             PlanningRoute(
-                onNavigateToActivityCreation = onAddActivity
+                onNavigateToActivityCreation = onAddActivity,
+                onNavigateToActivityDetail = onActivityClick
             )
         }
     }

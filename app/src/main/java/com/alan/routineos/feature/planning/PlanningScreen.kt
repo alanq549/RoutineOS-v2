@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Inbox
+import com.alan.routineos.feature.planning.components.BacklogPanelSheet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -52,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.domain.model.BacklogItem
 import com.alan.routineos.feature.dashboard.ActivityCatalogRoute
 import com.alan.routineos.feature.planning.components.PlanningExceptionCard
 import com.alan.routineos.feature.planning.components.PlanningReminderCard
@@ -98,6 +101,10 @@ fun PlanningScreen(
     onCancelPendingMove: () -> Unit,
     onAddActivityFromCatalog: (String) -> Unit = {},
     onNavigateToActivityCreation: () -> Unit = {},
+    onNavigateToActivityDetail: (String) -> Unit = {},
+    onAssignBacklogItemToDay: (BacklogItem) -> Unit = {},
+    onCreateBacklogItem: (String) -> Unit = {},
+    onDeleteBacklogItem: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var moveTargetId by remember { mutableStateOf<String?>(null) }
@@ -108,6 +115,7 @@ fun PlanningScreen(
 
     var fabMenuExpanded by remember { mutableStateOf(false) }
     var showCatalogSheet by remember { mutableStateOf(false) }
+    var showBacklogSheet by remember { mutableStateOf(false) }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -306,7 +314,36 @@ fun PlanningScreen(
                         }
                     }
 
-                    // Option 2: Evento Espontáneo
+                    // Option 2: Pendientes (Backlog)
+                    Surface(
+                        onClick = {
+                            fabMenuExpanded = false
+                            showBacklogSheet = true
+                        },
+                        color = RoutineTheme.colors.surface2,
+                        shape = RoutineTheme.shapes.pill,
+                        border = BorderStroke(1.dp, RoutineTheme.colors.border)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Inbox,
+                                contentDescription = null,
+                                tint = RoutineTheme.colors.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "PENDIENTES (BACKLOG)",
+                                style = RoutineTheme.typography.labelCaps.copy(fontWeight = FontWeight.Bold),
+                                color = RoutineTheme.colors.onSurface
+                            )
+                        }
+                    }
+
+                    // Option 3: Evento Espontáneo
                     Surface(
                         onClick = {
                             fabMenuExpanded = false
@@ -366,9 +403,23 @@ fun PlanningScreen(
                     onAddActivityFromCatalog(activityId)
                     showCatalogSheet = false
                 },
+                onOpenDetail = { activityId ->
+                    showCatalogSheet = false
+                    onNavigateToActivityDetail(activityId)
+                },
                 isSheetMode = true
             )
         }
+    }
+
+    if (showBacklogSheet) {
+        BacklogPanelSheet(
+            openBacklogItems = uiState.openBacklogItems,
+            onAssignToDay = onAssignBacklogItemToDay,
+            onCreateBacklogItem = onCreateBacklogItem,
+            onDeleteBacklogItem = onDeleteBacklogItem,
+            onDismiss = { showBacklogSheet = false }
+        )
     }
 
     if (uiState.editingSpontaneousEntry != null) {

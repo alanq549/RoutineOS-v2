@@ -136,6 +136,15 @@ class ActivityCatalogViewModel @Inject constructor(
         }
     }
 
+    fun onDeleteActivity(activityId: String) {
+        viewModelScope.launch {
+            val def = repository.getActivityDefinitionById(activityId)
+            if (def != null) {
+                repository.deleteActivityDefinition(def)
+            }
+        }
+    }
+
     fun onDismissSystemEditor() {
         _editingSystem.value = null
         _isCreatingNewSystem.value = false
