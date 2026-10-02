@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/ec-re-018-backlog-integration` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Cierre de EC-RE-018 e integración a develop |
+| **Current Goal** | Siguiente tarjeta del Roadmap: EC-RE-019 (Materialization Identity & Catalog Semantics) |
 | **Current EC** | [EC-RE-018: Backlog Operativo e Integración con Planning](../EC/EC-RE-018_BACKLOG_PLANNING_INTEGRATION.md) |
 | **Status** | `CLOSED` |
-| **Next EC** | [EC-RE-019: System & Roadmap Refinement] |
+| **Next EC** | [EC-RE-019: Materialization Identity & Catalog Semantics] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/ec-re-018-backlog-integration` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
