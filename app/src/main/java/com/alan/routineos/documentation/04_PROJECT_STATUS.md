@@ -33,7 +33,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-015 | Today Execution Surface Refinement | High | Medium | AI Agent | EC-RE-014 | CLOSED | PASS. Visual spine unification, card grammar, synthesized ContextFooter, color tokens. |
 | EC-RE-016 | Plannable Element Domain Analysis | High | Medium | AI Agent | EC-RE-015 | CLOSED | PASS. Formal domain analysis confirming DailyInstance as universal operational node. Zero code changes. |
 | EC-RE-017 | Planning Workspace Consolidation | High | Medium | AI Agent | EC-RE-016 | CLOSED | PASS. Consolidation of PlanningWorkspace into single surface with ModalBottomSheet catalog (Historical EC-013/EC-014). |
-| EC-RE-018 | Backlog Operativo e Integración con Planning | High | Medium | AI Agent | EC-RE-017 | USER_REVIEW_PENDING | PASS. BacklogItem materialization into DailyInstance, BacklogPanelSheet in Planning, 78/78 tests passing. |
+| EC-RE-018 | Backlog Operativo e Integración con Planning | High | Medium | AI Agent | EC-RE-017 | CLOSED | PASS. BacklogItem materialization into DailyInstance, BacklogPanelSheet in Planning, 78/78 tests passing. |
 
 ---
 
