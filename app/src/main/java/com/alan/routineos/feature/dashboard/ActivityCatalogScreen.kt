@@ -25,6 +25,8 @@ fun ActivityCatalogScreen(
     uiState: ActivityCatalogUiState,
     onAddActivity: () -> Unit,
     onActivityClick: (String) -> Unit,
+    onOpenDetail: ((String) -> Unit)? = null,
+    onDeleteActivity: ((String) -> Unit)? = null,
     onSystemSelected: (String?) -> Unit,
     onAddSystem: () -> Unit,
     onEditSystem: (String) -> Unit,
@@ -133,7 +135,10 @@ fun ActivityCatalogScreen(
                     uiState.myActivities.forEach { activity ->
                         ActivityCard(
                             activity = activity,
-                            onClick = { onActivityClick(activity.id) }
+                            onClick = { onActivityClick(activity.id) },
+                            onOpenDetail = onOpenDetail?.let { callback -> { callback(activity.id) } },
+                            onDeleteClick = onDeleteActivity?.let { callback -> { callback(activity.id) } },
+                            isSheetMode = isSheetMode
                         )
                         Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
                     }

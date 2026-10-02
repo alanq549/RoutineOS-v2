@@ -101,6 +101,7 @@ fun PlanningScreen(
     onCancelPendingMove: () -> Unit,
     onAddActivityFromCatalog: (String) -> Unit = {},
     onNavigateToActivityCreation: () -> Unit = {},
+    onNavigateToActivityDetail: (String) -> Unit = {},
     onAssignBacklogItemToDay: (BacklogItem) -> Unit = {},
     onCreateBacklogItem: (String) -> Unit = {},
     onDeleteBacklogItem: (String) -> Unit = {},
@@ -401,6 +402,10 @@ fun PlanningScreen(
                 onActivityClick = { activityId ->
                     onAddActivityFromCatalog(activityId)
                     showCatalogSheet = false
+                },
+                onOpenDetail = { activityId ->
+                    showCatalogSheet = false
+                    onNavigateToActivityDetail(activityId)
                 },
                 isSheetMode = true
             )
