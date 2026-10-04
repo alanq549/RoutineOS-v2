@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/ec-re-019-catalog-materialization-fix` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Cierre formal de EC-RE-019 |
+| **Current Goal** | Siguiente tarjeta del Roadmap: EC-RE-020 (Execution History Cleanup & Reset Sync Refinement) |
 | **Current EC** | [EC-RE-019: Catalog Semantics & Occurrence Materialization Correction](../EC/EC-RE-019_CATALOG_MATERIALIZATION_CORRECTION.md) |
 | **Status** | `CLOSED` |
-| **Next EC** | [EC-RE-020: System & Roadmap Refinement] |
+| **Next EC** | [EC-RE-020: Execution History Cleanup & Reset Sync Refinement] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/ec-re-019-catalog-materialization-fix` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
