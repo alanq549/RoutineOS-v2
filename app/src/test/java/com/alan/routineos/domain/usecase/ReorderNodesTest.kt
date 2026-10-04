@@ -126,6 +126,7 @@ class ReorderNodesTest {
         override fun getInstancesForDate(date: Long): Flow<List<DailyInstanceEntity>> = TODO()
         override fun getInstancesInRange(start: Long, end: Long): Flow<List<DailyInstanceEntity>> = flowOf(emptyList())
         override suspend fun getInstanceByTarget(targetId: String, date: Long): DailyInstanceEntity? = null
+        override suspend fun getInstanceBySourceRule(sourceRuleId: String, date: Long): DailyInstanceEntity? = null
         override suspend fun insertInstance(instance: DailyInstanceEntity) {}
         override suspend fun insertInstanceStrict(instance: DailyInstanceEntity) {}
         override suspend fun deleteInstance(instance: DailyInstanceEntity) {}

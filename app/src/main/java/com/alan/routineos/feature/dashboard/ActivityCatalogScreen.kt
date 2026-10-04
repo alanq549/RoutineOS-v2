@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.alan.routineos.core.designsystem.component.RoutineDropdownMenu
+import com.alan.routineos.core.designsystem.component.RoutineDropdownMenuItem
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.feature.dashboard.components.ActivityCard
 import com.alan.routineos.feature.dashboard.components.LifeSystemEditorSheet
@@ -25,7 +27,6 @@ fun ActivityCatalogScreen(
     uiState: ActivityCatalogUiState,
     onAddActivity: () -> Unit,
     onActivityClick: (String) -> Unit,
-    onOpenDetail: ((String) -> Unit)? = null,
     onDeleteActivity: ((String) -> Unit)? = null,
     onSystemSelected: (String?) -> Unit,
     onAddSystem: () -> Unit,
@@ -110,7 +111,8 @@ fun ActivityCatalogScreen(
                         color = Color(android.graphics.Color.parseColor(system.colorHex)),
                         isSelected = uiState.selectedSystemId == system.id,
                         onClick = { onSystemSelected(system.id) },
-                        onLongClick = { onEditSystem(system.id) }
+                        onEditClick = { onEditSystem(system.id) },
+                        onDeleteClick = { onDeleteSystem(system.id) }
                     )
                 }
             }
@@ -136,9 +138,7 @@ fun ActivityCatalogScreen(
                         ActivityCard(
                             activity = activity,
                             onClick = { onActivityClick(activity.id) },
-                            onOpenDetail = onOpenDetail?.let { callback -> { callback(activity.id) } },
-                            onDeleteClick = onDeleteActivity?.let { callback -> { callback(activity.id) } },
-                            isSheetMode = isSheetMode
+                            onDeleteClick = onDeleteActivity?.let { callback -> { callback(activity.id) } }
                         )
                         Spacer(modifier = Modifier.height(RoutineTheme.spacing.lg))
                     }
@@ -174,7 +174,6 @@ fun ActivityCatalogScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SystemFilterChip(
     name: String,
@@ -183,10 +182,12 @@ private fun SystemFilterChip(
     color: Color,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null
+    onEditClick: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null
 ) {
     val backgroundColor = if (isSelected) color.copy(alpha = 0.12f) else RoutineTheme.colors.surface2
     val borderColor = if (isSelected) color.copy(alpha = 0.8f) else RoutineTheme.colors.border.copy(alpha = 0.4f)
+    var showMenu by remember { mutableStateOf(false) }
 
     Surface(
         color = backgroundColor,
@@ -194,13 +195,13 @@ private fun SystemFilterChip(
         border = BorderStroke(1.dp, borderColor),
         modifier = Modifier
             .height(44.dp)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+            .clickable(onClick = onClick)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp),
+            modifier = Modifier.padding(
+                start = 14.dp,
+                end = if (isSelected && (onEditClick != null || onDeleteClick != null)) 6.dp else 14.dp
+            ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -233,6 +234,50 @@ private fun SystemFilterChip(
                 color = if (isSelected) Color.White else RoutineTheme.colors.onSurfaceVariant,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
+
+            if (isSelected && (onEditClick != null || onDeleteClick != null)) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Box {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Opciones del sistema",
+                            tint = Color.White.copy(alpha = 0.8f),
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+
+                    RoutineDropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        if (onEditClick != null) {
+                            RoutineDropdownMenuItem(
+                                text = "Editar sistema",
+                                onClick = {
+                                    showMenu = false
+                                    onEditClick()
+                                },
+                                icon = Icons.Default.Edit
+                            )
+                        }
+                        if (onDeleteClick != null) {
+                            RoutineDropdownMenuItem(
+                                text = "Eliminar sistema",
+                                onClick = {
+                                    showMenu = false
+                                    onDeleteClick()
+                                },
+                                icon = Icons.Default.Delete,
+                                iconColor = RoutineTheme.colors.error
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

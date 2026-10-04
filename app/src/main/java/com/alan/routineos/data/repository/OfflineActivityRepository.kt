@@ -56,7 +56,7 @@ class OfflineActivityRepository @Inject constructor(
     }
 
     override suspend fun deleteActivityDefinition(activityDefinition: ActivityDefinition) {
-        activityDefinitionDao.deleteActivityDefinition(activityDefinition.toEntity())
+        activityDefinitionDao.insertActivityDefinition(activityDefinition.copy(isDeleted = true).toEntity())
     }
 
     override fun getNodesForActivityDefinition(activityDefinitionId: String): Flow<List<ActivityNode>> {
@@ -272,6 +272,10 @@ class OfflineActivityRepository @Inject constructor(
 
     override suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance? {
         return dailyInstanceDao.getInstanceByTarget(targetId, date)?.toDomain()
+    }
+
+    override suspend fun getDailyInstanceBySourceRule(sourceRuleId: String, date: Long): DailyInstance? {
+        return dailyInstanceDao.getInstanceBySourceRule(sourceRuleId, date)?.toDomain()
     }
 
     override suspend fun upsertActivityWithContext(instance: DailyInstance, tasks: List<DailyInstance>, note: Note?) {

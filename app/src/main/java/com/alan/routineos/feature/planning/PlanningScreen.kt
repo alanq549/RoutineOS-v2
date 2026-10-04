@@ -400,10 +400,6 @@ fun PlanningScreen(
                     onNavigateToActivityCreation()
                 },
                 onActivityClick = { activityId ->
-                    onAddActivityFromCatalog(activityId)
-                    showCatalogSheet = false
-                },
-                onOpenDetail = { activityId ->
                     showCatalogSheet = false
                     onNavigateToActivityDetail(activityId)
                 },

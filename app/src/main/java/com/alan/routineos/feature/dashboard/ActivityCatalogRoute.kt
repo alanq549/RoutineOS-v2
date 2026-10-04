@@ -9,7 +9,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun ActivityCatalogRoute(
     onAddActivity: () -> Unit,
     onActivityClick: (String) -> Unit,
-    onOpenDetail: ((String) -> Unit)? = null,
     viewModel: ActivityCatalogViewModel = hiltViewModel(),
     isSheetMode: Boolean = false
 ) {
@@ -19,7 +18,6 @@ fun ActivityCatalogRoute(
         uiState = uiState,
         onAddActivity = onAddActivity,
         onActivityClick = onActivityClick,
-        onOpenDetail = onOpenDetail,
         onDeleteActivity = viewModel::onDeleteActivity,
         onSystemSelected = viewModel::onSystemSelected,
         onAddSystem = viewModel::onAddSystemClick,
