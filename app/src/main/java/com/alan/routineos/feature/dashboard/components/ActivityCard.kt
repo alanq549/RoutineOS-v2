@@ -11,16 +11,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -28,30 +21,26 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.component.RoutineCard
-import com.alan.routineos.core.designsystem.theme.RoutineTheme
-import com.alan.routineos.feature.dashboard.model.ActivityCardModel
-
 import com.alan.routineos.core.designsystem.component.RoutineDropdownMenu
 import com.alan.routineos.core.designsystem.component.RoutineDropdownMenuItem
+import com.alan.routineos.core.designsystem.theme.RoutineTheme
+import com.alan.routineos.feature.dashboard.model.ActivityCardModel
 
 @Composable
 fun ActivityCard(
     activity: ActivityCardModel,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    onOpenDetail: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
-    isSheetMode: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     val semanticColor = try { Color(android.graphics.Color.parseColor(activity.iconColorHex)) } catch (e: Exception) { RoutineTheme.colors.primary }
-    var showMenu by remember { mutableStateOf(false) }
 
     RoutineCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        containerColor = Color(0xFF0B0E14), // Deep background for layering
-        border = androidx.compose.foundation.BorderStroke(
+        containerColor = Color(0xFF0B0E14),
+        border = BorderStroke(
             width = 1.dp,
             color = semanticColor.copy(alpha = 0.2f)
         )
@@ -157,7 +146,6 @@ fun ActivityCard(
                                    modifier = Modifier.padding(start = 8.dp, top = 6.dp),
                                    verticalAlignment = Alignment.CenterVertically
                                ) {
-                                   // Technical Tree Connector (Circuit Style)
                                    Box(
                                        modifier = Modifier
                                            .width(1.5.dp)
@@ -172,7 +160,6 @@ fun ActivityCard(
                                    )
                                    Spacer(modifier = Modifier.width(10.dp))
                                    
-                                   // CIRCLE INDICATOR (Stitch style)
                                    Box(
                                        modifier = Modifier.size(6.dp).background(semanticColor.copy(alpha = 0.5f), CircleShape)
                                    )
@@ -213,110 +200,35 @@ fun ActivityCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (isSheetMode) {
-                        // Action 1: PLANIFICAR / ASIGNAR A HOY
-                        Surface(
-                            onClick = onClick,
-                            color = RoutineTheme.colors.primary,
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.height(42.dp)
+            if (onDeleteClick != null) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        onClick = onDeleteClick,
+                        color = RoutineTheme.colors.error.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, RoutineTheme.colors.error.copy(alpha = 0.25f)),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "PLANIFICAR",
-                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, fontWeight = FontWeight.Black),
-                                    color = Color.Black
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Icon(
-                                    imageVector = Icons.Default.CalendarToday,
-                                    contentDescription = null,
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            }
-                        }
-
-                        // Action 2: DETALLE (Opción secundaria)
-                        if (onOpenDetail != null) {
-                            Surface(
-                                onClick = onOpenDetail,
-                                color = RoutineTheme.colors.surface2,
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(1.dp, RoutineTheme.colors.border),
-                                modifier = Modifier.height(42.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "DETALLE",
-                                        style = RoutineTheme.typography.labelCaps.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
-                                        color = RoutineTheme.colors.onSurface
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        // Fullscreen Mode: Primary ABRIR button
-                        Surface(
-                            onClick = onClick,
-                            color = RoutineTheme.colors.primary,
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.height(44.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "ABRIR",
-                                    style = RoutineTheme.typography.labelCaps.copy(fontSize = 12.sp, fontWeight = FontWeight.Black),
-                                    color = Color.Black
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = null,
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Delete Action Menu
-                if (onDeleteClick != null) {
-                    Box {
-                        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
                             Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "Opciones de actividad",
-                                tint = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Borrar actividad",
+                                tint = RoutineTheme.colors.error,
+                                modifier = Modifier.size(14.dp)
                             )
-                        }
-                        RoutineDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                            RoutineDropdownMenuItem(
-                                text = "Eliminar",
-                                onClick = {
-                                    showMenu = false
-                                    onDeleteClick()
-                                },
-                                icon = Icons.Default.Delete,
-                                iconColor = RoutineTheme.colors.error
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "ELIMINAR",
+                                style = RoutineTheme.typography.labelCaps.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                                color = RoutineTheme.colors.error
                             )
                         }
                     }
@@ -326,7 +238,6 @@ fun ActivityCard(
     }
 }
 
-@Composable
 fun getTechnicalIcon(name: String): ImageVector {
     return when (name.lowercase()) {
         "fitness_center" -> Icons.Default.FitnessCenter

@@ -54,6 +54,7 @@ interface ActivityRepository {
     suspend fun upsertDailyInstance(instance: DailyInstance)
     suspend fun deleteDailyInstance(id: String)
     suspend fun getDailyInstanceByTarget(targetId: String, date: Long): DailyInstance?
+    suspend fun getDailyInstanceBySourceRule(sourceRuleId: String, date: Long): DailyInstance? = null
     
     // Contextual Persistence
     suspend fun upsertActivityWithContext(
