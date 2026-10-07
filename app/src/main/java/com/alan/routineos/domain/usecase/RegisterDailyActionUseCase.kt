@@ -94,6 +94,9 @@ class RegisterDailyActionUseCase @Inject constructor(
     private suspend fun handleResetRecursive(entry: HierarchicalTimelineEntry) {
         val instance = materializeIfVirtual(entry.root)
         
+        // Surgical deletion of executions associated with this specific dailyInstanceId
+        repository.deleteExecutionsForDailyInstance(instance.id)
+
         if (instance.sourceRuleId != null) {
             // Rule Override: Delete the instance to revert to original rule projection
             repository.deleteDailyInstance(instance.id)

@@ -2,6 +2,8 @@ package com.alan.routineos.domain.usecase
 
 import com.alan.routineos.domain.model.*
 import com.alan.routineos.domain.repository.ActivityRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.*
 import java.time.LocalDate
@@ -18,6 +20,16 @@ class GetHistoryAnalyticsUseCase @Inject constructor(
     private val repository: ActivityRepository,
     private val occurrenceResolver: HistoricalOccurrenceResolver
 ) {
+
+    fun invoke(start: LocalDate, end: LocalDate): Flow<HistorySnapshot> {
+        return combine(
+            repository.getAllExecutions(),
+            repository.getDailyInstancesForDateRange(start.toEpochDay(), end.toEpochDay()),
+            repository.getAllRules()
+        ) { _, _, _ ->
+            execute(start, end)
+        }
+    }
 
     suspend fun execute(start: LocalDate, end: LocalDate): HistorySnapshot {
         val resolvedOccs = occurrenceResolver.resolveRange(start, end)

@@ -32,6 +32,7 @@ interface ActivityRepository {
     fun getExecutionsForNode(nodeId: String): Flow<List<ActivityExecution>>
     fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<ActivityExecution>>
     suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long)
+    suspend fun deleteExecutionsForDailyInstance(dailyInstanceId: String) {}
 
     // Scheduling
     fun getAllRules(): Flow<List<ScheduleRule>>
