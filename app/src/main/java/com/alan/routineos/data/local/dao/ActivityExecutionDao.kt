@@ -25,6 +25,9 @@ interface ActivityExecutionDao {
     @Query("DELETE FROM activity_executions WHERE nodeId = :nodeId AND scheduledDate = :scheduledDate")
     suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long)
 
+    @Query("DELETE FROM activity_executions WHERE dailyInstanceId = :dailyInstanceId")
+    suspend fun deleteExecutionsForDailyInstance(dailyInstanceId: String)
+
     @Query("DELETE FROM activity_executions WHERE nodeId = :nodeId")
     suspend fun deleteExecutionsForNode(nodeId: String)
 }

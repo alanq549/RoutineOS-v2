@@ -101,6 +101,7 @@ class ReorderNodesTest {
         override fun getExecutionsForNode(nodeId: String): Flow<List<com.alan.routineos.data.local.entities.ActivityExecutionEntity>> = TODO()
         override fun getExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long): Flow<List<com.alan.routineos.data.local.entities.ActivityExecutionEntity>> = TODO()
         override suspend fun deleteExecutionsForNodeOnDate(nodeId: String, scheduledDate: Long) = TODO()
+        override suspend fun deleteExecutionsForDailyInstance(dailyInstanceId: String) {}
         override suspend fun deleteExecutionsForNode(nodeId: String) = TODO()
     }
     

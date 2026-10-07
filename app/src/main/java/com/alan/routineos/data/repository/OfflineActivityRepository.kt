@@ -180,6 +180,10 @@ class OfflineActivityRepository @Inject constructor(
         activityExecutionDao.deleteExecutionsForNodeOnDate(nodeId, scheduledDate)
     }
 
+    override suspend fun deleteExecutionsForDailyInstance(dailyInstanceId: String) {
+        activityExecutionDao.deleteExecutionsForDailyInstance(dailyInstanceId)
+    }
+
     override fun getAllRules(): Flow<List<ScheduleRule>> {
         return scheduleRuleDao.getAllRules().map { entities ->
             entities.map { it.toDomain() }
