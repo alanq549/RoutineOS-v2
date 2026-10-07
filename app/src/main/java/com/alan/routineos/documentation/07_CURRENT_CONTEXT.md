@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/ec-re-020-execution-history-stats-sync` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Cierre formal de EC-RE-020 (Execution History Lifecycle & Stats Synchronization) |
+| **Current Goal** | Siguiente tarjeta del Roadmap: EC-RE-021 |
 | **Current EC** | [EC-RE-020: Execution History Lifecycle & Stats Synchronization](../EC/EC-RE-020_EXECUTION_HISTORY_STATS_SYNC.md) |
 | **Status** | `CLOSED` |
 | **Next EC** | [EC-RE-021: Next Roadmap Target] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/ec-re-020-execution-history-stats-sync` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
