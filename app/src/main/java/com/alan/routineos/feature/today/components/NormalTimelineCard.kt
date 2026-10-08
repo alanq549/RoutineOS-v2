@@ -286,11 +286,11 @@ private fun FullActivityCard(
                     Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
                         Button(
                             onClick = { onAction(item.id, "COMPLETE") },
-                            colors = ButtonDefaults.buttonColors(containerColor = semanticColor.copy(alpha = 0.9f), contentColor = Color.Black),
+                            colors = ButtonDefaults.buttonColors(containerColor = semanticColor.copy(alpha = 0.9f), contentColor = RoutineTheme.colors.onPrimary),
                             shape = RoutineTheme.shapes.small,
                             modifier = Modifier.height(36.dp)
                         ) {
-                            Text("COMPLETE", style = RoutineTheme.typography.labelCaps.copy(fontWeight = FontWeight.Bold), color = Color.Black)
+                            Text("COMPLETE", style = RoutineTheme.typography.labelCaps.copy(fontWeight = FontWeight.Bold), color = RoutineTheme.colors.onPrimary)
                         }
                     }
                 }
