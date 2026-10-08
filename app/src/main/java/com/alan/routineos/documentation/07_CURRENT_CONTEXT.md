@@ -3,14 +3,14 @@
 ## Live Operational Context
 Este documento es la única fuente de verdad sobre lo que está ocurriendo en el repositorio en este preciso momento.
 
-| **Current Branch** | `feature/ec-re-021-today-visual-refinement` |
+| **Current Branch** | `develop` |
 | **Current Phase** | Fase 6: Personalización y Refinamiento |
-| **Current Goal** | Cierre formal de EC-RE-021 |
+| **Current Goal** | Siguiente tarjeta del Roadmap: EC-RE-022 |
 | **Current EC** | [EC-RE-021: Today Execution Surface Visual Alignment & Context Accordion Refinement](../EC/EC-RE-021_TODAY_VISUAL_ALIGNMENT_ACCORDION.md) |
 | **Status** | `CLOSED` |
 | **Next EC** | [EC-RE-022: Next Roadmap Target] |
 | **Blocked By** | Ninguna |
-| **Working Directory** | `feature/ec-re-021-today-visual-refinement` |
+| **Working Directory** | `develop` |
 | **Current Sprint** | Sprint 5: Experience & Refinement |
 | **Last Updated** | 2026-09-06 |
 
