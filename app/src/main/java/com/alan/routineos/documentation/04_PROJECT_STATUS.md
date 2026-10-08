@@ -36,6 +36,7 @@ Este es el panel de control de todas las tareas del proyecto. El contexto vivo d
 | EC-RE-018 | Backlog Operativo e Integración con Planning | High | Medium | AI Agent | EC-RE-017 | CLOSED | PASS. BacklogItem materialization into DailyInstance, BacklogPanelSheet in Planning, 78/78 tests passing. |
 | EC-RE-019 | Catalog Semantics & Occurrence Materialization Correction | High | Medium | AI Agent | EC-RE-017 | CLOSED | PASS. MaterializeInstanceUseCase fix (sourceRuleId + date), ActivityCard action inversion, 82/82 tests passing, manual runtime validation PASS. |
 | EC-RE-020 | Execution History Lifecycle & Stats Synchronization | High | Medium | AI Agent | EC-RE-019 | CLOSED | PASS. Surgical ActivityExecution deletion by dailyInstanceId on Reset, reactive Stats Flow pipeline, 87/87 tests passing. |
+| EC-RE-021 | Today Execution Surface Visual Alignment & Context Accordion Refinement | Medium | Small | AI Agent | EC-RE-020 | CLOSED | PASS. Unified spine geometry (x=28dp), collapsed ContextFooter accordion, RoutineTheme.colors token migration, 87/87 tests passing. |
 
 ---
 

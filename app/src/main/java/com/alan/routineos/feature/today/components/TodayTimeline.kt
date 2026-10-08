@@ -1,7 +1,6 @@
 package com.alan.routineos.feature.today.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -9,16 +8,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alan.routineos.core.designsystem.theme.RoutineTheme
 import com.alan.routineos.domain.model.TemporalImpact
-import com.alan.routineos.domain.model.TemporalRelationship
 import com.alan.routineos.feature.today.model.*
 
 fun LazyListScope.todayTimelineItems(
@@ -54,10 +50,10 @@ fun TimelineRow(
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
         ) {
-            // Vertical Axis Column (Simplified: just the rail and nodes)
+            // Vertical Axis Column (Unified 56.dp rail width)
             Box(
                 modifier = Modifier
-                    .width(64.dp)
+                    .width(56.dp)
                     .fillMaxHeight(),
                 contentAlignment = Alignment.TopCenter
             ) {
@@ -69,43 +65,51 @@ fun TimelineRow(
                         color = RoutineTheme.colors.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                     
-                    // Start Time (Top)
                     Text(
                         text = item.timeRangeText,
                         style = markerStyle,
-                        modifier = Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 14.dp)
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(start = 2.dp, top = 14.dp)
                     )
                 }
 
-                if (!isLast) {
-                    val railColor = RoutineTheme.colors.border
-                    val isDashed = item.temporalState == TimelineTemporalState.OVERDUE || item.temporalState == TimelineTemporalState.STALE_PENDING
-                    val pathEffect = if (isDashed) PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f) else null
+                // Continuous Spine Rail Line (Seamless connection without gaps)
+                val railColor = RoutineTheme.colors.border.copy(alpha = 0.5f)
+                val isDashed = item.temporalState == TimelineTemporalState.OVERDUE || item.temporalState == TimelineTemporalState.STALE_PENDING
+                val pathEffect = if (isDashed) PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f) else null
 
-                    Canvas(modifier = Modifier
-                        .padding(top = 24.dp)
+                Canvas(
+                    modifier = Modifier
                         .width(1.dp)
                         .fillMaxHeight()
                         .align(Alignment.TopCenter)
-                    ) {
-                        drawLine(
-                            color = railColor,
-                            start = Offset(0f, 0f),
-                            end = Offset(0f, size.height),
-                            strokeWidth = 1.5.dp.toPx(),
-                            pathEffect = pathEffect
-                        )
-                    }
+                ) {
+                    val endY = if (isLast) 20.dp.toPx() else size.height
+                    drawLine(
+                        color = railColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, endY),
+                        strokeWidth = 1.5.dp.toPx(),
+                        pathEffect = pathEffect
+                    )
                 }
                 
+                // Timeline Node centered at Y = 20.dp
                 TimelineNode(
                     status = item.status, 
-                    modifier = Modifier.padding(top = 16.dp).align(Alignment.TopCenter)
+                    modifier = Modifier
+                        .padding(top = 14.dp)
+                        .align(Alignment.TopCenter)
                 )
             }
 
             // Card Column
-            Box(modifier = Modifier.weight(1f).padding(bottom = 24.dp)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 16.dp, bottom = 16.dp)
+            ) {
                 TimelineItemCard(
                     item = item, 
                     onAction = onAction,
@@ -114,10 +118,4 @@ fun TimelineRow(
             }
         }
     }
-}
-
-private fun formatMinutes(minutes: Int): String {
-    val h = (minutes / 60) % 24
-    val m = minutes % 60
-    return "%02d:%02d".format(h, m)
 }
